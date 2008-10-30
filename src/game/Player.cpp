@@ -376,6 +376,18 @@ Player::Player (WorldSession *session): Unit()
     rest_type=REST_TYPE_NO;
     ////////////////////Rest System/////////////////////
 
+    //movement anticheat
+    m_anti_lastmovetime = 0;   //last movement time 
+    m_anti_transportGUID = 0;  //current transport GUID
+    m_anti_NextLenCheck = 0;
+    m_anti_MovedLen = 0.0f;
+    m_anti_beginfalltime = 0;  //alternative falling begin time
+    m_anti_lastalarmtime = 0;    //last time when alarm generated
+    m_anti_alarmcount = 0;       //alarm counter
+    m_anti_TeleTime = 0;
+    m_CanFly=false;
+    /////////////////////////////////
+
     m_mailsLoaded = false;
     m_mailsUpdated = false;
     unReadMails = 0;
@@ -418,6 +430,8 @@ Player::Player (WorldSession *session): Unit()
     m_miniPet = 0;
     m_bgAfkReportedTimer = 0;
     m_contestedPvPTimer = 0;
+
+    m_KnockedBack = false;
 
     m_declinedname = NULL;
 }
@@ -1661,6 +1675,7 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
         else
             return false;
     }
+    m_anti_TeleTime=time(NULL);
     return true;
 }
 

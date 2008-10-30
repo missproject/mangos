@@ -5677,6 +5677,7 @@ void Spell::EffectKnockBack(uint32 i)
     data << float(vsin);                                    // y direction
     data << float(m_spellInfo->EffectMiscValue[i])/10;      // Horizontal speed
     data << float(damage/-10);                              // Z Movement speed (vertical)
+    ((Player*)unitTarget)->SetKnockedBack(true);
 
     ((Player*)unitTarget)->GetSession()->SendPacket(&data);
 }
@@ -5736,6 +5737,7 @@ void Spell::EffectPlayerPull(uint32 i)
                                                             // Horizontal speed
     data << float(damage ? damage : unitTarget->GetDistance2d(m_caster));
     data << float(m_spellInfo->EffectMiscValue[i])/-10;     // Z Movement speed
+    ((Player*)unitTarget)->SetKnockedBack(true);
 
     ((Player*)unitTarget)->GetSession()->SendPacket(&data);
 }
