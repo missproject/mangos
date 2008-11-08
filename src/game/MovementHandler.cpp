@@ -287,7 +287,7 @@ void WorldSession::HandleMoveWorldportAckOpcode()
     {
         if( mEntry->IsDungeon() )
         {
-            GetPlayer()->ResurrectPlayer(0.5f,false);
+            GetPlayer()->ResurrectPlayer(0.5f);
             GetPlayer()->SpawnCorpseBones();
             GetPlayer()->SaveToDB();
         }
@@ -306,7 +306,7 @@ void WorldSession::HandleMoveWorldportAckOpcode()
     if(!mEntry->IsMountAllowed())
         _player->RemoveSpellsCausingAura(SPELL_AURA_MOUNTED);
 
-    // battleground state preper
+    // battleground state prepare
     if(_player->InBattleGround())
     {
         BattleGround *bg = _player->GetBattleGround();
@@ -475,7 +475,7 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
         GetPlayer()->m_anti_transportGUID = 0;
     }bool KnockedBack=GetPlayer()->GetKnockedBack();
 
-    // fall damage generation (ignore in flight case that can be triggred also at lags in moment teleportation to another map).
+    // fall damage generation (ignore in flight case that can be triggered also at lags in moment teleportation to another map).
     if (recv_data.GetOpcode() == MSG_MOVE_FALL_LAND && !GetPlayer()->isInFlight())
     {
         Player *target = GetPlayer();
