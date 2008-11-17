@@ -1918,7 +1918,7 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         //bool CanFly() const { return HasUnitMovementFlag(MOVEMENTFLAG_CAN_FLY); }
         bool CanFly() const { return m_CanFly;  }
-        bool SetCanFly(bool CanFly) { m_CanFly=CanFly; }
+        void SetCanFly(bool CanFly) { m_CanFly=CanFly; }
         bool IsFlying() const { return HasUnitMovementFlag(MOVEMENTFLAG_FLYING); }
 
         void HandleDrowning();
