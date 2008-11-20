@@ -244,6 +244,8 @@ MapManager::Update(time_t diff)
     if( !i_timer.Passed() )
         return;
 
+    ObjectAccessor::Instance().UpdatePlayers(i_timer.GetCurrent());
+
     for(MapMapType::iterator iter=i_maps.begin(); iter != i_maps.end(); ++iter)
     {
         checkAndCorrectGridStatesArray();                   // debugging code, should be deleted some day
@@ -334,7 +336,7 @@ uint32 MapManager::GetNumPlayersInInstances()
         MapInstanced::InstancedMaps &maps = ((MapInstanced *)map)->GetInstancedMaps();
         for(MapInstanced::InstancedMaps::iterator mitr = maps.begin(); mitr != maps.end(); ++mitr)
             if(mitr->second->IsDungeon())
-                ret += ((InstanceMap*)mitr->second)->GetPlayers().size();
+                ret += ((InstanceMap*)mitr->second)->GetPlayers().getSize();
     }
     return ret;
 }

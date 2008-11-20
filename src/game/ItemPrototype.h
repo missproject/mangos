@@ -538,7 +538,7 @@ struct ItemPrototype
     uint32 GemProperties;                                   // id from GemProperties.dbc
     uint32 RequiredDisenchantSkill;
     float  ArmorDamageModifier;
-    char* ScriptName;
+    uint32 ScriptId;
     uint32 DisenchantID;
     uint32 FoodType;
     uint32 MinMoneyLoot;
@@ -552,6 +552,7 @@ struct ItemPrototype
         {
             case INVTYPE_RELIC:
             case INVTYPE_SHIELD:
+            case INVTYPE_HOLDABLE:
                 return true;
         }
 

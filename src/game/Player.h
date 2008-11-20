@@ -31,6 +31,7 @@
 #include "Bag.h"
 #include "WorldSession.h"
 #include "Pet.h"
+#include "MapReference.h"
 #include "Util.h"                                           // for Tokens typedef
 
 #include<string>
@@ -676,12 +677,6 @@ struct ItemPosCount
     uint8 count;
 };
 typedef std::vector<ItemPosCount> ItemPosCountVec;
-
-enum SwitchWeapon
-{
-    DEFAULT_SWITCH_WEAPON       = 1500,                     //cooldown in ms
-    ROGUE_SWITCH_WEAPON         = 1000
-};
 
 enum TradeSlots
 {
@@ -2023,6 +2018,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         Player* GetNextRandomRaidMember(float radius);
 
         GridReference<Player> &GetGridRef() { return m_gridRef; }
+        MapReference &GetMapRef() { return m_mapRef; }
+
         bool isAllowedToLoot(Creature* creature);
 
         bool GetKnockedBack() { return m_KnockedBack; }
@@ -2283,6 +2280,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         Item* _StoreItem( uint16 pos, Item *pItem, uint32 count, bool clone, bool update );
 
         GridReference<Player> m_gridRef;
+        MapReference m_mapRef;
 };
 
 void AddItemsSetItem(Player*player,Item *item);

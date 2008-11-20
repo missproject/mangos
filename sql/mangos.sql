@@ -22,7 +22,7 @@
 DROP TABLE IF EXISTS `db_version`;
 CREATE TABLE `db_version` (
   `version` varchar(120) default NULL,
-  `required_2008_11_01_02_mangos_command` bit(1) default NULL
+  `required_2008_11_18_02_mangos_mangos_string` bit(1) default NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Used DB version notes';
 
 --
@@ -66,6 +66,15 @@ CREATE TABLE `areatrigger_scripts` (
     `ScriptName` CHAR( 64 ) NOT NULL ,
     PRIMARY KEY ( `entry` )
 ) ENGINE = MYISAM DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `areatrigger_scripts`
+--
+
+LOCK TABLES `areatrigger_scripts` WRITE;
+/*!40000 ALTER TABLE `areatrigger_scripts` DISABLE KEYS */;
+/*!40000 ALTER TABLE `areatrigger_scripts` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `areatrigger_tavern`
@@ -394,18 +403,24 @@ INSERT INTO `command` VALUES
 ('revive',3,'Syntax: .revive\r\n\r\nRevive the selected player. If no player is selected, it will revive you.'),
 ('save',0,'Syntax: .save\r\n\r\nSaves your character.'),
 ('saveall',1,'Syntax: .saveall\r\n\r\nSave all characters in game.'),
-('sendmail',1,'Syntax: .sendmail #playername "#subject" "#text" itemid1[:count1] itemid2[:count2] ... itemidN[:countN]\r\n\r\nSend a mail to a player. Subject and mail text must be in "". If for itemid not provided related count values then expected 1, if count > max items in stack then items will be send in required amount stacks. All stacks amount in mail limited to 12.'),
+('senditems',3,'Syntax: .senditems #playername "#subject" "#text" itemid1[:count1] itemid2[:count2] ... itemidN[:countN]\r\n\r\nSend a mail to a player. Subject and mail text must be in "". If for itemid not provided related count values then expected 1, if count > max items in stack then items will be send in required amount stacks. All stacks amount in mail limited to 12.'),
+('sendmail',1,'Syntax: .sendmail #playername "#subject" "#text"\r\n\r\nSend a mail to a player. Subject and mail text must be in "".'),
+('sendmoney','3','Syntax: .sendmoney #playername "#subject" "#text" #money\r\n\r\nSend mail with money to a player. Subject and mail text must be in "".'),
 ('sendmessage',3,'Syntax: .sendmessage $playername $message\r\n\r\nSend screen message to player from ADMINISTRATOR.'),
 ('server corpses',2,'Syntax: .server corpses\r\n\r\nTriggering corpses expire check in world.'),
-('server exit',4,'Syntax: .server exit\r\n\r\nTerminate mangosd NOW.'),
+('server exit',4,'Syntax: .server exit\r\n\r\nTerminate mangosd NOW. Exit code 0.'),
 ('server info',0,'Syntax: .server info\r\n\r\nDisplay server version and the number of connected players.'),
-('server idleshutdown',3,'Syntax: .server idleshutdown #delay|cancel\r\n\r\nShut the server down after #delay seconds if no active connections are present (no players) or cancel the restart/shutdown if cancel value is used.'),
-('server idlerestart',3,'Syntax: .server idlerestart #delay|cancel\r\n\r\nRestart the server after #delay seconds if no active connections are present (no players) or cancel the restart/shutdown if cancel value is used.'),
+('server idleshutdown',3,'Syntax: .server idleshutdown #delay [#exist_code]\r\n\r\nShut the server down after #delay seconds if no active connections are present (no players). Use #exist_code or 0 as program exist code.'),
+('server idleshutdown cancel',3,'Syntax: .server idleshutdown cancel\r\n\r\nCancel the restart/shutdown timer if any.'),
+('server idlerestart',3,'Syntax: .server idlerestart #delay\r\n\r\nRestart the server after #delay seconds if no active connections are present (no players). Use #exist_code or 2 as program exist code.'),
+('server idlerestart cancel',3,'Syntax: .server idlerestart cancel\r\n\r\nCancel the restart/shutdown timer if any.'),
 ('server motd',0,'Syntax: .server motd\r\n\r\nShow server Message of the day.'),
-('server restart',3,'Syntax: .server restart seconds\r\n\r\nRestart the server after given seconds and show "Restart server in X" or cancel the restart/shutdown if cancel value is used.'),
+('server restart',3,'Syntax: .server restart #delay\r\n\r\nRestart the server after #delay seconds. Use #exist_code or 2 as program exist code.'),
+('server restart cancel',3,'Syntax: .server restart cancel\r\n\r\nCancel the restart/shutdown timer if any.'),
 ('server set loglevel',4,'Syntax: .server set loglevel #level\r\n\r\nSet server log level (0 - errors only, 1 - basic, 2 - detail, 3 - debug).'),
 ('server set motd',3,'Syntax: .server set motd $MOTD\r\n\r\nSet server Message of the day.'),
-('server shutdown',3,'Syntax: .server shutdown seconds\r\n\r\nShut the server down after given seconds and show "Off server in X" or cancel the restart/shutdown if cancel value is used.'),
+('server shutdown',3,'Syntax: .server shutdown #delay [#exist_code]\r\n\r\nShut the server down after #delay seconds. Use #exist_code or 0 as program exist code.'),
+('server shutdown cancel',3,'Syntax: .server shutdown cancel\r\n\r\nCancel the restart/shutdown timer if any.'),
 ('setskill',3,'Syntax: .setskill #skill #level [#max]\r\n\r\nSet a skill of id #skill with a current skill value of #level and a maximum value of #max (or equal current maximum if not provide) for the selected character. If no character is selected, you learn the skill.'),
 ('showarea',3,'Syntax: .showarea #areaid\r\n\r\nReveal the area of #areaid to the selected character. If no character is selected, reveal this area to you.'),
 ('start',0,'Syntax: .start\r\n\r\nTeleport you to the starting area of your character.'),
@@ -607,11 +622,11 @@ CREATE TABLE `creature_movement` (
   `position_y` float NOT NULL default '0',
   `position_z` float NOT NULL default '0',
   `waittime` int(10) unsigned NOT NULL default '0',
-  `text1` text,
-  `text2` text,
-  `text3` text,
-  `text4` text,
-  `text5` text,
+  `textid1` int(11) NOT NULL default '0',
+  `textid2` int(11) NOT NULL default '0',
+  `textid3` int(11) NOT NULL default '0',
+  `textid4` int(11) NOT NULL default '0',
+  `textid5` int(11) NOT NULL default '0',
   `emote` mediumint(8) unsigned NOT NULL default '0',
   `spell` mediumint(8) unsigned NOT NULL default '0',
   `wpguid` int(11) NOT NULL default '0',
@@ -812,6 +827,34 @@ LOCK TABLES `creature_template_addon` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `db_script_string`
+--
+
+DROP TABLE IF EXISTS `db_script_string`;
+CREATE TABLE `db_script_string` (
+  `entry` mediumint(8) unsigned NOT NULL default '0',
+  `content_default` text NOT NULL,
+  `content_loc1` text,
+  `content_loc2` text,
+  `content_loc3` text,
+  `content_loc4` text,
+  `content_loc5` text,
+  `content_loc6` text,
+  `content_loc7` text,
+  `content_loc8` text,
+  PRIMARY KEY  (`entry`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `db_script_string`
+--
+
+LOCK TABLES `db_script_string` WRITE;
+/*!40000 ALTER TABLE `db_script_string` DISABLE KEYS */;
+/*!40000 ALTER TABLE `db_script_string` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `disenchant_loot_template`
 --
 
@@ -849,7 +892,7 @@ CREATE TABLE `event_scripts` (
   `command` mediumint(8) unsigned NOT NULL default '0',
   `datalong` mediumint(8) unsigned NOT NULL default '0',
   `datalong2` int(10) unsigned NOT NULL default '0',
-  `datatext` text NOT NULL,
+  `dataint` int(11) NOT NULL default '0',
   `x` float NOT NULL default '0',
   `y` float NOT NULL default '0',
   `z` float NOT NULL default '0',
@@ -1301,7 +1344,7 @@ CREATE TABLE `gameobject_scripts` (
   `command` mediumint(8) unsigned NOT NULL default '0',
   `datalong` mediumint(8) unsigned NOT NULL default '0',
   `datalong2` int(10) unsigned NOT NULL default '0',
-  `datatext` text NOT NULL,
+  `dataint` int(11) NOT NULL default '0',
   `x` float NOT NULL default '0',
   `y` float NOT NULL default '0',
   `z` float NOT NULL default '0',
@@ -2325,7 +2368,7 @@ INSERT INTO `mangos_string` VALUES
 (248,'Model %d: %d',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (249,'Emote: %d',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (250,'Spell: %d',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
-(251,'Text %d: %s',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+(251,'Text%d (ID: %i): %s',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (252,'AIScript: %s',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (253,'Forced rename for player %s will be requested at next login.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (254,'Forced rename for player %s (GUID #%u) will be requested at next login.',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
@@ -2472,7 +2515,6 @@ INSERT INTO `mangos_string` VALUES
 (450,'Graveyard #%u already linked to zone #%u (current).',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (451,'Graveyard #%u linked to zone #%u (current).',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (452,'Graveyard #%u can\'t be linked to subzone or not existed zone #%u (internal error).',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
-(453,'Graveyard can be linked to zone at another map only for all factions (no faction value).',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (454,'No faction in Graveyard with id= #%u , fix your DB',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (455,'invalid team, please fix database',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 (456,'any',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
@@ -10530,7 +10572,7 @@ CREATE TABLE `quest_end_scripts` (
   `command` mediumint(8) unsigned NOT NULL default '0',
   `datalong` mediumint(8) unsigned NOT NULL default '0',
   `datalong2` int(10) unsigned NOT NULL default '0',
-  `datatext` text NOT NULL,
+  `dataint` int(11) NOT NULL default '0',
   `x` float NOT NULL default '0',
   `y` float NOT NULL default '0',
   `z` float NOT NULL default '0',
@@ -10557,7 +10599,7 @@ CREATE TABLE `quest_start_scripts` (
   `command` mediumint(8) unsigned NOT NULL default '0',
   `datalong` mediumint(8) unsigned NOT NULL default '0',
   `datalong2` int(10) unsigned NOT NULL default '0',
-  `datatext` text NOT NULL,
+  `dataint` int(11) NOT NULL default '0',
   `x` float NOT NULL default '0',
   `y` float NOT NULL default '0',
   `z` float NOT NULL default '0',
@@ -15282,7 +15324,7 @@ CREATE TABLE `spell_scripts` (
   `command` mediumint(8) unsigned NOT NULL default '0',
   `datalong` mediumint(8) unsigned NOT NULL default '0',
   `datalong2` int(10) unsigned NOT NULL default '0',
-  `datatext` text NOT NULL,
+  `dataint` int(11) NOT NULL default '0',
   `x` float NOT NULL default '0',
   `y` float NOT NULL default '0',
   `z` float NOT NULL default '0',

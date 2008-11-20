@@ -475,12 +475,12 @@ void Spell::FillTargetMap()
 
                             TypeContainerVisitor<MaNGOS::WorldObjectSearcher<MaNGOS::CannibalizeObjectCheck >, GridTypeMapContainer > grid_searcher(searcher);
                             CellLock<GridReadGuard> cell_lock(cell, p);
-                            cell_lock->Visit(cell_lock, grid_searcher, *MapManager::Instance().GetMap(m_caster->GetMapId(), m_caster));
+                            cell_lock->Visit(cell_lock, grid_searcher, *m_caster->GetMap());
 
                             if(!result)
                             {
                                 TypeContainerVisitor<MaNGOS::WorldObjectSearcher<MaNGOS::CannibalizeObjectCheck >, WorldTypeMapContainer > world_searcher(searcher);
-                                cell_lock->Visit(cell_lock, world_searcher, *MapManager::Instance().GetMap(m_caster->GetMapId(), m_caster));
+                                cell_lock->Visit(cell_lock, world_searcher, *m_caster->GetMap());
                             }
 
                             if(result)
@@ -1208,8 +1208,8 @@ void Spell::SetTargetMap(uint32 i,uint32 cur,std::list<Unit*> &TagUnitMap)
                 TypeContainerVisitor<MaNGOS::UnitListSearcher<MaNGOS::AnyAoETargetUnitInObjectRangeCheck>, GridTypeMapContainer >  grid_unit_searcher(searcher);
 
                 CellLock<GridReadGuard> cell_lock(cell, p);
-                cell_lock->Visit(cell_lock, world_unit_searcher, *MapManager::Instance().GetMap(m_caster->GetMapId(), m_caster));
-                cell_lock->Visit(cell_lock, grid_unit_searcher, *MapManager::Instance().GetMap(m_caster->GetMapId(), m_caster));
+                cell_lock->Visit(cell_lock, world_unit_searcher, *m_caster->GetMap());
+                cell_lock->Visit(cell_lock, grid_unit_searcher, *m_caster->GetMap());
             }
 
             if(tempUnitMap.empty())
@@ -1307,8 +1307,8 @@ void Spell::SetTargetMap(uint32 i,uint32 cur,std::list<Unit*> &TagUnitMap)
                         TypeContainerVisitor<MaNGOS::UnitListSearcher<MaNGOS::AnyAoETargetUnitInObjectRangeCheck>, GridTypeMapContainer >  grid_unit_searcher(searcher);
 
                         CellLock<GridReadGuard> cell_lock(cell, p);
-                        cell_lock->Visit(cell_lock, world_unit_searcher, *MapManager::Instance().GetMap(m_caster->GetMapId(), m_caster));
-                        cell_lock->Visit(cell_lock, grid_unit_searcher, *MapManager::Instance().GetMap(m_caster->GetMapId(), m_caster));
+                        cell_lock->Visit(cell_lock, world_unit_searcher, *m_caster->GetMap());
+                        cell_lock->Visit(cell_lock, grid_unit_searcher, *m_caster->GetMap());
                     }
 
                     tempUnitMap.sort(TargetDistanceOrder(pUnitTarget));
@@ -1365,8 +1365,8 @@ void Spell::SetTargetMap(uint32 i,uint32 cur,std::list<Unit*> &TagUnitMap)
                 TypeContainerVisitor<MaNGOS::SpellNotifierCreatureAndPlayer, GridTypeMapContainer >  grid_object_notifier(notifier);
 
                 CellLock<GridReadGuard> cell_lock(cell, p);
-                cell_lock->Visit(cell_lock, world_object_notifier, *MapManager::Instance().GetMap(m_caster->GetMapId(), m_caster));
-                cell_lock->Visit(cell_lock, grid_object_notifier, *MapManager::Instance().GetMap(m_caster->GetMapId(), m_caster));
+                cell_lock->Visit(cell_lock, world_object_notifier, *m_caster->GetMap());
+                cell_lock->Visit(cell_lock, grid_object_notifier, *m_caster->GetMap());
 
                 // exclude caster (this can be important if this not original caster)
                 TagUnitMap.remove(m_caster);
@@ -1448,8 +1448,8 @@ void Spell::SetTargetMap(uint32 i,uint32 cur,std::list<Unit*> &TagUnitMap)
             TypeContainerVisitor<MaNGOS::SpellNotifierCreatureAndPlayer, GridTypeMapContainer >  grid_object_notifier(notifier);
 
             CellLock<GridReadGuard> cell_lock(cell, p);
-            cell_lock->Visit(cell_lock, world_object_notifier, *MapManager::Instance().GetMap(m_caster->GetMapId(), m_caster));
-            cell_lock->Visit(cell_lock, grid_object_notifier, *MapManager::Instance().GetMap(m_caster->GetMapId(), m_caster));
+            cell_lock->Visit(cell_lock, world_object_notifier, *m_caster->GetMap());
+            cell_lock->Visit(cell_lock, grid_object_notifier, *m_caster->GetMap());
         }break;
         case TARGET_ALL_FRIENDLY_UNITS_AROUND_CASTER:
         {
@@ -1464,8 +1464,8 @@ void Spell::SetTargetMap(uint32 i,uint32 cur,std::list<Unit*> &TagUnitMap)
             TypeContainerVisitor<MaNGOS::SpellNotifierCreatureAndPlayer, GridTypeMapContainer >  grid_object_notifier(notifier);
 
             CellLock<GridReadGuard> cell_lock(cell, p);
-            cell_lock->Visit(cell_lock, world_object_notifier, *MapManager::Instance().GetMap(m_caster->GetMapId(), m_caster));
-            cell_lock->Visit(cell_lock, grid_object_notifier, *MapManager::Instance().GetMap(m_caster->GetMapId(), m_caster));
+            cell_lock->Visit(cell_lock, world_object_notifier, *m_caster->GetMap());
+            cell_lock->Visit(cell_lock, grid_object_notifier, *m_caster->GetMap());
         }break;
         case TARGET_ALL_FRIENDLY_UNITS_IN_AREA:
         {
@@ -1480,8 +1480,8 @@ void Spell::SetTargetMap(uint32 i,uint32 cur,std::list<Unit*> &TagUnitMap)
             TypeContainerVisitor<MaNGOS::SpellNotifierCreatureAndPlayer, GridTypeMapContainer >  grid_object_notifier(notifier);
 
             CellLock<GridReadGuard> cell_lock(cell, p);
-            cell_lock->Visit(cell_lock, world_object_notifier, *MapManager::Instance().GetMap(m_caster->GetMapId(), m_caster));
-            cell_lock->Visit(cell_lock, grid_object_notifier, *MapManager::Instance().GetMap(m_caster->GetMapId(), m_caster));
+            cell_lock->Visit(cell_lock, world_object_notifier, *m_caster->GetMap());
+            cell_lock->Visit(cell_lock, grid_object_notifier, *m_caster->GetMap());
         }break;
         // TARGET_SINGLE_PARTY means that the spells can only be casted on a party member and not on the caster (some seals, fire shield from imp, etc..)
         case TARGET_SINGLE_PARTY:
@@ -1557,8 +1557,8 @@ void Spell::SetTargetMap(uint32 i,uint32 cur,std::list<Unit*> &TagUnitMap)
             TypeContainerVisitor<MaNGOS::SpellNotifierCreatureAndPlayer, GridTypeMapContainer >  grid_object_notifier(notifier);
 
             CellLock<GridReadGuard> cell_lock(cell, p);
-            cell_lock->Visit(cell_lock, world_object_notifier, *MapManager::Instance().GetMap(m_caster->GetMapId(), m_caster));
-            cell_lock->Visit(cell_lock, grid_object_notifier, *MapManager::Instance().GetMap(m_caster->GetMapId(), m_caster));
+            cell_lock->Visit(cell_lock, world_object_notifier, *m_caster->GetMap());
+            cell_lock->Visit(cell_lock, grid_object_notifier, *m_caster->GetMap());
         }break;
         case TARGET_DUELVSPLAYER:
         {
@@ -1607,8 +1607,8 @@ void Spell::SetTargetMap(uint32 i,uint32 cur,std::list<Unit*> &TagUnitMap)
                 TypeContainerVisitor<MaNGOS::SpellNotifierCreatureAndPlayer, GridTypeMapContainer >  grid_object_notifier(notifier);
 
                 CellLock<GridReadGuard> cell_lock(cell, p);
-                cell_lock->Visit(cell_lock, world_object_notifier, *MapManager::Instance().GetMap(m_caster->GetMapId(), m_caster));
-                cell_lock->Visit(cell_lock, grid_object_notifier, *MapManager::Instance().GetMap(m_caster->GetMapId(), m_caster));
+                cell_lock->Visit(cell_lock, world_object_notifier, *m_caster->GetMap());
+                cell_lock->Visit(cell_lock, grid_object_notifier, *m_caster->GetMap());
             }
         }break;
         case TARGET_MINION:
@@ -1726,8 +1726,8 @@ void Spell::SetTargetMap(uint32 i,uint32 cur,std::list<Unit*> &TagUnitMap)
                     TypeContainerVisitor<MaNGOS::SpellNotifierCreatureAndPlayer, GridTypeMapContainer >  grid_object_notifier(notifier);
 
                     CellLock<GridReadGuard> cell_lock(cell, p);
-                    cell_lock->Visit(cell_lock, world_object_notifier, *MapManager::Instance().GetMap(m_caster->GetMapId(), m_caster));
-                    cell_lock->Visit(cell_lock, grid_object_notifier, *MapManager::Instance().GetMap(m_caster->GetMapId(), m_caster));
+                    cell_lock->Visit(cell_lock, world_object_notifier, *m_caster->GetMap());
+                    cell_lock->Visit(cell_lock, grid_object_notifier, *m_caster->GetMap());
 
                 }
 
@@ -1791,8 +1791,8 @@ void Spell::SetTargetMap(uint32 i,uint32 cur,std::list<Unit*> &TagUnitMap)
                     TypeContainerVisitor<MaNGOS::SpellNotifierCreatureAndPlayer, WorldTypeMapContainer > world_notifier(notifier);
                     TypeContainerVisitor<MaNGOS::SpellNotifierCreatureAndPlayer, GridTypeMapContainer > grid_notifier(notifier);
                     CellLock<GridReadGuard> cell_lock(cell, p);
-                    cell_lock->Visit(cell_lock, world_notifier, *MapManager::Instance().GetMap(m_caster->GetMapId(), m_caster));
-                    cell_lock->Visit(cell_lock, grid_notifier, *MapManager::Instance().GetMap(m_caster->GetMapId(), m_caster));
+                    cell_lock->Visit(cell_lock, world_notifier, *m_caster->GetMap());
+                    cell_lock->Visit(cell_lock, grid_notifier, *m_caster->GetMap());
                 }
             }
         }break;
@@ -1848,8 +1848,8 @@ void Spell::SetTargetMap(uint32 i,uint32 cur,std::list<Unit*> &TagUnitMap)
                     TypeContainerVisitor<MaNGOS::SpellNotifierCreatureAndPlayer, GridTypeMapContainer > grid_notifier(notifier);
 
                     CellLock<GridReadGuard> cell_lock(cell, p);
-                    cell_lock->Visit(cell_lock, world_notifier, *MapManager::Instance().GetMap(m_caster->GetMapId(), m_caster));
-                    cell_lock->Visit(cell_lock, grid_notifier, *MapManager::Instance().GetMap(m_caster->GetMapId(), m_caster));
+                    cell_lock->Visit(cell_lock, world_notifier, *m_caster->GetMap());
+                    cell_lock->Visit(cell_lock, grid_notifier, *m_caster->GetMap());
                 }
             }
             else
@@ -2528,7 +2528,18 @@ void Spell::finish(bool ok)
 
     // Clear combo at finish state
     if(m_caster->GetTypeId() == TYPEID_PLAYER && NeedsComboPoints(m_spellInfo))
-        ((Player*)m_caster)->ClearComboPoints();
+    {
+        // Not drop combopoints if any miss exist
+        bool needDrop = true;
+        for(std::list<TargetInfo>::iterator ihit= m_UniqueTargetInfo.begin();ihit != m_UniqueTargetInfo.end();++ihit)
+            if (ihit->missCondition != SPELL_MISS_NONE)
+            {
+                needDrop = false;
+                break;
+            }
+        if (needDrop)
+            ((Player*)m_caster)->ClearComboPoints();
+    }
 
     // call triggered spell only at successful cast (after clear combo points -> for add some if need)
     if(!m_TriggerSpells.empty())
@@ -3372,7 +3383,7 @@ uint8 Spell::CanCast(bool strict)
 
                                 TypeContainerVisitor<MaNGOS::GameObjectLastSearcher<MaNGOS::NearestGameObjectEntryInObjectRangeCheck>, GridTypeMapContainer > object_checker(checker);
                                 CellLock<GridReadGuard> cell_lock(cell, p);
-                                cell_lock->Visit(cell_lock, object_checker, *MapManager::Instance().GetMap(m_caster->GetMapId(), m_caster));
+                                cell_lock->Visit(cell_lock, object_checker, *m_caster->GetMap());
 
                                 if(p_GameObject)
                                 {
@@ -3411,7 +3422,7 @@ uint8 Spell::CanCast(bool strict)
                             TypeContainerVisitor<MaNGOS::CreatureLastSearcher<MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck>, GridTypeMapContainer >  grid_creature_searcher(searcher);
 
                             CellLock<GridReadGuard> cell_lock(cell, p);
-                            cell_lock->Visit(cell_lock, grid_creature_searcher, *MapManager::Instance().GetMap(m_caster->GetMapId(), m_caster));
+                            cell_lock->Visit(cell_lock, grid_creature_searcher, *m_caster->GetMap());
 
                             if(p_Creature )
                             {
@@ -4438,7 +4449,7 @@ uint8 Spell::CheckItems()
 
         TypeContainerVisitor<MaNGOS::GameObjectSearcher<MaNGOS::GameObjectFocusCheck>, GridTypeMapContainer > object_checker(checker);
         CellLock<GridReadGuard> cell_lock(cell, p);
-        cell_lock->Visit(cell_lock, object_checker, *MapManager::Instance().GetMap(m_caster->GetMapId(), m_caster));
+        cell_lock->Visit(cell_lock, object_checker, *m_caster->GetMap());
 
         if(!ok)
             return (uint8)SPELL_FAILED_REQUIRES_SPELL_FOCUS;

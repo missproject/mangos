@@ -201,7 +201,7 @@ struct CreatureInfo
     uint32  equipmentId;
     uint32  MechanicImmuneMask;
     uint32  flags_extra;
-    char const* ScriptName;
+    uint32  ScriptID;
 
     // helpers
     SkillType GetRequiredLootSkill() const
@@ -490,7 +490,9 @@ class MANGOS_DLL_SPEC Creature : public Unit
 
         CreatureInfo const *GetCreatureInfo() const { return m_creatureInfo; }
         CreatureDataAddon const* GetCreatureAddon() const;
-        char const* GetScriptName() const;
+
+        std::string GetScriptName();
+        uint32 GetScriptId();
 
         void prepareGossipMenu( Player *pPlayer, uint32 gossipid = 0 );
         void sendPreparedGossip( Player* player );
@@ -512,6 +514,9 @@ class MANGOS_DLL_SPEC Creature : public Unit
         void Yell(int32 textId, uint32 language, uint64 TargetGuid) { MonsterYell(textId,language,TargetGuid); }
         void TextEmote(int32 textId, uint64 TargetGuid, bool IsBossEmote = false) { MonsterTextEmote(textId,TargetGuid,IsBossEmote); }
         void Whisper(int32 textId, uint64 receiver, bool IsBossWhisper = false) { MonsterWhisper(textId,receiver,IsBossWhisper); }
+
+        // overwrite WorldObject function for proper name localization
+        const char* GetNameForLocaleIdx(int32 locale_idx) const;
 
         void setDeathState(DeathState s);                   // overwrite virtual Unit::setDeathState
 
