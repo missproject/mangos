@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,28 +18,7 @@
 
 #ifndef _PLAYER_DUMP_H
 #define _PLAYER_DUMP_H
-/*
-#include "Log.h"
-#include "Object.h"
-#include "Bag.h"
-#include "Creature.h"
-#include "Player.h"
-#include "DynamicObject.h"
-#include "GameObject.h"
-#include "Corpse.h"
-#include "QuestDef.h"
-#include "Path.h"
-#include "ItemPrototype.h"
-#include "NPCHandler.h"
-#include "Database/DatabaseEnv.h"
-#include "AuctionHouseObject.h"
-#include "Mail.h"
-#include "Map.h"
-#include "ObjectAccessor.h"
-#include "ObjectDefines.h"
-#include "Policies/Singleton.h"
-#include "Database/SQLStorage.h"
-*/
+
 #include <string>
 #include <map>
 #include <set>
@@ -92,7 +71,7 @@ class PlayerDumpWriter : public PlayerDump
         PlayerDumpWriter() {}
 
         std::string GetDump(uint32 guid);
-        DumpReturn WriteDump(std::string file, uint32 guid);
+        DumpReturn WriteDump(const std::string& file, uint32 guid);
     private:
         typedef std::set<uint32> GUIDs;
 
@@ -111,7 +90,7 @@ class PlayerDumpReader : public PlayerDump
     public:
         PlayerDumpReader() {}
 
-        DumpReturn LoadDump(std::string file, uint32 account, std::string name, uint32 guid);
+        DumpReturn LoadDump(const std::string& file, uint32 account, std::string name, uint32 guid);
 };
 
 #endif

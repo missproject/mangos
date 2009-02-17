@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,12 +20,15 @@
 #define __BATTLEGROUND_H
 
 #include "Common.h"
-#include "WorldPacket.h"
-#include "WorldSession.h"
-#include "Opcodes.h"
-#include "ObjectMgr.h"
-#include "BattleGroundMgr.h"
 #include "SharedDefines.h"
+
+class Creature;
+class GameObject;
+class Group;
+class Player;
+class WorldPacket;
+
+struct WorldSafeLocsEntry;
 
 enum BattleGroundSounds
 {
@@ -83,7 +86,7 @@ enum BattleGroundTimeIntervals
 {
     RESURRECTION_INTERVAL           = 30000,                // ms
     REMIND_INTERVAL                 = 30000,                // ms
-    INVITE_ACCEPT_WAIT_TIME         = 120000,               // ms
+    INVITE_ACCEPT_WAIT_TIME         = 80000,                // ms
     TIME_TO_AUTOREMOVE              = 120000,               // ms
     MAX_OFFLINE_TIME                = 300000,               // ms
     START_DELAY0                    = 120000,               // ms
@@ -129,18 +132,18 @@ struct BattleGroundObjectInfo
     uint32      spellid;
 };
 
-#define MAX_QUEUED_PLAYERS_MAP 7
-
-enum BattleGroundTypeId
+// handle the queue types and bg types separately to enable joining queue for different sized arenas at the same time
+enum BattleGroundQueueTypeId
 {
-    BATTLEGROUND_AV     = 1,
-    BATTLEGROUND_WS     = 2,
-    BATTLEGROUND_AB     = 3,
-    BATTLEGROUND_NA     = 4,
-    BATTLEGROUND_BE     = 5,
-    BATTLEGROUND_AA     = 6,
-    BATTLEGROUND_EY     = 7,
-    BATTLEGROUND_RL     = 8
+    BATTLEGROUND_QUEUE_NONE   = 0,
+    BATTLEGROUND_QUEUE_AV     = 1,
+    BATTLEGROUND_QUEUE_WS     = 2,
+    BATTLEGROUND_QUEUE_AB     = 3,
+    BATTLEGROUND_QUEUE_EY     = 4,
+    BATTLEGROUND_QUEUE_SA     = 5,
+    BATTLEGROUND_QUEUE_2v2    = 6,
+    BATTLEGROUND_QUEUE_3v3    = 7,
+    BATTLEGROUND_QUEUE_5v5    = 8,
 };
 
 enum ScoreType
@@ -195,6 +198,20 @@ enum BattleGroundTeamId
     BG_TEAM_HORDE           = 1
 };
 
+enum BattleGroundJoinError
+{
+    BG_JOIN_ERR_OK = 0,
+    BG_JOIN_ERR_OFFLINE_MEMBER = 1,
+    BG_JOIN_ERR_GROUP_TOO_MANY = 2,
+    BG_JOIN_ERR_MIXED_FACTION = 3,
+    BG_JOIN_ERR_MIXED_LEVELS = 4,
+    BG_JOIN_ERR_MIXED_ARENATEAM = 5,
+    BG_JOIN_ERR_GROUP_MEMBER_ALREADY_IN_QUEUE = 6,
+    BG_JOIN_ERR_GROUP_DESERTER = 7,
+    BG_JOIN_ERR_ALL_QUEUES_USED = 8,
+    BG_JOIN_ERR_GROUP_NOT_ENOUGH = 9
+};
+
 class BattleGroundScore
 {
     public:
@@ -224,22 +241,20 @@ class BattleGround
     public:
         /* Construction */
         BattleGround();
+        /*BattleGround(const BattleGround& bg);*/
         virtual ~BattleGround();
-        virtual void Update(time_t diff);                   // must be implemented in BG subclass of BG specific update code, but must in begginning call parent version
+        virtual void Update(uint32 diff);                   // must be implemented in BG subclass of BG specific update code, but must in begginning call parent version
         virtual bool SetupBattleGround()                    // must be implemented in BG subclass
         {
             return true;
         }
-        void Reset();                                       // resets all common properties for battlegrounds
-        virtual void ResetBGSubclass()                      // must be implemented in BG subclass
-        {
-        }
+        virtual void Reset();                               // resets all common properties for battlegrounds, must be implemented and called in BG subclass
 
         /* Battleground */
         // Get methods:
         char const* GetName() const         { return m_Name; }
-        uint32 GetTypeID() const            { return m_TypeID; }
-        uint32 GetQueueType() const         { return m_Queue_type; }
+        BattleGroundTypeId GetTypeID() const { return m_TypeID; }
+        uint32 GetQueueId() const           { return m_QueueId; }
         uint32 GetInstanceID() const        { return m_InstanceID; }
         uint32 GetStatus() const            { return m_Status; }
         uint32 GetStartTime() const         { return m_StartTime; }
@@ -261,8 +276,8 @@ class BattleGround
 
         // Set methods:
         void SetName(char const* Name)      { m_Name = Name; }
-        void SetTypeID(uint32 TypeID)       { m_TypeID = TypeID; }
-        void SetQueueType(uint32 ID)        { m_Queue_type = ID; }
+        void SetTypeID(BattleGroundTypeId TypeID) { m_TypeID = TypeID; }
+        void SetQueueId(uint32 ID)          { m_QueueId = ID; }
         void SetInstanceID(uint32 InstanceID) { m_InstanceID = InstanceID; }
         void SetStatus(uint32 Status)       { m_Status = Status; }
         void SetStartTime(uint32 Time)      { m_StartTime = Time; }
@@ -296,6 +311,7 @@ class BattleGround
         }
         bool HasFreeSlotsForTeam(uint32 Team) const;
         bool HasFreeSlots() const;
+        uint32 GetFreeSlotsForTeam(uint32 Team) const;
 
         bool isArena() const        { return m_IsArena; }
         bool isBattleGround() const { return !m_IsArena; }
@@ -354,18 +370,13 @@ class BattleGround
 
         /* Raid Group */
         Group *GetBgRaid(uint32 TeamID) const { return TeamID == ALLIANCE ? m_BgRaids[BG_TEAM_ALLIANCE] : m_BgRaids[BG_TEAM_HORDE]; }
-        void SetBgRaid(uint32 TeamID, Group *bg_raid)
-        {
-            Group* &old_raid = TeamID == ALLIANCE ? m_BgRaids[BG_TEAM_ALLIANCE] : m_BgRaids[BG_TEAM_HORDE];
-            if(old_raid) old_raid->SetBattlegroundGroup(NULL);
-            if(bg_raid) bg_raid->SetBattlegroundGroup(this);
-            old_raid = bg_raid;
-        }
+        void SetBgRaid(uint32 TeamID, Group *bg_raid);
 
         virtual void UpdatePlayerScore(Player *Source, uint32 type, uint32 value);
 
         uint8 GetTeamIndexByTeamId(uint32 Team) const { return Team == ALLIANCE ? BG_TEAM_ALLIANCE : BG_TEAM_HORDE; }
         uint32 GetPlayersCountByTeam(uint32 Team) const { return m_PlayersCount[GetTeamIndexByTeamId(Team)]; }
+        uint32 GetAlivePlayersCountByTeam(uint32 Team) const;   // used in arenas to correctly handle death in spirit of redemption / last stand etc. (killer = killed) cases
         void UpdatePlayersCountByTeam(uint32 Team, bool remove)
         {
             if(remove)
@@ -373,6 +384,12 @@ class BattleGround
             else
                 ++m_PlayersCount[GetTeamIndexByTeamId(Team)];
         }
+
+        // used for rated arena battles
+        void SetArenaTeamIdForTeam(uint32 Team, uint32 ArenaTeamId) { m_ArenaTeamIds[GetTeamIndexByTeamId(Team)] = ArenaTeamId; }
+        uint32 GetArenaTeamIdForTeam(uint32 Team) const { return m_ArenaTeamIds[GetTeamIndexByTeamId(Team)]; }
+        void SetArenaTeamRatingChangeForTeam(uint32 Team, int32 RatingChange) { m_ArenaTeamRatingChanges[GetTeamIndexByTeamId(Team)] = RatingChange; }
+        int32 GetArenaTeamRatingChangeForTeam(uint32 Team) const { return m_ArenaTeamRatingChanges[GetTeamIndexByTeamId(Team)]; }
 
         /* Triggers handle */
         // must be implemented in BG subclass
@@ -390,6 +407,9 @@ class BattleGround
         virtual WorldSafeLocsEntry const* GetClosestGraveYard(float /*x*/, float /*y*/, float /*z*/, uint32 /*team*/)  { return NULL; }
 
         virtual void AddPlayer(Player *plr);                // must be implemented in BG subclass
+
+        void AddOrSetPlayerToCorrectBgGroup(Player *plr, uint64 plr_guid, uint32 team);
+
         virtual void RemovePlayerAtLeave(uint64 guid, bool Transport, bool SendPacket);
                                                             // can be extended in in BG subclass
 
@@ -402,7 +422,8 @@ class BattleGround
         BGCreatures m_BgCreatures;
         void SpawnBGObject(uint32 type, uint32 respawntime);
         bool AddObject(uint32 type, uint32 entry, float x, float y, float z, float o, float rotation0, float rotation1, float rotation2, float rotation3, uint32 respawnTime = 0);
-        Creature* AddCreature(uint32 entry, uint32 type, uint32 teamval, float x, float y, float z, float o);
+//        void SpawnBGCreature(uint32 type, uint32 respawntime);
+        Creature* AddCreature(uint32 entry, uint32 type, uint32 teamval, float x, float y, float z, float o, uint32 respawntime = 0);
         bool DelCreature(uint32 type);
         bool DelObject(uint32 type);
         bool AddSpiritGuide(uint32 type, float x, float y, float z, float o, uint32 team);
@@ -410,6 +431,15 @@ class BattleGround
         void DoorOpen(uint32 type);
         void DoorClose(uint32 type);
         const char *GetMangosString(int32 entry);
+
+        virtual bool HandlePlayerUnderMap(Player * plr) {return false;}
+
+        // since arenas can be AvA or Hvh, we have to get the "temporary" team of a player
+        uint32 GetPlayerTeam(uint64 guid);
+        bool IsPlayerInBattleGround(uint64 guid);
+        void PlayerRelogin(Player* plr);
+
+        void SetDeleteThis() {m_SetDeleteThis = true;}
 
     protected:
         //this method is called, when BG cannot spawn its own spirit guide, or something is wrong, It correctly ends BattleGround
@@ -435,14 +465,16 @@ class BattleGround
 
     private:
         /* Battleground */
-        uint32 m_TypeID;                                    //Battleground type, defined in enum BattleGroundTypeId
+        BattleGroundTypeId m_TypeID;
         uint32 m_InstanceID;                                //BattleGround Instance's GUID!
         uint32 m_Status;
         uint32 m_StartTime;
         uint32 m_EndTime;
         uint32 m_LastResurrectTime;
-        uint32 m_Queue_type;
+        uint32 m_QueueId;
         uint8  m_ArenaType;                                 // 2=2v2, 3=3v3, 5=5v5
+        bool   m_InBGFreeSlotQueue;                         // used to make sure that BG is only once inserted into the BattleGroundMgr.BGFreeSlotQueue[bgTypeId] deque
+        bool   m_SetDeleteThis;                             // used for safe deletion of the bg after end / all players leave
         // this variable is not used .... it can be found in many other ways... but to store it in BG object instance is useless
         //uint8  m_BattleGroundType;                        // 3=BG, 4=arena
         //instead of uint8 (in previous line) is bool used
@@ -450,6 +482,8 @@ class BattleGround
         uint8  m_Winner;                                    // 0=alliance, 1=horde, 2=none
         int32  m_StartDelayTime;
         bool   m_IsRated;                                   // is this battle rated?
+        bool   m_PrematureCountDown;
+        uint32 m_PrematureCountDownTimer;
         char const *m_Name;
 
         /* Player lists */
@@ -467,6 +501,11 @@ class BattleGround
 
         /* Players count by team */
         uint32 m_PlayersCount[2];
+
+        /* Arena team ids by team */
+        uint32 m_ArenaTeamIds[2];
+
+        int32 m_ArenaTeamRatingChanges[2];
 
         /* Limits */
         uint32 m_LevelMin;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@
 
 #include "HomeMovementGenerator.h"
 #include "Creature.h"
+#include "CreatureAI.h"
 #include "Traveller.h"
 #include "MapManager.h"
 #include "ObjectAccessor.h"
@@ -77,6 +78,8 @@ HomeMovementGenerator<Creature>::Update(Creature &owner, const uint32& time_diff
                 owner.SendMessageToSet(&packet, false);
             }
         }
+
+        owner.AI()->JustReachedHome();
         return false;
     }
 

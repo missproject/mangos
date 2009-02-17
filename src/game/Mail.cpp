@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -230,7 +230,7 @@ void WorldSession::HandleSendMail(WorldPacket & recv_data )
 
                 if( GetSecurity() > SEC_PLAYER && sWorld.getConfig(CONFIG_GM_LOG_TRADE) )
                 {
-                    sLog.outCommand("GM %s (Account: %u) mail item: %s (Entry: %u Count: %u) to player: %s (Account: %u)",
+                    sLog.outCommand(GetAccountId(), "GM %s (Account: %u) mail item: %s (Entry: %u Count: %u) to player: %s (Account: %u)",
                         GetPlayerName(), GetAccountId(), mailItem.item->GetProto()->Name1, mailItem.item->GetEntry(), mailItem.item->GetCount(), receiver.c_str(), rc_account);
                 }
 
@@ -249,7 +249,7 @@ void WorldSession::HandleSendMail(WorldPacket & recv_data )
 
         if(money > 0 &&  GetSecurity() > SEC_PLAYER && sWorld.getConfig(CONFIG_GM_LOG_TRADE))
         {
-            sLog.outCommand("GM %s (Account: %u) mail money: %u to player: %s (Account: %u)",
+            sLog.outCommand(GetAccountId(),"GM %s (Account: %u) mail money: %u to player: %s (Account: %u)",
                 GetPlayerName(), GetAccountId(), money, receiver.c_str(), rc_account);
         }
     }
@@ -352,7 +352,7 @@ void WorldSession::HandleReturnToSender(WorldPacket & recv_data )
     pl->SendMailResult(mailId, MAIL_RETURNED_TO_SENDER, 0);
 }
 
-void WorldSession::SendReturnToSender(uint8 messageType, uint32 sender_acc, uint32 sender_guid, uint32 receiver_guid, std::string subject, uint32 itemTextId, MailItemsInfo *mi, uint32 money, uint16 mailTemplateId )
+void WorldSession::SendReturnToSender(uint8 messageType, uint32 sender_acc, uint32 sender_guid, uint32 receiver_guid, const std::string& subject, uint32 itemTextId, MailItemsInfo *mi, uint32 money, uint16 mailTemplateId )
 {
     if(messageType != MAIL_NORMAL)                          // return only to players
     {
@@ -458,7 +458,7 @@ void WorldSession::HandleTakeItem(WorldPacket & recv_data )
                     if(!objmgr.GetPlayerNameByGUID(sender_guid,sender_name))
                         sender_name = objmgr.GetMangosStringForDBCLocale(LANG_UNKNOWN);
                 }
-                sLog.outCommand("GM %s (Account: %u) receive mail item: %s (Entry: %u Count: %u) and send COD money: %u to player: %s (Account: %u)",
+                sLog.outCommand(GetAccountId(),"GM %s (Account: %u) receive mail item: %s (Entry: %u Count: %u) and send COD money: %u to player: %s (Account: %u)",
                     GetPlayerName(),GetAccountId(),it->GetProto()->Name1,it->GetEntry(),it->GetCount(),m->COD,sender_name.c_str(),sender_accId);
             }
             else if(!receive)
@@ -517,7 +517,7 @@ void WorldSession::HandleTakeMoney(WorldPacket & recv_data )
 
     // save money and mail to prevent cheating
     CharacterDatabase.BeginTransaction();
-    pl->SetUInt32ValueInDB(PLAYER_FIELD_COINAGE,pl->GetMoney(),pl->GetGUID());
+    pl->SaveDataFieldToDB();                                // contains money
     pl->_SaveMail();
     CharacterDatabase.CommitTransaction();
 }
@@ -591,7 +591,7 @@ void WorldSession::HandleGetMail(WorldPacket & recv_data )
         data << (uint32) (*itr)->mailTemplateId;            // mail template (MailTemplate.dbc)
         data << (*itr)->subject;                            // Subject string - once 00, when mail type = 3
 
-        data << (uint8) item_count;
+        data << (uint8) item_count;                         // client limit is 0x10
 
         for(uint8 i = 0; i < item_count; ++i)
         {
@@ -602,7 +602,7 @@ void WorldSession::HandleGetMail(WorldPacket & recv_data )
             data << (uint32) (item ? item->GetGUIDLow() : 0);
             // entry
             data << (uint32) (item ? item->GetEntry() : 0);
-            for(uint8 j = 0; j < 6; ++j)
+            for(uint8 j = 0; j < MAX_INSPECTED_ENCHANTMENT_SLOT; ++j)
             {
                 // unsure
                 data << (uint32) (item ? item->GetEnchantmentCharges((EnchantmentSlot)j) : 0);
@@ -616,13 +616,15 @@ void WorldSession::HandleGetMail(WorldPacket & recv_data )
             // unk
             data << (uint32) (item ? item->GetItemSuffixFactor() : 0);
             // stack count
-            data << (uint8)  (item ? item->GetCount() : 0);
+            data << (uint32) (item ? item->GetCount() : 0);
             // charges
             data << (uint32) (item ? item->GetSpellCharges() : 0);
             // durability
             data << (uint32) (item ? item->GetUInt32Value(ITEM_FIELD_MAXDURABILITY) : 0);
             // durability
             data << (uint32) (item ? item->GetUInt32Value(ITEM_FIELD_DURABILITY) : 0);
+            // unknown wotlk
+            data << (uint8)  0;
         }
 
         mails_count += 1;

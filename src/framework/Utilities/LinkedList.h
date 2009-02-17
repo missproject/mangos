@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,6 +43,11 @@ class LinkedListElement
         LinkedListElement const* next() const { return hasNext() ? iNext : NULL; }
         LinkedListElement      * prev()       { return hasPrev() ? iPrev : NULL; }
         LinkedListElement const* prev() const { return hasPrev() ? iPrev : NULL; }
+
+        LinkedListElement      * nocheck_next()       { return iNext; }
+        LinkedListElement const* nocheck_next() const { return iNext; }
+        LinkedListElement      * nocheck_prev()       { return iPrev; }
+        LinkedListElement const* nocheck_prev() const { return iPrev; }
 
         void delink()
         {
@@ -134,7 +139,10 @@ class LinkedListHead
                 typedef ptrdiff_t                           difference_type;
                 typedef ptrdiff_t                           distance_type;
                 typedef _Ty*                                pointer;
+                typedef _Ty const*                          const_pointer;
                 typedef _Ty&                                reference;
+                typedef _Ty const &                         const_reference;
+
 
                 Iterator() : _Ptr(0)
                 {                                           // construct with null node pointer
@@ -142,6 +150,17 @@ class LinkedListHead
 
                 Iterator(pointer _Pnode) : _Ptr(_Pnode)
                 {                                           // construct with node pointer _Pnode
+                }
+
+                Iterator& operator=(Iterator const &_Right)
+                {
+                    return (*this) = _Right._Ptr;
+                }
+
+                Iterator& operator=(const_pointer const &_Right)
+                {
+                    _Ptr = (pointer)_Right;
+                    return (*this);
                 }
 
                 reference operator*()
@@ -199,6 +218,17 @@ class LinkedListHead
                 {                                           // test for pointer equality
                     return (!(*this == _Right));
                 }
+
+                bool operator==(const_reference _Right) const
+                {                                           // test for reference equality
+                    return (_Ptr == &_Right);
+                }
+
+                bool operator!=(const_reference _Right) const
+                {                                           // test for reference equality
+                    return (_Ptr != &_Right);
+                }
+
 
                 pointer _Mynode()
                 {                                           // return node pointer

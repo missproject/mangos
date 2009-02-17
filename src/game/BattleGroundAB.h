@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -236,12 +236,12 @@ class BattleGroundAB : public BattleGround
         BattleGroundAB();
         ~BattleGroundAB();
 
-        void Update(time_t diff);
+        void Update(uint32 diff);
         void AddPlayer(Player *plr);
         void RemovePlayer(Player *plr,uint64 guid);
         void HandleAreaTrigger(Player *Source, uint32 Trigger);
         virtual bool SetupBattleGround();
-        virtual void ResetBGSubclass();
+        virtual void Reset();
         virtual WorldSafeLocsEntry const* GetClosestGraveYard(float x, float y, float z, uint32 team);
 
         /* Scorekeeping */

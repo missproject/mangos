@@ -355,6 +355,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\game\AchievementMgr.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\AchievementMgr.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\game\AddonHandler.cpp"
 				>
 			</File>
@@ -367,7 +375,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\game\AuctionHouse.cpp"
+				RelativePath="..\..\src\game\AuctionHouseHandler.cpp"
 				>
 			</File>
 			<File
@@ -411,6 +419,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\game\BattleGroundDS.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\BattleGroundDS.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\game\BattleGroundEY.cpp"
 				>
 			</File>
@@ -447,11 +463,31 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\game\BattleGroundRV.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\BattleGroundRV.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\BattleGroundSA.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\BattleGroundSA.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\game\BattleGroundWS.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\..\src\game\BattleGroundWS.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\CalendarHandler.cpp"
 				>
 			</File>
 			<File
@@ -807,7 +843,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\game\AuctionHouseObject.h"
+				RelativePath="..\..\src\game\AuctionHouseMgr.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\AuctionHouseMgr.h"
 				>
 			</File>
 			<File
@@ -816,6 +856,14 @@
 			</File>
 			<File
 				RelativePath="..\..\src\game\Bag.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\Calendar.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\Calendar.h"
 				>
 			</File>
 			<File
@@ -1163,6 +1211,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\game\Vehicle.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\Vehicle.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\game\WaypointMovementGenerator.cpp"
 				>
 			</File>
@@ -1264,14 +1320,6 @@
 			</File>
 			<File
 				RelativePath="..\..\src\game\PlayerDump.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\game\tools.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\game\Tools.h"
 				>
 			</File>
 		</Filter>

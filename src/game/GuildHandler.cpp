@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -373,14 +373,14 @@ void WorldSession::HandleGuildDemoteOpcode(WorldPacket& recvPacket)
 
     guild->ChangeRank(plGuid, (slot->RankId+1));
     // Put record into guildlog
-    guild->LogGuildEvent(GUILD_EVENT_LOG_DEMOTE_PLAYER, GetPlayer()->GetGUIDLow(), GUID_LOPART(plGuid), (slot->RankId+1));
+    guild->LogGuildEvent(GUILD_EVENT_LOG_DEMOTE_PLAYER, GetPlayer()->GetGUIDLow(), GUID_LOPART(plGuid), slot->RankId);
 
     WorldPacket data(SMSG_GUILD_EVENT, (2+30));             // guess size
     data << (uint8)GE_DEMOTION;
     data << (uint8)3;
     data << GetPlayer()->GetName();
     data << plName;
-    data << guild->GetRankName(slot->RankId+1);
+    data << guild->GetRankName(slot->RankId);
     guild->BroadcastPacket(&data);
 }
 
@@ -730,7 +730,7 @@ void WorldSession::HandleGuildDelRankOpcode(WorldPacket& /*recvPacket*/)
     guild->Roster(this);
 }
 
-void WorldSession::SendGuildCommandResult(uint32 typecmd,std::string str,uint32 cmdresult)
+void WorldSession::SendGuildCommandResult(uint32 typecmd, const std::string& str,uint32 cmdresult)
 {
     WorldPacket data(SMSG_GUILD_COMMAND_RESULT, (8+str.size()+1));
     data << typecmd;
@@ -977,14 +977,14 @@ void WorldSession::HandleGuildBankDeposit( WorldPacket & recv_data )
 
     pGuild->SetBankMoney(pGuild->GetGuildBankMoney()+money);
     GetPlayer()->ModifyMoney(-int(money));
-    GetPlayer()->SaveGoldToDB();
+    GetPlayer()->SaveDataFieldToDB();                       //contains money
 
     CharacterDatabase.CommitTransaction();
 
     // logging money
     if(_player->GetSession()->GetSecurity() > SEC_PLAYER && sWorld.getConfig(CONFIG_GM_LOG_TRADE))
     {
-        sLog.outCommand("GM %s (Account: %u) deposit money (Amount: %u) to guild bank (Guild ID %u)",
+        sLog.outCommand(_player->GetSession()->GetAccountId(),"GM %s (Account: %u) deposit money (Amount: %u) to guild bank (Guild ID %u)",
             _player->GetName(),_player->GetSession()->GetAccountId(),money,GuildId);
     }
 
@@ -1033,7 +1033,7 @@ void WorldSession::HandleGuildBankWithdraw( WorldPacket & recv_data )
     }
 
     GetPlayer()->ModifyMoney(money);
-    GetPlayer()->SaveGoldToDB();
+    GetPlayer()->SaveDataFieldToDB();                       // contains money
 
     CharacterDatabase.CommitTransaction();
 
@@ -1378,7 +1378,7 @@ void WorldSession::HandleGuildBankDepositItem( WorldPacket & recv_data )
                     // logging item move to bank
                     if(_player->GetSession()->GetSecurity() > SEC_PLAYER && sWorld.getConfig(CONFIG_GM_LOG_TRADE))
                     {
-                        sLog.outCommand("GM %s (Account: %u) deposit item: %s (Entry: %d Count: %u) to guild bank (Guild ID: %u )",
+                        sLog.outCommand(_player->GetSession()->GetAccountId(),"GM %s (Account: %u) deposit item: %s (Entry: %d Count: %u) to guild bank (Guild ID: %u )",
                             _player->GetName(),_player->GetSession()->GetAccountId(),
                             pItemChar->GetProto()->Name1,pItemChar->GetEntry(),pItemChar->GetCount(),
                             GuildId);
@@ -1447,7 +1447,7 @@ void WorldSession::HandleGuildBankDepositItem( WorldPacket & recv_data )
         // logging item move to bank (before items merge
         if(_player->GetSession()->GetSecurity() > SEC_PLAYER && sWorld.getConfig(CONFIG_GM_LOG_TRADE))
         {
-            sLog.outCommand("GM %s (Account: %u) deposit item: %s (Entry: %d Count: %u) to guild bank (Guild ID: %u )",
+            sLog.outCommand(_player->GetSession()->GetAccountId(),"GM %s (Account: %u) deposit item: %s (Entry: %d Count: %u) to guild bank (Guild ID: %u )",
                 _player->GetName(),_player->GetSession()->GetAccountId(),
                 pItemChar->GetProto()->Name1,pItemChar->GetEntry(),SplitedAmount,GuildId);
         }
@@ -1473,7 +1473,7 @@ void WorldSession::HandleGuildBankDepositItem( WorldPacket & recv_data )
             // logging item move to bank
             if(_player->GetSession()->GetSecurity() > SEC_PLAYER && sWorld.getConfig(CONFIG_GM_LOG_TRADE))
             {
-                sLog.outCommand("GM %s (Account: %u) deposit item: %s (Entry: %d Count: %u) to guild bank (Guild ID: %u )",
+                sLog.outCommand(_player->GetSession()->GetAccountId(),"GM %s (Account: %u) deposit item: %s (Entry: %d Count: %u) to guild bank (Guild ID: %u )",
                     _player->GetName(),_player->GetSession()->GetAccountId(),
                     pItemChar->GetProto()->Name1,pItemChar->GetEntry(),pItemChar->GetCount(),
                     GuildId);
@@ -1523,7 +1523,7 @@ void WorldSession::HandleGuildBankDepositItem( WorldPacket & recv_data )
             // logging item move to bank
             if(_player->GetSession()->GetSecurity() > SEC_PLAYER && sWorld.getConfig(CONFIG_GM_LOG_TRADE))
             {
-                sLog.outCommand("GM %s (Account: %u) deposit item: %s (Entry: %d Count: %u) to guild bank (Guild ID: %u )",
+                sLog.outCommand(_player->GetSession()->GetAccountId(),"GM %s (Account: %u) deposit item: %s (Entry: %d Count: %u) to guild bank (Guild ID: %u )",
                     _player->GetName(),_player->GetSession()->GetAccountId(),
                     pItemChar->GetProto()->Name1,pItemChar->GetEntry(),pItemChar->GetCount(),
                     GuildId);

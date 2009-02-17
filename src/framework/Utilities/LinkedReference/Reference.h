@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,7 +42,7 @@ template <class TO, class FROM> class Reference : public LinkedListElement
         virtual ~Reference() {}
 
         // Create new link
-        inline void link(TO* toObj, FROM* fromObj)
+        void link(TO* toObj, FROM* fromObj)
         {
             assert(fromObj);                                // fromObj MUST not be NULL
             if(isValid())
@@ -57,28 +57,34 @@ template <class TO, class FROM> class Reference : public LinkedListElement
 
         // We don't need the reference anymore. Call comes from the refFrom object
         // Tell our refTo object, that the link is cut
-        inline void unlink() { targetObjectDestroyLink(); delink(); iRefTo = NULL; iRefFrom = NULL; }
+        void unlink() { targetObjectDestroyLink(); delink(); iRefTo = NULL; iRefFrom = NULL; }
 
         // Link is invalid due to destruction of referenced target object. Call comes from the refTo object
         // Tell our refFrom object, that the link is cut
-        inline void invalidate()                            // the iRefFrom MUST remain!!
+        void invalidate()                                   // the iRefFrom MUST remain!!
         {
             sourceObjectDestroyLink(); delink(); iRefTo = NULL;
         }
 
-        inline bool isValid() const                         // Only check the iRefTo
+        bool isValid() const                                // Only check the iRefTo
         {
             return iRefTo != NULL;
         }
 
-        Reference<TO,FROM>* next() { return((Reference<TO,FROM>*)LinkedListElement::next()); }
-        Reference<TO,FROM>const* next() const { return((Reference<TO,FROM> const*)LinkedListElement::next()); }
-        Reference<TO,FROM>* prev() { return((Reference<TO,FROM>*)LinkedListElement::prev()); }
+        Reference<TO,FROM>       * next()       { return((Reference<TO,FROM>       *) LinkedListElement::next()); }
+        Reference<TO,FROM> const * next() const { return((Reference<TO,FROM> const *) LinkedListElement::next()); }
+        Reference<TO,FROM>       * prev()       { return((Reference<TO,FROM>       *) LinkedListElement::prev()); }
+        Reference<TO,FROM> const * prev() const { return((Reference<TO,FROM> const *) LinkedListElement::prev()); }
 
-        inline TO* operator ->() const { return iRefTo; }
-        inline TO* getTarget() const { return iRefTo; }
+        Reference<TO,FROM>       * nocheck_next()       { return((Reference<TO,FROM>       *) LinkedListElement::nocheck_next()); }
+        Reference<TO,FROM> const * nocheck_next() const { return((Reference<TO,FROM> const *) LinkedListElement::nocheck_next()); }
+        Reference<TO,FROM>       * nocheck_prev()       { return((Reference<TO,FROM>       *) LinkedListElement::nocheck_prev()); }
+        Reference<TO,FROM> const * nocheck_prev() const { return((Reference<TO,FROM> const *) LinkedListElement::nocheck_prev()); }
 
-        inline FROM* getSource() const { return iRefFrom; }
+        TO* operator ->() const { return iRefTo; }
+        TO* getTarget() const { return iRefTo; }
+
+        FROM* getSource() const { return iRefFrom; }
 };
 
 //=====================================================

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -74,17 +74,45 @@ MotionMaster::~MotionMaster()
 }
 
 void
-MotionMaster::UpdateMotion(const uint32 &diff)
+MotionMaster::UpdateMotion(uint32 diff)
 {
     if( i_owner->hasUnitState(UNIT_STAT_ROOT | UNIT_STAT_STUNNED) )
         return;
     assert( !empty() );
+    m_cleanFlag |= MMCF_UPDATE;
     if (!top()->Update(*i_owner, diff))
+    {
+        m_cleanFlag &= ~MMCF_UPDATE;
         MovementExpired();
+    }
+    else
+        m_cleanFlag &= ~MMCF_UPDATE;
+
+    if (m_expList)
+    {
+        for (int i = 0; i < m_expList->size(); ++i)
+        {
+            MovementGenerator* mg = (*m_expList)[i];
+            if (!isStatic(mg))
+                delete mg;
+        }
+
+        delete m_expList;
+        m_expList = NULL;
+
+        if (empty())
+            Initialize();
+
+        if (m_cleanFlag & MMCF_RESET)
+        {
+            top()->Reset(*i_owner);
+            m_cleanFlag &= ~MMCF_RESET;
+        }
+    }
 }
 
 void
-MotionMaster::Clear(bool reset)
+MotionMaster::DirectClean(bool reset)
 {
     while( !empty() && size() > 1 )
     {
@@ -103,7 +131,26 @@ MotionMaster::Clear(bool reset)
 }
 
 void
-MotionMaster::MovementExpired(bool reset)
+MotionMaster::DelayedClean()
+{
+    if (empty() || size() == 1)
+        return;
+
+    if(!m_expList)
+        m_expList = new ExpireList();
+
+    while( !empty() && size() > 1 )
+    {
+        MovementGenerator *curr = top();
+        curr->Finalize(*i_owner);
+        pop();
+        if( !isStatic( curr ) )
+            m_expList->push_back(curr);
+    }
+}
+
+void
+MotionMaster::DirectExpire(bool reset)
 {
     if( empty() || size() == 1 )
         return;
@@ -129,6 +176,32 @@ MotionMaster::MovementExpired(bool reset)
     if (reset) top()->Reset(*i_owner);
 }
 
+void
+MotionMaster::DelayedExpire()
+{
+    if( empty() || size() == 1 )
+        return;
+
+    MovementGenerator *curr = top();
+    curr->Finalize(*i_owner);
+    pop();
+
+    if(!m_expList)
+        m_expList = new ExpireList();
+
+    if( !isStatic(curr) )
+        m_expList->push_back(curr);
+
+    while( !empty() && top()->GetMovementGeneratorType() == TARGETED_MOTION_TYPE )
+    {
+        // Should check if target is still valid? If not valid it will crash.
+        curr = top();
+        curr->Finalize(*i_owner);
+        pop();
+        m_expList->push_back(curr);
+    }
+}
+
 void MotionMaster::MoveIdle()
 {
     if( empty() || !isStatic( top() ) )
@@ -150,8 +223,17 @@ MotionMaster::MoveTargetedHome()
     }
     else if(i_owner->GetTypeId()==TYPEID_UNIT && ((Creature*)i_owner)->GetCharmerOrOwnerGUID())
     {
-        sLog.outError("Pet or controlled creature (Entry: %u GUID: %u) attempt targeted home",
+        DEBUG_LOG("Pet or controlled creature (Entry: %u GUID: %u) targeting home",
             i_owner->GetEntry(), i_owner->GetGUIDLow() );
+        Unit *target = ((Creature*)i_owner)->GetCharmerOrOwner();
+        if(target)
+        {
+            i_owner->addUnitState(UNIT_STAT_FOLLOW);
+            DEBUG_LOG("Following %s (GUID: %u)",
+                target->GetTypeId()==TYPEID_PLAYER ? "player" : "creature",
+                target->GetTypeId()==TYPEID_PLAYER ? target->GetGUIDLow() : ((Creature*)target)->GetDBTableGUIDLow() );
+            Mutate(new TargetedMovementGenerator<Creature>(*target,PET_FOLLOW_DIST,PET_FOLLOW_ANGLE));
+        }
     }
     else
     {

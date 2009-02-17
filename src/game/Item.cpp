@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -204,6 +204,10 @@ bool ItemCanGoIntoBag(ItemPrototype const *pProto, ItemPrototype const *pBagProt
                     if(!(pProto->BagFamily & BAG_FAMILY_MASK_LEATHERWORKING_SUPP))
                         return false;
                     return true;
+                case ITEM_SUBCLASS_INSCRIPTION_CONTAINER:
+                    if(!(pProto->BagFamily & BAG_FAMILY_MASK_INSCRIPTION_SUPP))
+                        return false;
+                    return true;
                 default:
                     return false;
             }
@@ -282,7 +286,7 @@ void Item::UpdateDuration(Player* owner, uint32 diff)
     }
 
     SetUInt32Value(ITEM_FIELD_DURATION, GetUInt32Value(ITEM_FIELD_DURATION) - diff);
-    SetState(ITEM_CHANGED);                                 // save new time in database
+    SetState(ITEM_CHANGED, owner);                          // save new time in database
 }
 
 void Item::SaveToDB()
@@ -448,7 +452,7 @@ uint32 Item::GetSkill()
 
     const static uint32 item_armor_skills[MAX_ITEM_SUBCLASS_ARMOR] =
     {
-        0,SKILL_CLOTH,SKILL_LEATHER,SKILL_MAIL,SKILL_PLATE_MAIL,0,SKILL_SHIELD,0,0,0
+        0,SKILL_CLOTH,SKILL_LEATHER,SKILL_MAIL,SKILL_PLATE_MAIL,0,SKILL_SHIELD,0,0,0,0
     };
 
     ItemPrototype const* proto = GetProto();
@@ -763,9 +767,9 @@ void Item::SetEnchantment(EnchantmentSlot slot, uint32 id, uint32 duration, uint
     if((GetEnchantmentId(slot) == id) && (GetEnchantmentDuration(slot) == duration) && (GetEnchantmentCharges(slot) == charges))
         return;
 
-    SetUInt32Value(ITEM_FIELD_ENCHANTMENT + slot*MAX_ENCHANTMENT_OFFSET + ENCHANTMENT_ID_OFFSET,id);
-    SetUInt32Value(ITEM_FIELD_ENCHANTMENT + slot*MAX_ENCHANTMENT_OFFSET + ENCHANTMENT_DURATION_OFFSET,duration);
-    SetUInt32Value(ITEM_FIELD_ENCHANTMENT + slot*MAX_ENCHANTMENT_OFFSET + ENCHANTMENT_CHARGES_OFFSET,charges);
+    SetUInt32Value(ITEM_FIELD_ENCHANTMENT_1_1 + slot*MAX_ENCHANTMENT_OFFSET + ENCHANTMENT_ID_OFFSET,id);
+    SetUInt32Value(ITEM_FIELD_ENCHANTMENT_1_1 + slot*MAX_ENCHANTMENT_OFFSET + ENCHANTMENT_DURATION_OFFSET,duration);
+    SetUInt32Value(ITEM_FIELD_ENCHANTMENT_1_1 + slot*MAX_ENCHANTMENT_OFFSET + ENCHANTMENT_CHARGES_OFFSET,charges);
     SetState(ITEM_CHANGED);
 }
 
@@ -774,7 +778,7 @@ void Item::SetEnchantmentDuration(EnchantmentSlot slot, uint32 duration)
     if(GetEnchantmentDuration(slot) == duration)
         return;
 
-    SetUInt32Value(ITEM_FIELD_ENCHANTMENT + slot*MAX_ENCHANTMENT_OFFSET + ENCHANTMENT_DURATION_OFFSET,duration);
+    SetUInt32Value(ITEM_FIELD_ENCHANTMENT_1_1 + slot*MAX_ENCHANTMENT_OFFSET + ENCHANTMENT_DURATION_OFFSET,duration);
     SetState(ITEM_CHANGED);
 }
 
@@ -783,7 +787,7 @@ void Item::SetEnchantmentCharges(EnchantmentSlot slot, uint32 charges)
     if(GetEnchantmentCharges(slot) == charges)
         return;
 
-    SetUInt32Value(ITEM_FIELD_ENCHANTMENT + slot*MAX_ENCHANTMENT_OFFSET + ENCHANTMENT_CHARGES_OFFSET,charges);
+    SetUInt32Value(ITEM_FIELD_ENCHANTMENT_1_1 + slot*MAX_ENCHANTMENT_OFFSET + ENCHANTMENT_CHARGES_OFFSET,charges);
     SetState(ITEM_CHANGED);
 }
 
@@ -793,14 +797,14 @@ void Item::ClearEnchantment(EnchantmentSlot slot)
         return;
 
     for(uint8 x = 0; x < 3; ++x)
-        SetUInt32Value(ITEM_FIELD_ENCHANTMENT + slot*MAX_ENCHANTMENT_OFFSET + x, 0);
+        SetUInt32Value(ITEM_FIELD_ENCHANTMENT_1_1 + slot*MAX_ENCHANTMENT_OFFSET + x, 0);
     SetState(ITEM_CHANGED);
 }
 
 bool Item::GemsFitSockets() const
 {
     bool fits = true;
-    for(uint32 enchant_slot = SOCK_ENCHANTMENT_SLOT; enchant_slot < SOCK_ENCHANTMENT_SLOT+3; ++enchant_slot)
+    for(uint32 enchant_slot = SOCK_ENCHANTMENT_SLOT; enchant_slot < SOCK_ENCHANTMENT_SLOT+MAX_GEM_SOCKETS; ++enchant_slot)
     {
         uint8 SocketColor = GetProto()->Socket[enchant_slot-SOCK_ENCHANTMENT_SLOT].Color;
 
@@ -840,7 +844,7 @@ bool Item::GemsFitSockets() const
 uint8 Item::GetGemCountWithID(uint32 GemID) const
 {
     uint8 count = 0;
-    for(uint32 enchant_slot = SOCK_ENCHANTMENT_SLOT; enchant_slot < SOCK_ENCHANTMENT_SLOT+3; ++enchant_slot)
+    for(uint32 enchant_slot = SOCK_ENCHANTMENT_SLOT; enchant_slot < SOCK_ENCHANTMENT_SLOT+MAX_GEM_SOCKETS; ++enchant_slot)
     {
         uint32 enchant_id = GetEnchantmentId(EnchantmentSlot(enchant_slot));
         if(!enchant_id)
@@ -851,6 +855,29 @@ uint8 Item::GetGemCountWithID(uint32 GemID) const
             continue;
 
         if(GemID == enchantEntry->GemID)
+            ++count;
+    }
+    return count;
+}
+
+uint8 Item::GetGemCountWithLimitCategory(uint32 limitCategory) const
+{
+    uint8 count = 0;
+    for(uint32 enchant_slot = SOCK_ENCHANTMENT_SLOT; enchant_slot < SOCK_ENCHANTMENT_SLOT+MAX_GEM_SOCKETS; ++enchant_slot)
+    {
+        uint32 enchant_id = GetEnchantmentId(EnchantmentSlot(enchant_slot));
+        if(!enchant_id)
+            continue;
+
+        SpellItemEnchantmentEntry const* enchantEntry = sSpellItemEnchantmentStore.LookupEntry(enchant_id);
+        if(!enchantEntry)
+            continue;
+
+        ItemPrototype const* gemProto = ObjectMgr::GetItemPrototype(enchantEntry->GemID);
+        if(!gemProto)
+            continue;
+
+        if(gemProto->ItemLimitCategory==limitCategory)
             ++count;
     }
     return count;
@@ -884,8 +911,8 @@ Item* Item::CreateItem( uint32 item, uint32 count, Player const* player )
     ItemPrototype const *pProto = objmgr.GetItemPrototype( item );
     if( pProto )
     {
-        if ( count > pProto->Stackable )
-            count = pProto->Stackable;
+        if ( count > pProto->GetMaxStackSize())
+            count = pProto->GetMaxStackSize();
 
         assert(count !=0 && "pProto->Stackable==0 but checked at loading already");
 

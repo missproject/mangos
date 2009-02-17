@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,6 +39,6 @@ class MapRefManager : public RefManager<Map, Player>
         iterator rbegin() { return iterator(getLast()); }
         iterator rend() { return iterator(NULL); }
         const_iterator begin() const { return const_iterator(getFirst()); }
-        const_iterator end() const  { return const_iterator(getLast()); }
+        const_iterator end() const  { return const_iterator(NULL); }
 };
 #endif

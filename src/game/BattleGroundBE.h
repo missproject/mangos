@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -55,7 +55,7 @@ class BattleGroundBE : public BattleGround
     public:
         BattleGroundBE();
         ~BattleGroundBE();
-        void Update(time_t diff);
+        void Update(uint32 diff);
 
         /* inherited from BattlegroundClass */
         virtual void AddPlayer(Player *plr);
@@ -63,13 +63,12 @@ class BattleGroundBE : public BattleGround
         void RemovePlayer(Player *plr, uint64 guid);
         void HandleAreaTrigger(Player *Source, uint32 Trigger);
         bool SetupBattleGround();
-        void ResetBGSubclass();
+        virtual void Reset();
+        virtual void FillInitialWorldStates(WorldPacket &d);
         void HandleKillPlayer(Player* player, Player *killer);
+        bool HandlePlayerUnderMap(Player * plr);
 
         /* Scorekeeping */
         void UpdatePlayerScore(Player *Source, uint32 type, uint32 value);
-
-    private:
-        uint32 m_TeamKills[2];                              // count of kills for each team
 };
 #endif
