@@ -542,11 +542,6 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
         {
             GetPlayer()->m_anti_BeginFallZ=(float)(movementInfo.z);
         }
-        else if(GetPlayer()->m_anti_BeginFallZ != INVALID_HEIGHT &&
-                (movementInfo.flags & (MOVEMENTFLAG_FALLING | MOVEMENTFLAG_UNK4)) == 0)
-        {
-            //GetPlayer()->m_anti_BeginFallZ=INVALID_HEIGHT;
-        }
 
         if(GetPlayer()->m_anti_NextLenCheck <= CurTime)
         {
