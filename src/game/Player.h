@@ -2345,11 +2345,11 @@ class MANGOS_DLL_SPEC Player : public Unit
         ////////////////////Rest System/////////////////////
 
         //movement anticheat
-        uint32 m_anti_lastmovetime;     //last movement time 
+        uint32 m_anti_lastmovetime;     //last movement time
         uint64 m_anti_transportGUID;    //current transport GUID
         float  m_anti_MovedLen;         //Length of traveled way
         uint32 m_anti_NextLenCheck;
-        uint32 m_anti_beginfalltime;    //alternative falling begin time
+        float  m_anti_BeginFallZ;    //alternative falling begin time
         uint32 m_anti_lastalarmtime;    //last time when alarm generated
         uint32 m_anti_alarmcount;       //alarm counter
         uint32 m_anti_TeleTime;
@@ -2386,7 +2386,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         float  m_summon_y;
         float  m_summon_z;
 
-        /* FH */ bool m_KnockedBack;
 
         // Far Teleport
         WorldLocation m_teleport_dest;
