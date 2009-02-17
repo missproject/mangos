@@ -542,7 +542,7 @@ void World::LoadConfigSettings(bool reload)
     ///- Read other configuration items from the config file
 
     // movement anticheat
-    m_MvAnticheatEnable                     = sConfig.GetBoolDefault("Anticheat.Movement.Enable",true);
+    m_MvAnticheatEnable                     = sConfig.GetBoolDefault("Anticheat.Movement.Enable",false);
     m_MvAnticheatKick                       = sConfig.GetBoolDefault("Anticheat.Movement.Kick",false);
     m_MvAnticheatAlarmCount                 = (uint32)sConfig.GetIntDefault("Anticheat.Movement.AlarmCount", 5);
     m_MvAnticheatAlarmPeriod                = (uint32)sConfig.GetIntDefault("Anticheat.Movement.AlarmTime", 5000);

@@ -34,6 +34,7 @@
 //#define __ANTI_DEBUG__
 
 #ifdef __ANTI_DEBUG__
+#include "Chat.h"
 std::string FlagsToStr(const uint32 Flags)
 {
     std::string Ret="";
@@ -425,21 +426,27 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
         {
             GetPlayer()->m_transport->RemovePassenger(GetPlayer());
             GetPlayer()->m_transport = NULL;
-            movementInfo.t_x = 0.0f;
-            movementInfo.t_y = 0.0f;
-            movementInfo.t_z = 0.0f;
-            movementInfo.t_o = 0.0f;
-            movementInfo.t_time = 0;
-            movementInfo.t_seat = -1;
-            GetPlayer()->m_anti_transportGUID = 0;
         }
+        movementInfo.t_x = 0.0f;
+        movementInfo.t_y = 0.0f;
+        movementInfo.t_z = 0.0f;
+        movementInfo.t_o = 0.0f;
+        movementInfo.t_time = 0;
+        movementInfo.t_seat = -1;
+        GetPlayer()->m_anti_transportGUID = 0;
     }
 
     // fall damage generation (ignore in flight case that can be triggered also at lags in moment teleportation to another map).
-    if (opcode == MSG_MOVE_FALL_LAND && !GetPlayer()->isInFlight())
+    if ((opcode == MSG_MOVE_FALL_LAND ||
+         ((movementInfo.flags & (MOVEMENTFLAG_FALLING | MOVEMENTFLAG_UNK4)) == 0 &&
+          GetPlayer()->m_anti_BeginFallZ!=INVALID_HEIGHT)) &&
+        !GetPlayer()->isInFlight())
     {
         // calculate total z distance of the fall
-        float z_diff = GetPlayer()->m_lastFallZ - movementInfo.z;
+        float z_diff = (GetPlayer()->m_lastFallZ >= GetPlayer()->m_anti_BeginFallZ ? GetPlayer()->m_lastFallZ :
+                                                                                     GetPlayer()->m_anti_BeginFallZ)
+                       - movementInfo.z;
+        GetPlayer()->m_anti_BeginFallZ=INVALID_HEIGHT;
         sLog.outDebug("zDiff = %f", z_diff);
         Player *target = GetPlayer();
 
@@ -538,7 +545,7 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
         else if(GetPlayer()->m_anti_BeginFallZ != INVALID_HEIGHT &&
                 (movementInfo.flags & (MOVEMENTFLAG_FALLING | MOVEMENTFLAG_UNK4)) == 0)
         {
-            GetPlayer()->m_anti_BeginFallZ=INVALID_HEIGHT;
+            //GetPlayer()->m_anti_BeginFallZ=INVALID_HEIGHT;
         }
 
         if(GetPlayer()->m_anti_NextLenCheck <= CurTime)
@@ -549,6 +556,9 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
             GetPlayer()->m_anti_NextLenCheck=CurTime+500;
             GetPlayer()->m_anti_MovedLen=0.0f;
             static const float MaxDeltaXYT=sWorld.GetMvAnticheatMaxXYT();
+#ifdef __ANTI_DEBUG__
+            ChatHandler(GetPlayer()).PSendSysMessage("XYT: %f ; Flags: %s",delta_xyt,FlagsToStr(movementInfo.flags).c_str());
+#endif //__ANTI_DEBUG__
             if(delta_xyt>MaxDeltaXYT && delta<=100.0f)
             {
                 Anti__CheatOccurred(CurTime,"Speed hack",delta_xyt,LookupOpcodeName(opcode),
