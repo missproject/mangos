@@ -530,12 +530,12 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
         }*/
 
         //antiOFF fall-damage, MOVEMENTFLAG_UNK4 seted by client if player try movement when falling and unset in this case the MOVEMENTFLAG_FALLING flag.
-        if((GetPlayer()->m_anti_movementInfo == INVALID_HEIGHT) &&
+        if((GetPlayer()->m_anti_BeginFallZ == INVALID_HEIGHT) &&
            (movementInfo.flags & (MOVEMENTFLAG_FALLING | MOVEMENTFLAG_UNK4)) != 0)
         {
             GetPlayer()->m_anti_BeginFallZ=(float)(movementInfo.z);
         }
-        else if(GetPlayer()->m_anti_BginFallZ != INVALID_HEIGHT &&
+        else if(GetPlayer()->m_anti_BeginFallZ != INVALID_HEIGHT &&
                 (movementInfo.flags & (MOVEMENTFLAG_FALLING | MOVEMENTFLAG_UNK4)) == 0)
         {
             GetPlayer()->m_anti_BeginFallZ=INVALID_HEIGHT;
@@ -594,8 +594,8 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
             }
             else if(Anti__MapZ+5.0f < GetPlayer()->GetPositionZ()) // Woot? More than 15 Units over ground?
             {
-                Anti__CheatOccured(CurTime,"Air Jump Hack", // Not sure, but possible
-                                   0.0f,LookupOpcodeName(opcode),0.0f,movementInfo.flags,movementInfo);
+                Anti__CheatOccurred(CurTime,"Air Jump Hack", // Not sure, but possible
+                                    0.0f,LookupOpcodeName(opcode),0.0f,movementInfo.flags,&movementInfo);
             }
         }
 

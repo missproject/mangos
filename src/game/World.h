@@ -483,6 +483,8 @@ class World
         inline std::string GetMvAnticheatBanTime()     {return m_MvAnticheatBanTime;}
         inline unsigned char GetMvAnticheatGmLevel()   {return m_MvAnticheatGmLevel;}
         inline bool GetMvAnticheatKill()               {return m_MvAnticheatKill;}
+        inline float GetMvAnticheatMaxXYT()            {return m_MvAnticheatMaxXYT;}
+        inline uint16 GetMvAnticheatIgnoreAfterTeleport()   {return m_MvAnticheatIgnoreAfterTeleport;}
         
 
         void ProcessCliCommands();
@@ -559,6 +561,8 @@ class World
         std::string m_MvAnticheatBanTime;
         unsigned char m_MvAnticheatGmLevel;
         bool m_MvAnticheatKill;
+        float m_MvAnticheatMaxXYT;
+        uint16 m_MvAnticheatIgnoreAfterTeleport;
 
 
         // CLI command holder to be thread safe
