@@ -54,6 +54,8 @@ std::string FlagsToStr(const uint32 Flags)
     {   Ret+="STR ";    }
     if(Flags & MOVEMENTFLAG_LEFT)
     {   Ret+="LF "; }
+    if(Flags & MOVEMENTFLAG_RIGHT)
+    {   Ret+="RI "; }
     if(Flags & MOVEMENTFLAG_PITCH_UP)
     {   Ret+="PTUP ";   }
     if(Flags & MOVEMENTFLAG_PITCH_DOWN)
