@@ -586,12 +586,14 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
         
         float Anti__GroundZ = GetPlayer()->GetMap()->GetHeight(GetPlayer()->GetPositionX(),GetPlayer()->GetPositionY(),MAX_HEIGHT);
         float Anti__FloorZ  = GetPlayer()->GetMap()->GetHeight(GetPlayer()->GetPositionX(),GetPlayer()->GetPositionY(),GetPlayer()->GetPositionZ());
-        float Anti__MapZ = ((Anti__FloorZ <= (INVALID_HEIGHT+15.0f)) ? Anti__GroundZ : Anti__FloorZ)+10.0f;
+        static const float DIFF_OVERGROUND=10.0f;
+        float Anti__MapZ = ((Anti__FloorZ <= (INVALID_HEIGHT+5.0f)) ? Anti__GroundZ : Anti__FloorZ)+DIFF_OVERGROUND;
 
         if(!GetPlayer()->CanFly() &&
-           !GetPlayer()->GetBaseMap()->IsUnderWater(movementInfo.x, movementInfo.y, movementInfo.z-5.0f) &&
-           Anti__MapZ < GetPlayer()->GetPositionZ() && Anti__MapZ>(INVALID_HEIGHT+15.0f))
+           !GetPlayer()->GetBaseMap()->IsUnderWater(movementInfo.x, movementInfo.y, movementInfo.z-7.0f) &&
+           Anti__MapZ < GetPlayer()->GetPositionZ() && Anti__MapZ>(INVALID_HEIGHT+DIFF_OVERGROUND+5.0f))
         {
+            static const float DIFF_AIRJUMP=15.0f;
             if((movementInfo.flags & (MOVEMENTFLAG_CAN_FLY | MOVEMENTFLAG_FLYING | MOVEMENTFLAG_FLYING2)) != 0) // Fly Hack
             {
                 Anti__CheatOccurred(CurTime,"Fly hack",
@@ -599,7 +601,7 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
                                     ((uint8)(GetPlayer()->HasAuraType(SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED))*2),
                                     NULL,GetPlayer()->GetPositionZ()-Anti__MapZ);
             }
-            else if(Anti__MapZ+5.0f < GetPlayer()->GetPositionZ()) // Woot? More than 15 Units over ground?
+            else if(Anti__MapZ+DIFF_AIRJUMP < GetPlayer()->GetPositionZ()) // Woot? More than 15 Units over ground?
             {
                 Anti__CheatOccurred(CurTime,"Air Jump Hack", // Not sure, but possible
                                     0.0f,LookupOpcodeName(opcode),0.0f,movementInfo.flags,&movementInfo);
