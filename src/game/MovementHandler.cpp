@@ -554,7 +554,7 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
             GetPlayer()->m_anti_MovedLen=0.0f;
             static const float MaxDeltaXYT=sWorld.GetMvAnticheatMaxXYT();
 #ifdef __ANTI_DEBUG__
-            ChatHandler(GetPlayer()).PSendSysMessage("XYT: %f ; Flags: %s",delta_xyt,FlagsToStr(movementInfo.flags).c_str());
+            SendAreaTriggerMessage("XYT: %f ; Flags: %s",delta_xyt,FlagsToStr(movementInfo.flags).c_str());
 #endif //__ANTI_DEBUG__
             if(delta_xyt>MaxDeltaXYT && delta<=100.0f)
             {
@@ -593,7 +593,8 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
            !GetPlayer()->GetBaseMap()->IsUnderWater(movementInfo.x, movementInfo.y, movementInfo.z-7.0f) &&
            Anti__MapZ < GetPlayer()->GetPositionZ() && Anti__MapZ>(INVALID_HEIGHT+DIFF_OVERGROUND+5.0f))
         {
-            static const float DIFF_AIRJUMP=15.0f;
+            static const float DIFF_AIRJUMP=25.0f; // 25 is realy high, but to many false positives...
+            // Air-Jump-Detection definitively needs a better way to be detected...
             if((movementInfo.flags & (MOVEMENTFLAG_CAN_FLY | MOVEMENTFLAG_FLYING | MOVEMENTFLAG_FLYING2)) != 0) // Fly Hack
             {
                 Anti__CheatOccurred(CurTime,"Fly hack",
@@ -601,9 +602,12 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
                                     ((uint8)(GetPlayer()->HasAuraType(SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED))*2),
                                     NULL,GetPlayer()->GetPositionZ()-Anti__MapZ);
             }
-            else if(Anti__MapZ+DIFF_AIRJUMP < GetPlayer()->GetPositionZ()) // Woot? More than 15 Units over ground?
+            else if((Anti__MapZ+DIFF_AIRJUMP < GetPlayer()->GetPositionZ() &&
+			         (movementInfo.flags & (MOVEMENTFLAG_FALLING | MOVEMENTFLAG_UNK4))==0) ||
+					(Anti__MapZ < GetPlayer()->GetPositionZ() && 
+					 opcode==MSG_MOVE_JUMP))
             {
-                Anti__CheatOccurred(CurTime,"Air Jump Hack", // Not sure, but possible
+                Anti__CheatOccurred(CurTime,"Possible Air Jump Hack",
                                     0.0f,LookupOpcodeName(opcode),0.0f,movementInfo.flags,&movementInfo);
             }
         }
