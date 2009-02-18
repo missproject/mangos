@@ -1,7 +1,7 @@
 DROP TABLE IF EXISTS `cheaters`;
 CREATE TABLE `cheaters` (
   `entry` bigint(20) NOT NULL auto_increment,
-  `player` varchar(255) NOT NULL,
+  `player` varchar(30) NOT NULL,
   `acctid` int(11) NOT NULL,
   `reason` varchar(255) NOT NULL default 'unknown',
   `speed` float NOT NULL default '0',
@@ -15,5 +15,6 @@ CREATE TABLE `cheaters` (
   `last_date` datetime NOT NULL,
   `Op` varchar(255) NOT NULL default 'unknown',
   PRIMARY KEY  (`entry`),
-  KEY `idx_Count` (`count`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+  KEY `idx_Count` (`count`),
+  KEY `idx_Player` (`player`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8;
