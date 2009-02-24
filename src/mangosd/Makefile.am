@@ -39,11 +39,13 @@ mangos_worldd_LDFLAGS = -L../../dep/src/sockets -L../../dep/src/zthread -L../../
 ## Additional files to include when running 'make dist'
 #  Include world daemon configuration
 EXTRA_DIST = \
-    mangosd.conf.dist
+    mangosd.conf.dist \
+    mangchat.conf.dist
 
 ## Additional files to install
 sysconf_DATA = \
-    mangosd.conf.dist
+    mangosd.conf.dist \
+    mangchat.conf.dist
 
 install-data-hook:
 	@list='$(sysconf_DATA)'; for p in $$list; do \
