@@ -601,6 +601,7 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
                                     ((uint8)(GetPlayer()->HasAuraType(SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED))*2),
                                     NULL,GetPlayer()->GetPositionZ()-Anti__MapZ);
             }
+            /* Need a better way to do that
             else if((Anti__MapZ+DIFF_AIRJUMP < GetPlayer()->GetPositionZ() &&
 			         (movementInfo.flags & (MOVEMENTFLAG_FALLING | MOVEMENTFLAG_UNK4))==0) ||
 					(Anti__MapZ < GetPlayer()->GetPositionZ() && 
@@ -608,7 +609,7 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
             {
                 Anti__CheatOccurred(CurTime,"Possible Air Jump Hack",
                                     0.0f,LookupOpcodeName(opcode),0.0f,movementInfo.flags,&movementInfo);
-            }
+            }*/
         }
 
         /*if(Anti__FloorZ < -199900.0f && Anti__GroundZ >= -199900.0f &&
