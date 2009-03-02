@@ -471,14 +471,16 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
         float delta_x = GetPlayer()->GetPositionX() - movementInfo.x;
         float delta_y = GetPlayer()->GetPositionY() - movementInfo.y;
         float delta_z = GetPlayer()->GetPositionZ() - movementInfo.z;
-        float delta = sqrt(delta_x * delta_x + delta_y * delta_y); // Len of movement-vector via Pythagoras (a^2+b^2=Len)
+        float delta = sqrt(delta_x * delta_x + delta_y * delta_y); // Len of movement-vector via Pythagoras (a^2+b^2=Len^2)
         float tg_z = 0.0f; //tangens
         float delta_t = getMSTimeDiff(GetPlayer()->m_anti_lastmovetime,CurTime);
-        GetPlayer()->m_anti_lastmovetime = CurTime;
+        
+		GetPlayer()->m_anti_lastmovetime = CurTime;
         GetPlayer()->m_anti_MovedLen += delta;
 
         if(delta_t > 15000.0f)
         {   delta_t = 15000.0f;   }
+
         // Tangens of walking angel
         /*if (!(movementInfo.flags & (MOVEMENTFLAG_FLYING | MOVEMENTFLAG_SWIMMING)))
         {
@@ -487,7 +489,8 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
         }*/
 
         //antiOFF fall-damage, MOVEMENTFLAG_UNK4 seted by client if player try movement when falling and unset in this case the MOVEMENTFLAG_FALLING flag.
-        if((GetPlayer()->m_anti_BeginFallZ == INVALID_HEIGHT) &&
+        
+		if((GetPlayer()->m_anti_BeginFallZ == INVALID_HEIGHT) &&
            (movementInfo.flags & (MOVEMENTFLAG_FALLING | MOVEMENTFLAG_UNK4)) != 0)
         {
             GetPlayer()->m_anti_BeginFallZ=(float)(movementInfo.z);
@@ -498,20 +501,23 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
             // Check every 500ms is a lot more advisable then 1000ms, because normal movment packet arrives every 500ms
             uint32 OldNextLenCheck=GetPlayer()->m_anti_NextLenCheck;
             float delta_xyt=GetPlayer()->m_anti_MovedLen/(float)(getMSTimeDiff(OldNextLenCheck-500,CurTime));
-            GetPlayer()->m_anti_NextLenCheck=CurTime+500;
-            GetPlayer()->m_anti_MovedLen=0.0f;
-            static const float MaxDeltaXYT=sWorld.GetMvAnticheatMaxXYT();
+            GetPlayer()->m_anti_NextLenCheck = CurTime+500;
+            GetPlayer()->m_anti_MovedLen = 0.0f;
+            static const float MaxDeltaXYT = sWorld.GetMvAnticheatMaxXYT();
+
 #ifdef __ANTI_DEBUG__
             SendAreaTriggerMessage("XYT: %f ; Flags: %s",delta_xyt,FlagsToStr(movementInfo.flags).c_str());
 #endif //__ANTI_DEBUG__
-            if(delta_xyt>MaxDeltaXYT && delta<=100.0f)
+            
+			if(delta_xyt > MaxDeltaXYT && delta<=100.0f)
             {
                 Anti__CheatOccurred(CurTime,"Speed hack",delta_xyt,LookupOpcodeName(opcode),
                                     (float)(GetPlayer()->GetMotionMaster()->GetCurrentMovementGeneratorType()),
                                     (float)(getMSTimeDiff(OldNextLenCheck-500,CurTime)),&movementInfo);
             }
         }
-        if(delta>100.0f)
+
+        if(delta > 100.0f)
         {
             Anti__ReportCheat("Tele hack",delta,LookupOpcodeName(opcode));
         }
@@ -530,19 +536,21 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
         /*if ((tg_z > 85.0f))
         {
             Anti__CheatOccurred(CurTime,"Mount hack",tg_z,NULL,delta,delta_z);
-        }*/
+        }
+		*/
         
+        static const float DIFF_OVERGROUND = 10.0f;
         float Anti__GroundZ = GetPlayer()->GetMap()->GetHeight(GetPlayer()->GetPositionX(),GetPlayer()->GetPositionY(),MAX_HEIGHT);
         float Anti__FloorZ  = GetPlayer()->GetMap()->GetHeight(GetPlayer()->GetPositionX(),GetPlayer()->GetPositionY(),GetPlayer()->GetPositionZ());
-        static const float DIFF_OVERGROUND=10.0f;
-        float Anti__MapZ = ((Anti__FloorZ <= (INVALID_HEIGHT+5.0f)) ? Anti__GroundZ : Anti__FloorZ)+DIFF_OVERGROUND;
-
+        float Anti__MapZ = ((Anti__FloorZ <= (INVALID_HEIGHT+5.0f)) ? Anti__GroundZ : Anti__FloorZ) + DIFF_OVERGROUND;
+        
         if(!GetPlayer()->CanFly() &&
            !GetPlayer()->GetBaseMap()->IsUnderWater(movementInfo.x, movementInfo.y, movementInfo.z-7.0f) &&
-           Anti__MapZ < GetPlayer()->GetPositionZ() && Anti__MapZ>(INVALID_HEIGHT+DIFF_OVERGROUND+5.0f))
+           Anti__MapZ < GetPlayer()->GetPositionZ() && Anti__MapZ > (INVALID_HEIGHT+DIFF_OVERGROUND + 5.0f))
         {
             static const float DIFF_AIRJUMP=25.0f; // 25 is realy high, but to many false positives...
-            // Air-Jump-Detection definitively needs a better way to be detected...
+            
+			// Air-Jump-Detection definitively needs a better way to be detected...
             if((movementInfo.flags & (MOVEMENTFLAG_CAN_FLY | MOVEMENTFLAG_FLYING | MOVEMENTFLAG_FLYING2)) != 0) // Fly Hack
             {
                 Anti__CheatOccurred(CurTime,"Fly hack",
@@ -550,7 +558,8 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
                                     ((uint8)(GetPlayer()->HasAuraType(SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED))*2),
                                     NULL,GetPlayer()->GetPositionZ()-Anti__MapZ);
             }
-            /* Need a better way to do that
+            
+			/* Need a better way to do that - currently a lot of fake alarms
             else if((Anti__MapZ+DIFF_AIRJUMP < GetPlayer()->GetPositionZ() &&
 			         (movementInfo.flags & (MOVEMENTFLAG_FALLING | MOVEMENTFLAG_UNK4))==0) ||
 					(Anti__MapZ < GetPlayer()->GetPositionZ() && 
@@ -561,13 +570,15 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
             }*/
         }
 
-        /*if(Anti__FloorZ < -199900.0f && Anti__GroundZ >= -199900.0f &&
+        /*
+		if(Anti__FloorZ < -199900.0f && Anti__GroundZ >= -199900.0f &&
            GetPlayer()->GetPositionZ()+5.0f < Anti__GroundZ)
         {
             Anti__CheatOccurred(CurTime,"Teleport2Plane hack",
                                 GetPlayer()->GetPositionZ(),NULL,Anti__GroundZ);
         }*/
-    } // <<---- anti-cheat features
+    } 
+	// <<---- anti-cheat features
 
 
     /* process position-change */
