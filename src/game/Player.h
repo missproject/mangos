@@ -2015,7 +2015,11 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool isMoving() const { return HasUnitMovementFlag(movementFlagsMask); }
         bool isMovingOrTurning() const { return HasUnitMovementFlag(movementOrTurningFlagsMask); }
 
-        bool CanFly() const { return HasUnitMovementFlag(MOVEMENTFLAG_CAN_FLY); }
+        uint32 Anti__GetLastTeleTime() const { return m_anti_TeleTime; }
+        void Anti__SetLastTeleTime(uint32 TeleTime) { m_anti_TeleTime=TeleTime; }
+        //bool CanFly() const { return HasUnitMovementFlag(MOVEMENTFLAG_CAN_FLY); }
+        bool CanFly() const { return m_CanFly;  }
+        void SetCanFly(bool CanFly) { m_CanFly=CanFly; }
         bool IsFlying() const { return HasUnitMovementFlag(MOVEMENTFLAG_FLYING); }
         bool IsAllowUseFlyMountsHere() const;
 
@@ -2356,6 +2360,17 @@ class MANGOS_DLL_SPEC Player : public Unit
         RestType rest_type;
         ////////////////////Rest System/////////////////////
 
+        //movement anticheat
+        uint32 m_anti_lastmovetime;     //last movement time
+        uint64 m_anti_transportGUID;    //current transport GUID
+        float  m_anti_MovedLen;         //Length of traveled way
+        uint32 m_anti_NextLenCheck;
+        float  m_anti_BeginFallZ;    //alternative falling begin time
+        uint32 m_anti_lastalarmtime;    //last time when alarm generated
+        uint32 m_anti_alarmcount;       //alarm counter
+        uint32 m_anti_TeleTime;
+        bool m_CanFly;
+
         // Transports
         Transport * m_transport;
 
@@ -2386,6 +2401,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         float  m_summon_x;
         float  m_summon_y;
         float  m_summon_z;
+
 
         // Far Teleport
         WorldLocation m_teleport_dest;
