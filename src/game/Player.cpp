@@ -19813,12 +19813,10 @@ uint8 Player::CanEquipUniqueItem( ItemPrototype const* itemProto, uint8 except_s
 void Player::HandleFall(MovementInfo const& movementInfo)
 {
     // calculate total z distance of the fall
-    float z_diff = (GetPlayer()->m_lastFallZ >= m_anti_BeginFallZ ? m_lastFallZ :
-                                                                    m_anti_BeginFallZ)
-                                                                 - movementInfo.z;
-    GetPlayer()->m_anti_BeginFallZ=INVALID_HEIGHT;
+    float z_diff = (m_lastFallZ >= m_anti_BeginFallZ ? m_lastFallZ : m_anti_BeginFallZ) - movementInfo.z;
+    
+	m_anti_BeginFallZ=INVALID_HEIGHT;
     sLog.outDebug("zDiff = %f", z_diff);
-    Player *target = GetPlayer();
 
     //Players with low fall distance, Feather Fall or physical immunity (charges used) are ignored
     // 14.57 can be calculated by resolving damageperc formular below to 0
