@@ -123,9 +123,9 @@ void WorldSession::HandleSendMail(WorldPacket & recv_data )
         return;
     }
 
-    uint32 reqmoney = money + 30;
-    if (items_count)
-        reqmoney = money + (30 * items_count);
+    uint32 cost = items_count ? 30 * items_count : 30;  // price hardcoded in client
+
+    uint32 reqmoney = cost + money;
 
     if (pl->GetMoney() < reqmoney)
     {
@@ -208,6 +208,7 @@ void WorldSession::HandleSendMail(WorldPacket & recv_data )
     }
 
     pl->ModifyMoney( -int32(reqmoney) );
+    pl->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_GOLD_SPENT_FOR_MAIL, cost);
 
     bool needItemDelay = false;
 
