@@ -21,7 +21,6 @@
 #include "Database/DatabaseEnv.h"
 #include "Log.h"
 #include "Opcodes.h"
-#include "ObjectMgr.h"
 #include "SpellMgr.h"
 #include "World.h"
 #include "WorldPacket.h"
@@ -47,7 +46,6 @@
 #include "Group.h"
 #include "Guild.h"
 #include "Pet.h"
-#include "SpellAuras.h"
 #include "Util.h"
 #include "Transports.h"
 #include "Weather.h"
@@ -2074,7 +2072,7 @@ void Player::UninviteFromGroup()
 
     group->RemoveInvite(this);
 
-    if(group->GetMembersCount() <= 1)                   // group has just 1 member => disband
+    if(group->GetMembersCount() <= 1)                       // group has just 1 member => disband
     {
         if(group->IsCreated())
         {
