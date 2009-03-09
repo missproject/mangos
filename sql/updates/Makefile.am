@@ -194,6 +194,8 @@ pkgdata_DATA = \
 	7388_01_mangos_mangos_string.sql \
 	7390_01_mangos_areatrigger_teleport.sql \
 	7393_01_mangos_game_event.sql \
+	7399_01_mangos_mangos_string.sql \
+	7422_01_mangos_mangos_string.sql \
 	README
 
 ## Additional files to include when running 'make dist'
@@ -369,4 +371,5 @@ EXTRA_DIST = \
 	7390_01_mangos_areatrigger_teleport.sql \
 	7393_01_mangos_game_event.sql \
 	7399_01_mangos_mangos_string.sql \
+	7422_01_mangos_mangos_string.sql \
 	README
