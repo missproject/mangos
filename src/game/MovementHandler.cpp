@@ -30,6 +30,7 @@
 #include "WaypointMovementGenerator.h"
 #include "InstanceSaveMgr.h"
 #include "ObjectMgr.h"
+#include "World.h"
 
 //#define __ANTI_DEBUG__
 
