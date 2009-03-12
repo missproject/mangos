@@ -448,6 +448,9 @@ void Spell::FillTargetMap()
             default:
                 switch(m_spellInfo->EffectImplicitTargetB[i])
                 {
+                    case 0:
+                        SetTargetMap(i,m_spellInfo->EffectImplicitTargetA[i],tmpUnitMap);
+                        break;
                     case TARGET_SCRIPT_COORDINATES:         // B case filled in canCast but we need fill unit list base at A case
                         SetTargetMap(i,m_spellInfo->EffectImplicitTargetA[i],tmpUnitMap);
                         break;
@@ -2065,7 +2068,25 @@ void Spell::SetTargetMap(uint32 i,uint32 cur,std::list<Unit*> &TagUnitMap)
             // if parent spell create dynamic object extract area from it
             if(DynamicObject* dynObj = m_caster->GetDynObject(m_triggeredByAuraSpell ? m_triggeredByAuraSpell->Id : m_spellInfo->Id))
                 m_targets.setDestination(dynObj->GetPositionX(), dynObj->GetPositionY(), dynObj->GetPositionZ());
-        }break;
+            break;
+        }
+        case TARGET_DIRECTLY_FORWARD:
+        {
+            if (!(m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION))
+            {
+                SpellRangeEntry const* rEntry = sSpellRangeStore.LookupEntry(m_spellInfo->rangeIndex);
+                float minRange = GetSpellMinRange(rEntry);
+                float maxRange = GetSpellMaxRange(rEntry);
+                float dist = minRange+ rand_norm()*(maxRange-minRange);
+
+                float _target_x, _target_y, _target_z;
+                m_caster->GetClosePoint(_target_x, _target_y, _target_z, m_caster->GetObjectSize(), dist);
+                m_targets.setDestination(_target_x, _target_y, _target_z);
+            }
+
+            TagUnitMap.push_back(m_caster);
+            break;
+        }
         default:
             break;
     }
@@ -3756,7 +3777,10 @@ uint8 Spell::CanCast(bool strict)
                 return SPELL_FAILED_NOT_IN_ARENA;
 
     // zone check
-    if (uint8 res= spellmgr.GetSpellAllowedInLocationError(m_spellInfo,m_caster->GetMapId(),m_caster->GetZoneId(),m_caster->GetAreaId(),
+    uint32 zone, area;
+    m_caster->GetZoneAndAreaId(zone,area);
+
+    if (uint8 res= spellmgr.GetSpellAllowedInLocationError(m_spellInfo,m_caster->GetMapId(),zone,area,
         m_caster->GetTypeId()==TYPEID_PLAYER ? ((Player*)m_caster) : NULL))
         return res;
 
