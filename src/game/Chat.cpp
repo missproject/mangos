@@ -506,8 +506,46 @@ ChatCommand * ChatHandler::getCommandTable()
         { "savedata",       SEC_MODERATOR,      false, &ChatHandler::HandleInstanceSaveDataCommand,    "", NULL },
         { NULL,             0,                  false, NULL,                                           "", NULL }
     };
-
-    static ChatCommand commandTable[] =
+   static ChatCommand gmcCommandTable[] =
+   {
+	   { "a", SEC_PLAYER, false, &ChatHandler::HandleGMCAttackCommand, "", NULL },
+	   { "attack", SEC_PLAYER, false, &ChatHandler::HandleGMCAttackCommand, "", NULL },
+	   { "aoe", SEC_PLAYER, false, &ChatHandler::HandleGMCAoECommand, "", NULL },
+       { "noa", SEC_PLAYER, false, &ChatHandler::HandleGMCNoAttackCommand, "", NULL },
+       { "noattack", SEC_PLAYER, false, &ChatHandler::HandleGMCNoAttackCommand, "", NULL },
+       { "f", SEC_PLAYER, false, &ChatHandler::HandleGMCFollowCommand, "", NULL },
+       { "follow", SEC_PLAYER, false, &ChatHandler::HandleGMCFollowCommand, "", NULL },
+       { "s", SEC_PLAYER, false, &ChatHandler::HandleGMCStayCommand, "", NULL },
+       { "stay", SEC_PLAYER, false, &ChatHandler::HandleGMCStayCommand, "", NULL },
+       { "sum", SEC_PLAYER, false, &ChatHandler::HandleGMCSuMCommand, "", NULL },
+       { "spells", SEC_PLAYER, false, &ChatHandler::HandleGMCSpellsCommand, "", NULL },
+       { "u", SEC_PLAYER, false, &ChatHandler::HandleGMCUnsummonCommand, "", NULL },
+       { "unsummon", SEC_PLAYER, false, &ChatHandler::HandleGMCUnsummonCommand, "", NULL },
+       { "g", SEC_PLAYER, false, &ChatHandler::HandleGMCGossipCommand, "", NULL },
+       { "gossip", SEC_PLAYER, false, &ChatHandler::HandleGMCGossipCommand, "", NULL },
+       { "d", SEC_PLAYER, false, &ChatHandler::HandleGMCDisplayCommand, "", NULL },
+       { "display", SEC_PLAYER, false, &ChatHandler::HandleGMCDisplayCommand, "", NULL },
+       { "r", SEC_PLAYER, false, &ChatHandler::HandleGMCReportCommand, "", NULL },
+       { "report", SEC_PLAYER, false, &ChatHandler::HandleGMCReportCommand, "", NULL },
+       { "spawn", SEC_MODERATOR, false, &ChatHandler::HandleGMCSpawnCommand, "", NULL },
+       { "freeze", SEC_GAMEMASTER, false, &ChatHandler::HandleGMCFreezeCommand, "", NULL },
+       { "cd", SEC_GAMEMASTER, false, &ChatHandler::HandleGMCCooldownCommand, "", NULL },
+       { "cooldown", SEC_GAMEMASTER, false, &ChatHandler::HandleGMCCooldownCommand, "", NULL },
+       { "remspells", SEC_GAMEMASTER, false, &ChatHandler::HandleGMCRemoveSpellsCommand, "", NULL },
+       { "resetgroup", SEC_GAMEMASTER, false, &ChatHandler::HandleGMCResetGroupCommand, "", NULL },
+       { "expell", SEC_GAMEMASTER, false, &ChatHandler::HandleGMCExpellCommand, "", NULL },
+       { "supunsummon", SEC_GAMEMASTER, false, &ChatHandler::HandleGMCSupUnsummonCommand, "", NULL },
+       { "rc", SEC_GAMEMASTER, false, &ChatHandler::HandleGMCRegularCommand, "", NULL },
+       { "regularcommands",SEC_GAMEMASTER, false, &ChatHandler::HandleGMCRegularCommand, "", NULL },
+       { "clearstack", SEC_ADMINISTRATOR, false, &ChatHandler::HandleGMCClearStackCommand, "", NULL },
+       { "ordre", SEC_ADMINISTRATOR, false, &ChatHandler::HandleGMCDirectOrderCommand, "", NULL },
+       { "order", SEC_ADMINISTRATOR, false, &ChatHandler::HandleGMCDirectOrderCommand, "", NULL },
+       { "l", SEC_ADMINISTRATOR, false, &ChatHandler::HandleGMCReloadCommand, "", NULL },
+	   { "reload", SEC_ADMINISTRATOR, false, &ChatHandler::HandleGMCReloadCommand, "", NULL },
+       { NULL, 0, false, NULL, "", NULL }
+	};
+    
+	static ChatCommand commandTable[] =
     {
         { "account",        SEC_PLAYER,         true,  NULL,                                           "", accountCommandTable },
         { "gm",             SEC_MODERATOR,      true,  NULL,                                           "", gmCommandTable },

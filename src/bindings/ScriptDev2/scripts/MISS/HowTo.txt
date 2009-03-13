@@ -1,0 +1,7 @@
+1. Apply MOSr6440.patch on MaNGOS trunk dir
+2. Compile MaNGOS Core
+3. Apply SD2r558.patch on SD2 dir
+4. Compile SD2
+5. Apply sql/sql_MISSr6.sql on MaNGOS DB.
+
+ENJOY !!

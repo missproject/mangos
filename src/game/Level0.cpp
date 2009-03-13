@@ -32,6 +32,12 @@
 #include "revision.h"
 #include "revision_nr.h"
 #include "Util.h"
+#include "SpellAuras.h"
+
+#include "CEnDExP.h"
+#include "mysql_config.h"
+
+using namespace std;
 
 bool ChatHandler::HandleHelpCommand(const char* args)
 {
@@ -262,4 +268,692 @@ bool ChatHandler::HandleServerMotdCommand(const char* /*args*/)
 {
     PSendSysMessage(LANG_MOTD_CURRENT, sWorld.GetMotd());
     return true;
+}
+
+void recursive_decomposition(stack<string> &s_args, const string args)
+{
+  if ( args == "" ) return;
+  unsigned int arg_index = 0;
+  string arg_dec = args;
+  // effacement des blancs au d?but de la cha?ne
+  while ( arg_dec.substr(0,1) == " " )
+  arg_dec.erase(0,1);
+  // on place l'index jusqu'? la d?limitation de fin d'argument (";")
+  while( arg_index < arg_dec.size() )
+  {
+    if ( arg_dec.substr(arg_index,1) == ";" )
+    break;
+    ++arg_index;
+  }
+  if ( arg_index < arg_dec.size()-1 ) // traitement des chaines suivantes
+  {
+    recursive_decomposition(s_args,arg_dec.substr(arg_index+1));
+    arg_dec.erase(arg_index);
+  }
+  else
+    if ( arg_dec.substr(arg_index,1) == ";" )
+      arg_dec.erase(arg_index,1);
+  // poursuite du traitement de la premi?re cha?ne
+  --arg_index;
+  // effacement des blancs ? la fin de la chaine
+  while ( arg_dec.substr(arg_index,1) == " " )
+  {
+    arg_dec.erase(arg_index,1);
+    --arg_index;
+    if ( arg_index == 0 )
+      return; // cha?ne vide, pas besoin d'ajouter la chaine ? la liste
+  }
+  s_args.push(arg_dec);
+  return;
+}
+
+void recursive_decomposition(stack<string> &s_args, const char* args)
+{
+  if ( !args ) return;
+
+  unsigned int arg_index = 0;
+  string arg_dec = args;
+
+  // Effacement des blancs au d?but de la cha?ne
+  while ( arg_dec.substr(0,1) == " " )
+  {
+    arg_dec.erase(0,1);
+  }
+  // On place l'index jusqu'? la d?limitation de fin d'argument (";")
+  while( arg_index < arg_dec.size() )
+  {
+    if ( arg_dec.substr(arg_index,1) == ";" ) break;
+    ++arg_index;
+  }
+  if ( arg_index < arg_dec.size()-1 ) // Traitement des chaines suivantes
+  {
+    recursive_decomposition(s_args,arg_dec.substr(arg_index+1));
+    arg_dec.erase(arg_index);
+  }
+  else
+  {
+    if ( arg_dec.substr(arg_index,1) == ";" )
+    {
+      arg_dec.erase(arg_index,1);
+    }
+  }
+  // Poursuite du traitement de la premi?re cha?ne
+  --arg_index;
+  // Effacement des blancs ? la fin de la chaine
+  while ( arg_dec.substr(arg_index,1) == " " )
+  {
+    arg_dec.erase(arg_index,1);
+    --arg_index;
+    if ( arg_index == 0 ) return; // Cha?ne vide, pas besoin d'ajouter la chaine ? la liste
+  }
+  s_args.push(arg_dec);
+  return;
+}
+
+bool ChatHandler::HandleGMCAttackCommand(const char* args)
+{
+    if (!*args) return false;
+
+  stack<string> s_temp_fill;
+  recursive_decomposition(s_temp_fill,args);
+
+  // Syntax: .gmc attack <mercenary> [target]
+
+  if ( s_temp_fill.empty() || s_temp_fill.size() > 2 ) return false;
+
+  // Remplissage des variables temporaires arg_i et arg_ii
+  string arg_i = s_temp_fill.top();
+  s_temp_fill.pop();
+  string arg_ii = "";
+  if ( !s_temp_fill.empty() )
+  {
+    arg_ii = s_temp_fill.top();
+    s_temp_fill.pop();
+  }
+
+  if ( arg_i.substr(0,3) == "any" ) return false;
+
+  // Instanciation du protocole d'?change
+  WodexManager &wodex = WodexManager::GetInstance();
+
+  wodex.AutoSCEnDExPCreation(m_session->GetPlayer(),arg_i,arg_ii,101,10);
+
+  return true;
+}
+
+bool ChatHandler::HandleGMCStayCommand(const char* args)
+{
+    if (!*args) return false;
+
+  stack<string> s_temp_fill;
+  recursive_decomposition(s_temp_fill,args);
+
+  // Syntax: .gmc stay <mercenary>
+
+  if ( s_temp_fill.empty() || s_temp_fill.size() > 1 ) return false;
+
+  // Remplissage de la variable temporaire arg_i
+  string arg_i = s_temp_fill.top();
+  s_temp_fill.pop();
+
+  if ( arg_i.substr(0,3) == "any" ) return false;
+
+  // Instanciation du protocole d'?change
+  WodexManager &wodex = WodexManager::GetInstance();
+
+  wodex.AutoSCEnDExPCreation(m_session->GetPlayer(),arg_i,"",110,10);
+
+  return true;
+}
+
+bool ChatHandler::HandleGMCFollowCommand(const char* args)
+{
+    if (!*args) return false;
+
+  stack<string> s_temp_fill;
+  recursive_decomposition(s_temp_fill,args);
+
+  // Syntax: .gmc follow <mercenary>
+
+  if ( s_temp_fill.empty() || s_temp_fill.size() > 1 ) return false;
+
+  // Remplissage de la variable temporaire arg_i
+  string arg_i = s_temp_fill.top();
+  s_temp_fill.pop();
+
+  if ( arg_i.substr(0,3) == "any" ) return false;
+
+  // Instanciation du protocole d'?change
+  WodexManager &wodex = WodexManager::GetInstance();
+
+  wodex.AutoSCEnDExPCreation(m_session->GetPlayer(),arg_i,"",112,10);
+
+  return true;
+}
+
+bool ChatHandler::HandleGMCUnsummonCommand(const char *args)
+{
+    if (!*args) return false;
+
+  stack<string> s_temp_fill;
+  recursive_decomposition(s_temp_fill,args);
+
+  // Syntax: .gmc follow <mercenary>
+
+  if ( s_temp_fill.empty() || s_temp_fill.size() > 1 ) return false;
+
+  // Remplissage de la variable temporaire arg_i
+  string arg_i = s_temp_fill.top();
+  s_temp_fill.pop();
+
+  if ( arg_i.substr(0,3) == "any" ) return false;
+
+  // Instanciation du protocole d'?change
+  WodexManager &wodex = WodexManager::GetInstance();
+
+  wodex.AutoSCEnDExPCreation(m_session->GetPlayer(),arg_i,"",120,10);
+
+  return true;
+}
+
+bool ChatHandler::HandleGMCDisplayCommand(const char *args)
+{
+    if (!*args) return false;
+
+  stack<string> s_temp_fill;
+  recursive_decomposition(s_temp_fill,args);
+
+  // Syntax: .gmc display <mercenary> ; <type>
+
+  if ( s_temp_fill.size() != 1 ) return false;
+
+  // Remplissage de la variable temporaire arg_i
+  string arg_i = s_temp_fill.top();
+  s_temp_fill.pop();
+
+  if ( arg_i.substr(0,3) == "any" || arg_i.substr(arg_i.size()-1,1) == "s" || arg_i == "all" ) return false;
+
+  // Instanciation du protocole d'?change
+  WodexManager &wodex = WodexManager::GetInstance();
+  wodex.AutoSCEnDExPCreation(m_session->GetPlayer(),arg_i,"",160,10);
+
+  return true;
+}
+
+bool ChatHandler::HandleGMCSuMCommand(const char *args)
+{
+    if (!*args) return false;
+
+  stack<string> s_temp_fill;
+  recursive_decomposition(s_temp_fill,args);
+
+  // Syntax: .gmc aoe <mercenary> ; <boolean_value>
+
+  if ( s_temp_fill.size() != 2 ) return false;
+
+  // Remplissage de la variable temporaire arg_i
+  string arg_i = s_temp_fill.top();
+  s_temp_fill.pop();
+  string arg_ii = s_temp_fill.top();
+  s_temp_fill.pop();
+
+  if ( arg_i.substr(0,3) == "any" ) return false;
+
+  if ( arg_ii == "on" )
+  {
+    // Instanciation du protocole d'?change
+    WodexManager &wodex = WodexManager::GetInstance();
+    wodex.AutoSCEnDExPCreation(m_session->GetPlayer(),arg_i,"",116,10);
+  }
+  else if ( arg_ii == "off" )
+  {
+    // Instanciation du protocole d'?change
+    WodexManager &wodex = WodexManager::GetInstance();
+    wodex.AutoSCEnDExPCreation(m_session->GetPlayer(),arg_i,"",115,10);
+  }
+  else return false;
+  return true;
+}
+
+bool ChatHandler::HandleGMCSpellsCommand(const char *args)
+{
+    if (!*args) return false;
+
+  stack<string> s_temp_fill;
+  recursive_decomposition(s_temp_fill,args);
+
+  // Syntax: .gmc aoe <mercenary> ; <boolean_value>
+
+  if ( s_temp_fill.size() != 2 ) return false;
+
+  // Remplissage de la variable temporaire arg_i
+  string arg_i = s_temp_fill.top();
+  s_temp_fill.pop();
+  string arg_ii = s_temp_fill.top();
+  s_temp_fill.pop();
+
+  if ( arg_i.substr(0,3) == "any" ) return false;
+
+  if ( arg_ii == "on" )
+  {
+    // Instanciation du protocole d'?change
+    WodexManager &wodex = WodexManager::GetInstance();
+    wodex.AutoSCEnDExPCreation(m_session->GetPlayer(),arg_i,"",118,10);
+  }
+  else if ( arg_ii == "off" )
+  {
+    // Instanciation du protocole d'?change
+    WodexManager &wodex = WodexManager::GetInstance();
+    wodex.AutoSCEnDExPCreation(m_session->GetPlayer(),arg_i,"",117,10);
+  }
+  else return false;
+
+  return true;
+}
+
+bool ChatHandler::HandleGMCNoAttackCommand(const char* args)
+{
+    if (!*args) return false;
+
+  stack<string> s_temp_fill;
+  recursive_decomposition(s_temp_fill,args);
+
+  // Syntax: .gmc stay <mercenary>
+  if ( s_temp_fill.empty() || s_temp_fill.size() > 1 ) return false;
+
+  // Remplissage de la variable temporaire arg_i
+  string arg_i = s_temp_fill.top();
+  s_temp_fill.pop();
+
+  if ( arg_i.substr(0,3) == "any" ) return false;
+
+  // Instanciation du protocole d'?change
+  WodexManager &wodex = WodexManager::GetInstance();
+
+  wodex.AutoSCEnDExPCreation(m_session->GetPlayer(),arg_i,"",102,10);
+
+  return true;
+}
+
+bool ChatHandler::HandleGMCFreezeCommand(const char *args)
+{
+    if (!*args) return false;
+
+  stack<string> s_temp_fill;
+  recursive_decomposition(s_temp_fill,args);
+
+  // Syntax: .gmc follow <mercenary>
+
+  if ( s_temp_fill.empty() || s_temp_fill.size() > 1 ) return false;
+
+  // Remplissage de la variable temporaire arg_i
+  string arg_i = s_temp_fill.top();
+  s_temp_fill.pop();
+
+  if ( arg_i.substr(0,3) == "any" ) return false;
+
+  // Instanciation du protocole d'?change
+  WodexManager &wodex = WodexManager::GetInstance();
+
+  wodex.AutoSCEnDExPCreation(m_session->GetPlayer(),arg_i,"",950,10);
+
+  return true;
+}
+
+bool ChatHandler::HandleGMCClearStackCommand(const char *args)
+{
+    if (!*args) return false;
+
+  stack<string> s_temp_fill;
+  recursive_decomposition(s_temp_fill,args);
+
+  // Syntax: .gmc attack <mercenary> [target]
+
+  if ( s_temp_fill.size() != 2 ) return false;
+
+  // Remplissage des variables temporaires arg_i et arg_ii
+  string arg_i = s_temp_fill.top();
+  s_temp_fill.pop();
+  string arg_ii = "";
+  if ( !s_temp_fill.empty() )
+  {
+    arg_ii = s_temp_fill.top();
+    s_temp_fill.pop();
+  }
+
+  if ( arg_i.substr(0,3) == "any" ) return false;
+
+  // Instanciation du protocole d'?change
+  WodexManager &wodex = WodexManager::GetInstance();
+  wodex.AutoSCEnDExPCreation(m_session->GetPlayer(),arg_i,"",960,10);
+
+  return true;
+}
+
+bool ChatHandler::HandleGMCResetGroupCommand(const char *args)
+{
+    if (!*args) return false;
+
+  stack<string> s_temp_fill;
+  recursive_decomposition(s_temp_fill,args);
+
+  // Syntax: .gmc follow <mercenary>
+
+  if ( s_temp_fill.empty() || s_temp_fill.size() > 1 ) return false;
+
+  // Remplissage de la variable temporaire arg_i
+  string arg_i = s_temp_fill.top();
+  s_temp_fill.pop();
+
+  if ( arg_i.substr(0,3) == "any" ) return false;
+
+  // Instanciation du protocole d'?change
+  WodexManager &wodex = WodexManager::GetInstance();
+
+  wodex.AutoSCEnDExPCreation(m_session->GetPlayer(),arg_i,"",961,10);
+
+  return true;
+}
+
+bool ChatHandler::HandleGMCExpellCommand(const char *args)
+{
+    if (!*args) return false;
+
+  stack<string> s_temp_fill;
+  recursive_decomposition(s_temp_fill,args);
+
+  // Syntax: .gmc follow <mercenary>
+
+  if ( s_temp_fill.empty() || s_temp_fill.size() > 1 ) return false;
+
+  // Remplissage de la variable temporaire arg_i
+  string arg_i = s_temp_fill.top();
+  s_temp_fill.pop();
+  if ( arg_i.substr(0,3) == "any" ) return false;
+
+  // Instanciation du protocole d'?change
+  WodexManager &wodex = WodexManager::GetInstance();
+
+  wodex.AutoSCEnDExPCreation(m_session->GetPlayer(),arg_i,"",963,10);
+
+  return true;
+}
+
+bool ChatHandler::HandleGMCSupUnsummonCommand(const char *args)
+{
+    if (!*args) return false;
+
+  stack<string> s_temp_fill;
+  recursive_decomposition(s_temp_fill,args);
+
+  // Syntax: .gmc follow <mercenary>
+
+  if ( s_temp_fill.empty() || s_temp_fill.size() > 1 ) return false;
+
+  // Remplissage de la variable temporaire arg_i
+  string arg_i = s_temp_fill.top();
+  s_temp_fill.pop();
+
+  if ( arg_i.substr(0,3) == "any" ) return false;
+
+  // Instanciation du protocole d'?change
+  WodexManager &wodex = WodexManager::GetInstance();
+
+  wodex.AutoSCEnDExPCreation(m_session->GetPlayer(),arg_i,"",962,10);
+  return true;
+}
+
+bool ChatHandler::HandleGMCRegularCommand(const char *args)
+{
+    if (!*args) return false;
+
+  stack<string> s_temp_fill;
+  recursive_decomposition(s_temp_fill,args);
+
+  // Syntax: .gmc aoe <mercenary> ; <boolean_value>
+
+  if ( s_temp_fill.size() != 2 ) return false;
+
+  // Remplissage de la variable temporaire arg_i
+  string arg_i = s_temp_fill.top();
+  s_temp_fill.pop();
+  string arg_ii = s_temp_fill.top();
+  s_temp_fill.pop();
+
+  if ( arg_i.substr(0,3) == "any" ) return false;
+
+  if ( arg_ii == "on" )
+  {
+    // Instanciation du protocole d'?change
+    WodexManager &wodex = WodexManager::GetInstance();
+    wodex.AutoSCEnDExPCreation(m_session->GetPlayer(),arg_i,"",971,10);
+  }
+
+  if ( arg_ii == "off" )
+  {
+    // Instanciation du protocole d'?change
+    WodexManager &wodex = WodexManager::GetInstance();
+    wodex.AutoSCEnDExPCreation(m_session->GetPlayer(),arg_i,"",970,10);
+  }
+  else return false;
+
+  return true;
+}
+
+bool ChatHandler::HandleGMCReportCommand(const char *args)
+{
+    if (!*args) return false;
+
+  stack<string> s_temp_fill;
+  recursive_decomposition(s_temp_fill,args);
+
+  // Syntax: .gmc display <mercenary> ; <type>
+
+  if ( s_temp_fill.size() != 2 ) return false;
+
+  // Remplissage de la variable temporaire arg_i
+  string arg_i = s_temp_fill.top();
+  s_temp_fill.pop();
+  string arg_ii = s_temp_fill.top();
+  s_temp_fill.pop();
+
+  if ( arg_i.substr(0,3) == "any" ) return false;
+
+  // Instanciation du protocole d'?change
+  WodexManager &wodex = WodexManager::GetInstance();
+  wodex.AutoSCEnDExPCreation(m_session->GetPlayer(),arg_i,arg_ii,130,10);
+
+  return true;
+}
+
+bool ChatHandler::HandleGMCDirectOrderCommand(const char *args)
+{
+    if (!*args) return false;
+  stack<string> s_temp_fill;
+  recursive_decomposition(s_temp_fill,args);
+  if ( s_temp_fill.size() < 1 ) return false;
+  string arg_i = s_temp_fill.top();
+  s_temp_fill.pop();
+  if ( arg_i == "10" )
+  {
+    SpellEntry const *spellInfo = sSpellStore.LookupEntry( 43430 );
+    if(spellInfo)
+    {
+      for(uint32 i = 0;i<3;i++)
+      {
+        uint8 eff = spellInfo->Effect[i];
+        if (eff>=TOTAL_SPELL_EFFECTS)
+          continue;
+        if(eff == SPELL_EFFECT_APPLY_AREA_AURA_PARTY || eff == SPELL_EFFECT_APPLY_AURA || eff == SPELL_EFFECT_PERSISTENT_AREA_AURA)
+        {
+          Aura *Aur = CreateAura(spellInfo, i, NULL, m_session->GetPlayer());
+          Aur->SetAuraDuration(3600000);
+          m_session->GetPlayer()->AddAura(Aur);
+        }
+      }
+    }
+    return true;
+  }
+  string arg_ii = "all";
+  if ( !s_temp_fill.empty() )
+  {
+    arg_ii = s_temp_fill.top();
+    s_temp_fill.pop();
+    if ( arg_ii.substr(0,3) == "any" ) return false;
+  }
+  WodexManager &wodex = WodexManager::GetInstance();
+  wodex.AutoSCEnDExPCreation(m_session->GetPlayer(),arg_ii,arg_i,500,10);
+  return true;
+}
+
+bool ChatHandler::HandleGMCRemoveSpellsCommand(const char *args)
+{
+    if (!*args) return false;
+
+  stack<string> s_temp_fill;
+  recursive_decomposition(s_temp_fill,args);
+
+  // Syntax: .gmc follow <mercenary>
+
+  if ( s_temp_fill.empty() || s_temp_fill.size() > 1 ) return false;
+
+  // Remplissage de la variable temporaire arg_i
+  string arg_i = s_temp_fill.top();
+  s_temp_fill.pop();
+
+  if ( arg_i.substr(0,3) == "any" ) return false;
+
+  // Instanciation du protocole d'?change
+  WodexManager &wodex = WodexManager::GetInstance();
+
+  wodex.AutoSCEnDExPCreation(m_session->GetPlayer(),arg_i,"",964,10);
+
+  return true;
+}
+
+bool ChatHandler::HandleGMCCooldownCommand(const char *args)
+{
+    if (!*args) return false;
+
+  stack<string> s_temp_fill;
+  recursive_decomposition(s_temp_fill,args);
+
+  // Syntax: .gmc cooldown <mercenary>
+
+  if ( s_temp_fill.empty() || s_temp_fill.size() > 2 ) return false;
+
+  // Remplissage de la variable temporaire arg_i
+  string arg_i = s_temp_fill.top();
+  s_temp_fill.pop();
+  string arg_ii = "";
+  if ( !s_temp_fill.empty() )
+  {
+    arg_ii = s_temp_fill.top();
+    s_temp_fill.pop();
+  }
+
+  if ( arg_i.substr(0,3) == "any" ) return false;
+
+  // Instanciation du protocole d'?change
+  WodexManager &wodex = WodexManager::GetInstance();
+
+  wodex.AutoSCEnDExPCreation(m_session->GetPlayer(),arg_i,arg_ii,965,10);
+
+  return true;
+}
+
+bool ChatHandler::HandleGMCGossipCommand(const char *args)
+{
+    if (!*args) return false;
+
+  stack<string> s_temp_fill;
+  recursive_decomposition(s_temp_fill,args);
+
+  // Syntax: .gmc gossip <mercenary> ; <boolean_value>
+
+  if ( s_temp_fill.size() != 2 ) return false;
+
+  // Remplissage de la variable temporaire arg_i
+  string arg_i = s_temp_fill.top();
+  s_temp_fill.pop();
+  string arg_ii = s_temp_fill.top();
+  s_temp_fill.pop();
+
+  if ( arg_i.substr(0,3) == "any" ) return false;
+
+  if ( arg_ii == "on" )
+  {
+    // Instanciation du protocole d'?change
+    WodexManager &wodex = WodexManager::GetInstance();
+    wodex.AutoSCEnDExPCreation(m_session->GetPlayer(),arg_i,"",113,10);
+  }
+  else if ( arg_ii == "off" )
+  {
+    // Instanciation du protocole d'?change
+    WodexManager &wodex = WodexManager::GetInstance();
+    wodex.AutoSCEnDExPCreation(m_session->GetPlayer(),arg_i,"",114,10);
+  }
+  else return false;
+
+  return true;
+}
+
+bool ChatHandler::HandleGMCAoECommand(const char *args)
+{
+    if (!*args) return false;
+
+  stack<string> s_temp_fill;
+  recursive_decomposition(s_temp_fill,args);
+
+  // Syntax: .gmc gossip <mercenary> ; <boolean_value>
+
+  if ( s_temp_fill.size() != 2 ) return false;
+
+  // Remplissage de la variable temporaire arg_i
+  string arg_i = s_temp_fill.top();
+  s_temp_fill.pop();
+  string arg_ii = s_temp_fill.top();
+  s_temp_fill.pop();
+
+  if ( arg_i.substr(0,3) == "any" ) return false;
+
+  if ( arg_ii == "on" )
+  {
+    // Instanciation du protocole d'?change
+    WodexManager &wodex = WodexManager::GetInstance();
+    wodex.AutoSCEnDExPCreation(m_session->GetPlayer(),arg_i,"",121,10);
+  }
+  else if ( arg_ii == "off" )
+  {
+    // Instanciation du protocole d'?change
+    WodexManager &wodex = WodexManager::GetInstance();
+    wodex.AutoSCEnDExPCreation(m_session->GetPlayer(),arg_i,"",122,10);
+  }
+  else return false;
+
+  return true;
+}
+
+bool ChatHandler::HandleGMCSpawnCommand(const char *args)
+{
+  // Syntax: .gmc spawn
+
+  m_session->GetPlayer()->SummonCreature(50505,m_session->GetPlayer()->GetPositionX(),m_session->GetPlayer()->GetPositionY(),m_session->GetPlayer()->GetPositionZ(),m_session->GetPlayer()->GetOrientation(),TEMPSUMMON_DEAD_DESPAWN,3600);
+
+  return true;
+}
+
+bool ChatHandler::HandleGMCReloadCommand(const char *args)
+{
+  // Syntax: .gmc reload
+
+  MySQLConfig & mysql = MySQLConfig::GetInstance();
+  mysql.Reload();
+
+  // Instanciation du protocole d'?change
+  WodexManager &wodex = WodexManager::GetInstance();
+
+  wodex.AutoSCEnDExPCreation(m_session->GetPlayer(),"all","",966,10);
+
+  return true;
 }

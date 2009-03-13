@@ -46,6 +46,9 @@
 #include "sockets/SocketHandler.h"
 #include "sockets/ListenSocket.h"
 
+#include "../game/mysql_config.h"
+#include "../game/GameAccessor.h"
+
 #ifdef WIN32
 #include "ServiceWin32.h"
 extern int m_ServiceStatus;
@@ -292,6 +295,10 @@ int Master::Run()
     // maximum counter for next ping
     uint32 numLoops = (sConfig.GetIntDefault( "MaxPingTime", 30 ) * (MINUTE * 1000000 / socketSelecttime));
     uint32 loopCounter = 0;
+
+    //MISS
+    MySQLConfig & mysql = MySQLConfig::GetInstance();
+    GameAccessor & mgr = GameAccessor::GetInstance(); // MISS Gmgr initialisation
 
     ///- Start up freeze catcher thread
     uint32 freeze_delay = sConfig.GetIntDefault("MaxCoreStuckTime", 0);

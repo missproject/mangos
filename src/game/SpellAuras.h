@@ -52,7 +52,7 @@ typedef void(Aura::*pAuraHandler)(bool Apply, bool Real);
 
 class MANGOS_DLL_SPEC Aura
 {
-    friend Aura* CreateAura(SpellEntry const* spellproto, uint32 eff, int32 *currentBasePoints, Unit *target, Unit *caster, Item* castItem);
+    friend MANGOS_DLL_SPEC Aura* CreateAura(SpellEntry const* spellproto, uint32 eff, int32 *currentBasePoints, Unit *target, Unit *caster, Item* castItem);
 
     public:
         //aura handlers
@@ -389,5 +389,5 @@ class MANGOS_DLL_SPEC SingleEnemyTargetAura : public Aura
         uint64 m_casters_target_guid;
 };
 
-Aura* CreateAura(SpellEntry const* spellproto, uint32 eff, int32 *currentBasePoints, Unit *target, Unit *caster = NULL, Item* castItem = NULL);
+MANGOS_DLL_SPEC Aura* CreateAura(SpellEntry const* spellproto, uint32 eff, int32 *currentBasePoints, Unit *target, Unit *caster = NULL, Item* castItem = NULL);
 #endif
