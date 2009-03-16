@@ -528,6 +528,7 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
 
     if (pVictim->GetTypeId() == TYPEID_UNIT && !((Creature*)pVictim)->isPet() && !((Creature*)pVictim)->hasLootRecipient())
         ((Creature*)pVictim)->SetLootRecipient(this);
+
     if (health <= damage)
     {
         DEBUG_LOG("DealDamage: victim just died");
@@ -604,12 +605,12 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
             ((Creature*)this)->AI()->KilledUnit(pVictim);
 
         // achievement stuff
-        if ( pVictim->GetTypeId() == TYPEID_PLAYER)
+        if (pVictim->GetTypeId() == TYPEID_PLAYER)
         {
-            if(GetTypeId() == TYPEID_UNIT)
+            if (GetTypeId() == TYPEID_UNIT)
                 ((Player*)pVictim)->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_KILLED_BY_CREATURE, GetEntry());
-            else if(GetTypeId() == TYPEID_PLAYER)
-                ((Player*)pVictim)->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_KILLED_BY_PLAYER, 1);
+            else if(GetTypeId() == TYPEID_PLAYER && pVictim != this)
+                ((Player*)pVictim)->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_KILLED_BY_PLAYER, 1, ((Player*)this)->GetTeam());
         }
 
         // 10% durability loss on death
@@ -900,7 +901,7 @@ void Unit::CastCustomSpell(Unit* Victim,uint32 spellId, int32 const* bp0, int32 
 
     if(!spellInfo)
     {
-        sLog.outError("CastCustomSpell: unknown spell id %i\n", spellId);
+        sLog.outError("CastCustomSpell: unknown spell id %i", spellId);
         return;
     }
 
@@ -2967,7 +2968,7 @@ void Unit::_UpdateAutoRepeatSpell()
     if (isAttackReady(RANGED_ATTACK))
     {
         // Check if able to cast
-        if(m_currentSpells[CURRENT_AUTOREPEAT_SPELL]->CanCast(true))
+        if(m_currentSpells[CURRENT_AUTOREPEAT_SPELL]->CheckCast(true) != SPELL_CAST_OK)
         {
             InterruptSpell(CURRENT_AUTOREPEAT_SPELL);
             return;
@@ -6028,7 +6029,7 @@ bool Unit::HandleProcTriggerSpell(Unit *pVictim, uint32 damage, Aura* triggeredB
                 //else if (auraSpellInfo->Id==47300)        // Dark Flame Aura
                 else if (auraSpellInfo->Id==57345)          // Darkmoon Card: Greatness
                 {
-                    uint32 stat = 0;
+                    float stat = 0.0f;
                     // strength
                     if (GetStat(STAT_STRENGTH) > stat) { trigger_spell_id = 60229;stat = GetStat(STAT_STRENGTH); }
                     // agility
@@ -6587,7 +6588,7 @@ bool Unit::HandleProcTriggerSpell(Unit *pVictim, uint32 damage, Aura* triggeredB
         // Bloodthirst (($m/100)% of max health)
         case 23880:
         {
-            basepoints0 = int32(GetMaxHealth() * triggerAmount / 10000);
+            basepoints0 = int32(GetMaxHealth() * triggerAmount / 100);
             break;
         }
         // Shamanistic Rage triggered spell
@@ -7131,6 +7132,7 @@ bool Unit::Attack(Unit *victim, bool meleeAttack)
     if(HasAuraType(SPELL_AURA_MOD_UNATTACKABLE))
         RemoveSpellsCausingAura(SPELL_AURA_MOD_UNATTACKABLE);
 
+    // in fighting already
     if (m_attacking)
     {
         if (m_attacking == victim)
@@ -7144,7 +7146,16 @@ bool Unit::Attack(Unit *victim, bool meleeAttack)
             }
             return false;
         }
-        AttackStop();
+
+        // remove old target data
+        AttackStop(true);
+    }
+    // new battle
+    else
+    {
+        // set position before any AI calls/assistance
+        if(GetTypeId()==TYPEID_UNIT)
+            ((Creature*)this)->SetCombatStartPosition(GetPositionX(), GetPositionY(), GetPositionZ());
     }
 
     //Set our target
@@ -7152,10 +7163,6 @@ bool Unit::Attack(Unit *victim, bool meleeAttack)
 
     if(meleeAttack)
         addUnitState(UNIT_STAT_MELEE_ATTACKING);
-
-    // set position before any AI calls/assistance
-    if(GetTypeId()==TYPEID_UNIT)
-        ((Creature*)this)->SetCombatStartPosition(GetPositionX(), GetPositionY(), GetPositionZ());
 
     m_attacking = victim;
     m_attacking->_addAttacker(this);
@@ -7183,7 +7190,7 @@ bool Unit::Attack(Unit *victim, bool meleeAttack)
     return true;
 }
 
-bool Unit::AttackStop()
+bool Unit::AttackStop(bool targetSwitch /*=false*/)
 {
     if (!m_attacking)
         return false;
@@ -7200,11 +7207,9 @@ bool Unit::AttackStop()
 
     InterruptSpell(CURRENT_MELEE_SPELL);
 
-    if( GetTypeId()==TYPEID_UNIT )
-    {
-        // reset call assistance
+    // reset only at real combat stop
+    if(!targetSwitch && GetTypeId()==TYPEID_UNIT )
         ((Creature*)this)->SetNoCallAssistance(false);
-    }
 
     SendAttackStop(victim);
 
@@ -7617,10 +7622,12 @@ uint32 Unit::SpellDamageBonus(Unit *pVictim, SpellEntry const *spellProto, uint3
             coeff = bonus->dot_damage * LvlPenalty * stack;
         else
             coeff = bonus->direct_damage * LvlPenalty * stack;
+
         if (bonus->ap_bonus)
-            DoneTotal+=bonus->ap_bonus * GetTotalAttackPowerValue(BASE_ATTACK) * stack;
-        DoneTotal += DoneAdvertisedBenefit * coeff * SpellModSpellDamage;
-        TakenTotal+= TakenAdvertisedBenefit * coeff;
+            DoneTotal += int32(bonus->ap_bonus * GetTotalAttackPowerValue(BASE_ATTACK) * stack);
+
+        DoneTotal  += int32(DoneAdvertisedBenefit * coeff * SpellModSpellDamage);
+        TakenTotal += int32(TakenAdvertisedBenefit * coeff);
     }
     // Default calculation
     else if (DoneAdvertisedBenefit || TakenAdvertisedBenefit)
@@ -7670,8 +7677,8 @@ uint32 Unit::SpellDamageBonus(Unit *pVictim, SpellEntry const *spellProto, uint3
                 break;
             }
         }
-        DoneTotal += DoneAdvertisedBenefit * (CastingTime / 3500.0f) * DotFactor * LvlPenalty * SpellModSpellDamage;
-        TakenTotal+= TakenAdvertisedBenefit * (CastingTime / 3500.0f) * DotFactor * LvlPenalty;
+        DoneTotal += int32(DoneAdvertisedBenefit * (CastingTime / 3500.0f) * DotFactor * LvlPenalty * SpellModSpellDamage);
+        TakenTotal+= int32(TakenAdvertisedBenefit * (CastingTime / 3500.0f) * DotFactor * LvlPenalty);
     }
 
     float tmpDamage = (pdamage + DoneTotal) * DoneTotalMod;
@@ -8033,10 +8040,12 @@ uint32 Unit::SpellHealingBonus(Unit *pVictim, SpellEntry const *spellProto, uint
             coeff = bonus->dot_damage * LvlPenalty * stack;
         else
             coeff = bonus->direct_damage * LvlPenalty * stack;
+
         if (bonus->ap_bonus)
-            DoneTotal+=bonus->ap_bonus * GetTotalAttackPowerValue(BASE_ATTACK) * stack;
-        DoneTotal += DoneAdvertisedBenefit * coeff * SpellModSpellDamage;
-        TakenTotal+= TakenAdvertisedBenefit * coeff;
+            DoneTotal += int32(bonus->ap_bonus * GetTotalAttackPowerValue(BASE_ATTACK) * stack);
+
+        DoneTotal  += int32(DoneAdvertisedBenefit * coeff * SpellModSpellDamage);
+        TakenTotal += int32(TakenAdvertisedBenefit * coeff);
     }
     // Default calculation
     else if (DoneAdvertisedBenefit || TakenAdvertisedBenefit)
@@ -8086,8 +8095,8 @@ uint32 Unit::SpellHealingBonus(Unit *pVictim, SpellEntry const *spellProto, uint
                 break;
             }
         }
-        DoneTotal += DoneAdvertisedBenefit * (CastingTime / 3500.0f) * DotFactor * LvlPenalty * SpellModSpellDamage * 1.88f;
-        TakenTotal+= TakenAdvertisedBenefit * (CastingTime / 3500.0f) * DotFactor * LvlPenalty * 1.88f;
+        DoneTotal  += int32(DoneAdvertisedBenefit * (CastingTime / 3500.0f) * DotFactor * LvlPenalty * SpellModSpellDamage * 1.88f);
+        TakenTotal += int32(TakenAdvertisedBenefit * (CastingTime / 3500.0f) * DotFactor * LvlPenalty * 1.88f);
     }
 
     // use float as more appropriate for negative values and percent applying
@@ -10606,8 +10615,11 @@ Player* Unit::GetSpellModOwner()
 }
 
 ///----------Pet responses methods-----------------
-void Unit::SendPetCastFail(uint32 spellid, uint8 msg)
+void Unit::SendPetCastFail(uint32 spellid, SpellCastResult msg)
 {
+    if(msg == SPELL_CAST_OK)
+        return; 
+
     Unit *owner = GetCharmerOrOwner();
     if(!owner || owner->GetTypeId() != TYPEID_PLAYER)
         return;
@@ -11367,4 +11379,20 @@ void Unit::SetPhaseMask(uint32 newPhaseMask, bool update)
     if(IsInWorld())
         if(Pet* pet = GetPet())
             pet->SetPhaseMask(newPhaseMask,true);
+}
+
+void Unit::NearTeleportTo( float x, float y, float z, float orientation, bool casting /*= false*/ )
+{
+    if(GetTypeId() == TYPEID_PLAYER)
+        ((Player*)this)->TeleportTo(GetMapId(), x, y, z, orientation, TELE_TO_NOT_LEAVE_TRANSPORT | TELE_TO_NOT_LEAVE_COMBAT | TELE_TO_NOT_UNSUMMON_PET | (casting ? TELE_TO_SPELL : 0));
+    else
+    {
+        GetMap()->CreatureRelocation((Creature*)this, x, y, z, orientation);
+
+        WorldPacket data;
+        // Work strange for many spells: triggered active mover set for targeted player to creature
+        //BuildTeleportAckMsg(&data, x, y, z, orientation);
+        BuildHeartBeatMsg(&data);
+        SendMessageToSet(&data, false);
+    }
 }
