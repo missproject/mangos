@@ -295,7 +295,7 @@ void SendDefaultMenu_mercenary_summoner(Player *player, Creature *_Creature, uin
 			player->PlayerTalkClass->SendGossipMenu(907,_Creature->GetGUID());
 		}
 		else
-			_Creature->Say(mysql.GetText((uint32)TEXT_SUMMONER_MUST_GROUP),LANG_UNIVERSAL,NULL);
+			_Creature->MonsterSay(mysql.GetText((uint32)TEXT_SUMMONER_MUST_GROUP),LANG_UNIVERSAL,NULL);
     }
 }
 

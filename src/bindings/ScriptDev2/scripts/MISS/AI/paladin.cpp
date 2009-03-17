@@ -807,7 +807,7 @@ void mercenary_paladinAI::UpdateAI(const uint32 diff)
 				if ( chatty )
 				{
 					MySQLConfig & mysql = MySQLConfig::GetInstance();
-					DoYell(mysql.GetText((uint32)TEXT_PALADIN_SPELL_1),LANG_UNIVERSAL,t_maintank);
+					DoYell(mysql.GetText((uint32)TEXT_PALADIN_SPELL_1),LANG_UNIVERSAL,t_maintank->GetGUID());
 				}
 				do
 				{
@@ -831,7 +831,7 @@ void mercenary_paladinAI::UpdateAI(const uint32 diff)
 				if ( chatty )
 				{
 					MySQLConfig & mysql = MySQLConfig::GetInstance();
-					DoYell(mysql.GetText((uint32)TEXT_PALADIN_SPELL_3a),LANG_UNIVERSAL,t_player);
+					DoYell(mysql.GetText((uint32)TEXT_PALADIN_SPELL_3a),LANG_UNIVERSAL,t_player->GetGUID());
 				}
 				SpellEntry const *spellInfo = GetSpellStore()->LookupEntry(Spell3Entry1);
 				AddToSpellList(t_player,Spell3Entry1);
@@ -859,7 +859,7 @@ void mercenary_paladinAI::UpdateAI(const uint32 diff)
 				if ( chatty )
 				{
 					MySQLConfig & mysql = MySQLConfig::GetInstance();
-					DoYell(mysql.GetText((uint32)TEXT_PALADIN_SPELL_3b),LANG_UNIVERSAL,t_player);
+					DoYell(mysql.GetText((uint32)TEXT_PALADIN_SPELL_3b),LANG_UNIVERSAL,t_player->GetGUID());
 				}
 				SpellEntry const *spellInfo = GetSpellStore()->LookupEntry(Spell3Entry2);
 				AddToSpellList(t_player,Spell3Entry2);
@@ -895,7 +895,7 @@ void mercenary_paladinAI::UpdateAI(const uint32 diff)
 			if ( chatty )
 			{
 				MySQLConfig & mysql = MySQLConfig::GetInstance();
-				DoYell(mysql.GetText((uint32)TEXT_PALADIN_SPELL_2),LANG_UNIVERSAL,t_player);
+				DoYell(mysql.GetText((uint32)TEXT_PALADIN_SPELL_2),LANG_UNIVERSAL,t_player->GetGUID());
 			}
 			SpellEntry const *spellInfo = GetSpellStore()->LookupEntry(Spell2Entry);
 			AddToSpellList(t_player,Spell2Entry);
@@ -931,7 +931,7 @@ void mercenary_paladinAI::UpdateAI(const uint32 diff)
 			if ( chatty )
 			{
 				MySQLConfig & mysql = MySQLConfig::GetInstance();
-				DoYell(mysql.GetText((uint32)TEXT_PALADIN_SPELL_4),LANG_UNIVERSAL,t_player);
+				DoYell(mysql.GetText((uint32)TEXT_PALADIN_SPELL_4),LANG_UNIVERSAL,t_player->GetGUID());
 			}
 			DoCast(t_player,Spell4Entry);
 		}

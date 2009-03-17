@@ -97,4 +97,7 @@ int GetLogLevel();
 #define ConsumeMage()				IntListPutIntToInt(mages,MageCooldown)
 #define GetUnpolymorphedHostile()	UnitListGetRandomHostileUnitExceptNotWishSpell(s_names,m_creature,m_creature->getVictim(),SheepEntry) /*now volatile*/
 
+#define DoSay(a,b,c)				m_creature->MonsterSay(a,b,c)
+#define DoYell(a,b,c)				m_creature->MonsterYell(a,b,c)
+
 #endif

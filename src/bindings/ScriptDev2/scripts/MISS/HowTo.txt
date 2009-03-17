@@ -1,7 +1,8 @@
-1. Apply MOSr6440.patch on MaNGOS trunk dir
-2. Compile MaNGOS Core
-3. Apply SD2r558.patch on SD2 dir
-4. Compile SD2
-5. Apply sql/sql_MISSr6.sql on MaNGOS DB.
+1. Apply SD2r905.patch on SD2 dir.
+2. Compile mangos then SD2.
+3. Apply sql/mangos_creature_template_modifications_for_MISS_r17_mangos_r7468.sql on MaNGOS DB.
+4. Apply sql/MISS_DB_for_MISS_r17_mangos_r7468.sql on MySQL connection.
+
+Edit config if needed.
 
 ENJOY !!

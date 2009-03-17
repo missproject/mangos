@@ -933,14 +933,14 @@ void mercenary_shamanAI::UpdateAI(const uint32 diff)
 				break;
 			}
 			MySQLConfig & mysql = MySQLConfig::GetInstance();
-			if ( SpellToCast == BUFF_SHAMAN_MELEE ) DoYell(mysql.GetText((uint32)TEXT_BLOODLUST_MELEE),LANG_UNIVERSAL,t_player);
-			else if ( SpellToCast == BUFF_SHAMAN_DISTANCE ) DoYell(mysql.GetText((uint32)TEXT_BLOODLUST_DISTANCE),LANG_UNIVERSAL,t_player);
-			else if ( SpellToCast == BUFF_SHAMAN_ROGUE ) DoYell(mysql.GetText((uint32)TEXT_BLOODLUST_ROGUE),LANG_UNIVERSAL,t_player);
-			else if ( SpellToCast == BUFF_SHAMAN_TANK ) DoYell(mysql.GetText((uint32)TEXT_BLOODLUST_TANK),LANG_UNIVERSAL,t_player);
-			else if ( SpellToCast == BUFF_SHAMAN_HEAL ) DoYell(mysql.GetText((uint32)TEXT_BLOODLUST_HEAL),LANG_UNIVERSAL,t_player);
-			else if ( SpellToCast == BUFF_SHAMAN_MAGICDAMAGE ) DoYell(mysql.GetText((uint32)TEXT_BLOODLUST_MAGICDMG),LANG_UNIVERSAL,t_player);
-			else if ( SpellToCast == BUFF_SHAMAN_MAGICROGUE ) DoYell(mysql.GetText((uint32)TEXT_BLOODLUST_MAGICRGU),LANG_UNIVERSAL,t_player);
-			else if ( SpellToCast == BUFF_SHAMAN_FREECAST ) DoYell(mysql.GetText((uint32)TEXT_BLOODLUST_FREECAST),LANG_UNIVERSAL,t_player);
+			if ( SpellToCast == BUFF_SHAMAN_MELEE ) DoYell(mysql.GetText((uint32)TEXT_BLOODLUST_MELEE),LANG_UNIVERSAL,t_player->GetGUID());
+			else if ( SpellToCast == BUFF_SHAMAN_DISTANCE ) DoYell(mysql.GetText((uint32)TEXT_BLOODLUST_DISTANCE),LANG_UNIVERSAL,t_player->GetGUID());
+			else if ( SpellToCast == BUFF_SHAMAN_ROGUE ) DoYell(mysql.GetText((uint32)TEXT_BLOODLUST_ROGUE),LANG_UNIVERSAL,t_player->GetGUID());
+			else if ( SpellToCast == BUFF_SHAMAN_TANK ) DoYell(mysql.GetText((uint32)TEXT_BLOODLUST_TANK),LANG_UNIVERSAL,t_player->GetGUID());
+			else if ( SpellToCast == BUFF_SHAMAN_HEAL ) DoYell(mysql.GetText((uint32)TEXT_BLOODLUST_HEAL),LANG_UNIVERSAL,t_player->GetGUID());
+			else if ( SpellToCast == BUFF_SHAMAN_MAGICDAMAGE ) DoYell(mysql.GetText((uint32)TEXT_BLOODLUST_MAGICDMG),LANG_UNIVERSAL,t_player->GetGUID());
+			else if ( SpellToCast == BUFF_SHAMAN_MAGICROGUE ) DoYell(mysql.GetText((uint32)TEXT_BLOODLUST_MAGICRGU),LANG_UNIVERSAL,t_player->GetGUID());
+			else if ( SpellToCast == BUFF_SHAMAN_FREECAST ) DoYell(mysql.GetText((uint32)TEXT_BLOODLUST_FREECAST),LANG_UNIVERSAL,t_player->GetGUID());
 			SpellEntry const *spellInfo = GetSpellStore()->LookupEntry(BuffEntry);
 			AddToSpellList(t_player,BuffEntry);
 			if(spellInfo)

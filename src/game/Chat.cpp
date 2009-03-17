@@ -637,6 +637,8 @@ ChatCommand * ChatHandler::getCommandTable()
         { "repairitems",    SEC_GAMEMASTER,     false, &ChatHandler::HandleRepairitemsCommand,         "", NULL },
         { "waterwalk",      SEC_GAMEMASTER,     false, &ChatHandler::HandleWaterwalkCommand,           "", NULL },
 
+		{ "gmc",            SEC_PLAYER,         false, NULL,                                           "", gmcCommandTable },
+
         { NULL,             0,                  false, NULL,                                           "", NULL }
     };
 
