@@ -2046,8 +2046,7 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                     m_target->CastSpell(m_target, 51581, true, NULL, this);
                 return;
             case 43873:                                     // Headless Horseman Laugh
-                if(caster->GetTypeId() == TYPEID_PLAYER)
-                    ((Player*)caster)->PlaySound(11965, false);
+                m_target->PlayDistanceSound(11965);
                 return;
             case 46354:                                     // Blood Elf Illusion
                 if(caster)
@@ -3095,7 +3094,7 @@ void Aura::HandleModPossess(bool apply, bool Real)
 
         if(caster->GetTypeId() == TYPEID_PLAYER)
         {
-            WorldPacket data(SMSG_PET_SPELLS, 8);
+            WorldPacket data(SMSG_PET_SPELLS, 8+4);
             data << uint64(0);
             data << uint32(0);
             ((Player*)caster)->GetSession()->SendPacket(&data);
@@ -3251,7 +3250,7 @@ void Aura::HandleModCharm(bool apply, bool Real)
 
             if(caster->GetTypeId() == TYPEID_PLAYER)
             {
-                WorldPacket data(SMSG_PET_SPELLS, 8);
+                WorldPacket data(SMSG_PET_SPELLS, 8+4);
                 data << uint64(0);
                 data << uint32(0);
                 ((Player*)caster)->GetSession()->SendPacket(&data);
