@@ -49,6 +49,31 @@
 
 extern pEffect SpellEffects[TOTAL_SPELL_EFFECTS];
 
+class PrioritizeManaPlayerWraper
+{
+    friend struct PrioritizeMana;
+
+    public:
+        explicit PrioritizeManaPlayerWraper(Player* player) : player(player)
+        {
+            uint32 maxmana = player->GetMaxPower(POWER_MANA);
+            percentMana = maxmana ? player->GetPower(POWER_MANA) * 100 / maxmana : 101;
+        }
+        Player* getPlayer() const { return player; }
+    private:
+        Player* player;
+        uint32 percentMana;
+};
+
+struct PrioritizeMana
+{
+    int operator()( PrioritizeManaPlayerWraper const& x, PrioritizeManaPlayerWraper const& y ) const
+    {
+        return x.percentMana < y.percentMana;
+    }
+};
+
+
 bool IsQuestTameSpell(uint32 spellId)
 {
     SpellEntry const *spellproto = sSpellStore.LookupEntry(spellId);
@@ -1301,6 +1326,19 @@ void Spell::SetTargetMap(uint32 i,uint32 cur,std::list<Unit*> &TagUnitMap)
 
     // Get spell max affected targets
     uint32 unMaxTargets = m_spellInfo->MaxAffectedTargets;
+
+    // custom target amount cases
+    switch(m_spellInfo->SpellFamilyName)
+    {
+        case SPELLFAMILY_DRUID:
+            // Starfall
+            if (m_spellInfo->SpellFamilyFlags2 & 0x00000100LL)
+                unMaxTargets = 2;
+            break;
+        default:
+            break;
+    }
+
     Unit::AuraList const& mod = m_caster->GetAurasByType(SPELL_AURA_MOD_MAX_AFFECTED_TARGETS);
     for(Unit::AuraList::const_iterator m = mod.begin(); m != mod.end(); ++m)
     {
@@ -1308,6 +1346,7 @@ void Spell::SetTargetMap(uint32 i,uint32 cur,std::list<Unit*> &TagUnitMap)
             continue;
         unMaxTargets+=(*m)->GetModifier()->m_amount;
     }
+
     switch(cur)
     {
         case TARGET_TOTEM_EARTH:
@@ -1600,7 +1639,6 @@ void Spell::SetTargetMap(uint32 i,uint32 cur,std::list<Unit*> &TagUnitMap)
         case TARGET_ALL_PARTY_AROUND_CASTER:
         case TARGET_ALL_PARTY_AROUND_CASTER_2:
         case TARGET_ALL_PARTY:
-        case TARGET_ALL_RAID_AROUND_CASTER:
         {
             Player *pTarget = m_caster->GetCharmerOrOwnerPlayerOrPlayerItself();
             Group *pGroup = pTarget ? pTarget->GetGroup() : NULL;
@@ -1614,9 +1652,7 @@ void Spell::SetTargetMap(uint32 i,uint32 cur,std::list<Unit*> &TagUnitMap)
                     Player* Target = itr->getSource();
 
                     // IsHostileTo check duel and controlled by enemy
-                    if( Target &&
-                        (cur==TARGET_ALL_RAID_AROUND_CASTER || Target->GetSubGroup()==subgroup) &&
-                        !m_caster->IsHostileTo(Target) )
+                    if( Target && Target->GetSubGroup()==subgroup && !m_caster->IsHostileTo(Target) )
                     {
                         if( m_caster->IsWithinDistInMap(Target, radius) )
                             TagUnitMap.push_back(Target);
@@ -1636,7 +1672,81 @@ void Spell::SetTargetMap(uint32 i,uint32 cur,std::list<Unit*> &TagUnitMap)
                     if( m_caster->IsWithinDistInMap(pet, radius) )
                         TagUnitMap.push_back(pet);
             }
-        }break;
+            break;
+        }
+        case TARGET_ALL_RAID_AROUND_CASTER:
+        {
+            Player *pTarget = m_caster->GetCharmerOrOwnerPlayerOrPlayerItself();
+            Group *pGroup = pTarget ? pTarget->GetGroup() : NULL;
+
+            if(m_spellInfo->Id==57669)                  //Replenishment (special target selection)
+            {
+                if(pGroup)
+                {
+                    typedef std::priority_queue<PrioritizeManaPlayerWraper, std::vector<PrioritizeManaPlayerWraper>, PrioritizeMana> Top10;
+                    Top10 manaUsers;
+
+                    for(GroupReference *itr = pGroup->GetFirstMember(); itr != NULL && manaUsers.size() < 10; itr = itr->next())
+                    {
+                        Player* Target = itr->getSource();
+                        if (m_caster->GetGUID() != Target->GetGUID() && Target->getPowerType() == POWER_MANA &&
+                            !Target->isDead() && m_caster->IsWithinDistInMap(Target, radius))
+                        {
+                            PrioritizeManaPlayerWraper  WTarget(Target);
+                            manaUsers.push(WTarget);
+                        }
+                    }
+
+                    while(!manaUsers.empty())
+                    {
+                        TagUnitMap.push_back(manaUsers.top().getPlayer());
+                        manaUsers.pop();
+                    }
+                }
+                else
+                {
+                    Unit* ownerOrSelf = pTarget ? pTarget : m_caster->GetCharmerOrOwnerOrSelf();
+                    if ((ownerOrSelf==m_caster || m_caster->IsWithinDistInMap(ownerOrSelf, radius)) &&
+                        ownerOrSelf->getPowerType() == POWER_MANA)
+                        TagUnitMap.push_back(ownerOrSelf);
+
+                    if(Pet* pet = ownerOrSelf->GetPet())
+                        if( m_caster->IsWithinDistInMap(pet, radius) && pet->getPowerType() == POWER_MANA )
+                            TagUnitMap.push_back(pet);
+                }
+            }
+            else
+            {
+                if(pGroup)
+                {
+                    for(GroupReference *itr = pGroup->GetFirstMember(); itr != NULL; itr = itr->next())
+                    {
+                        Player* Target = itr->getSource();
+
+                        // IsHostileTo check duel and controlled by enemy
+                        if( Target && !m_caster->IsHostileTo(Target) )
+                        {
+                            if( m_caster->IsWithinDistInMap(Target, radius) )
+                                TagUnitMap.push_back(Target);
+
+                            if(Pet* pet = Target->GetPet())
+                                if( m_caster->IsWithinDistInMap(pet, radius) )
+                                    TagUnitMap.push_back(pet);
+                        }
+                    }
+                }
+                else
+                {
+                    Unit* ownerOrSelf = pTarget ? pTarget : m_caster->GetCharmerOrOwnerOrSelf();
+                    if(ownerOrSelf==m_caster || m_caster->IsWithinDistInMap(ownerOrSelf, radius))
+                        TagUnitMap.push_back(ownerOrSelf);
+                    if(Pet* pet = ownerOrSelf->GetPet())
+                        if( m_caster->IsWithinDistInMap(pet, radius) )
+                            TagUnitMap.push_back(pet);
+                }
+            }
+            break;
+        }
         case TARGET_SINGLE_FRIEND:
         case TARGET_SINGLE_FRIEND_2:
         {
@@ -4305,6 +4415,20 @@ SpellCastResult Spell::CheckCast(bool strict)
     {
         switch(m_spellInfo->EffectApplyAuraName[i])
         {
+            case SPELL_AURA_DUMMY:
+            {
+                //custom check
+                switch(m_spellInfo->Id)
+                {
+                    case 61336:
+                        if(m_caster->GetTypeId()!=TYPEID_PLAYER || !((Player*)m_caster)->IsInFeralForm())
+                            return SPELL_FAILED_ONLY_SHAPESHIFT;
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            }
             case SPELL_AURA_MOD_POSSESS:
             case SPELL_AURA_MOD_CHARM:
             {
@@ -4394,7 +4518,7 @@ SpellCastResult Spell::CheckCast(bool strict)
     return SPELL_CAST_OK;
 }
 
-int16 Spell::PetCanCast(Unit* target)
+SpellCastResult Spell::CheckPetCast(Unit* target)
 {
     if(!m_caster->isAlive())
         return SPELL_FAILED_CASTER_DEAD;
@@ -4458,11 +4582,7 @@ int16 Spell::PetCanCast(Unit* target)
             return SPELL_FAILED_NOT_READY;
     }
 
-    SpellCastResult result = CheckCast(true);
-    if(result != SPELL_CAST_OK)
-        return result;
-    else
-        return -1;                                          //this allows to check spell fail 0, in combat
+    return CheckCast(true);
 }
 
 SpellCastResult Spell::CheckCasterAuras() const
@@ -4511,7 +4631,7 @@ SpellCastResult Spell::CheckCasterAuras() const
         prevented_reason = SPELL_FAILED_PACIFIED;
 
     // Attr must make flag drop spell totally immune from all effects
-    if(prevented_reason)
+    if(prevented_reason != SPELL_CAST_OK)
     {
         if(school_immune || mechanic_immune || dispel_immune)
         {
@@ -4589,9 +4709,9 @@ bool Spell::CanAutoCast(Unit* target)
         }
     }
 
-    int16 result = PetCanCast(target);
+    SpellCastResult result = CheckPetCast(target);
 
-    if(result == -1 || result == SPELL_FAILED_UNIT_NOT_INFRONT)
+    if(result == SPELL_CAST_OK || result == SPELL_FAILED_UNIT_NOT_INFRONT)
     {
         FillTargetMap();
         //check if among target units, our WANTED target is as well (->only self cast spells return false)
@@ -4881,7 +5001,7 @@ SpellCastResult Spell::CheckItems()
                 ItemPrototype const *proto = m_CastItem->GetProto();
                 if(!proto)
                     return SPELL_FAILED_ITEM_NOT_READY;
-                for(int s=0;s < MAX_ITEM_PROTO_SPELLS; ++s)
+                for(int s=0; s < MAX_ITEM_PROTO_SPELLS; ++s)
                 {
                     // CastItem will be used up and does not count as reagent
                     int32 charges = m_CastItem->GetSpellCharges(s);

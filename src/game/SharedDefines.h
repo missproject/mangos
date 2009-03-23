@@ -296,7 +296,7 @@ enum ItemQualities
 #define SPELL_ATTR_EX2_UNK18                      0x00040000            // 18 Only Revive pet - possible req dead pet
 #define SPELL_ATTR_EX2_NOT_NEED_SHAPESHIFT        0x00080000            // 19 does not necessarly need shapeshift
 #define SPELL_ATTR_EX2_UNK20                      0x00100000            // 20
-#define SPELL_ATTR_EX2_UNK21                      0x00200000            // 21
+#define SPELL_ATTR_EX2_DAMAGE_REDUCED_SHIELD      0x00200000            // 21 for ice blocks, pala immunity buffs, priest absorb shields, but used also for other spells -> not sure!
 #define SPELL_ATTR_EX2_UNK22                      0x00400000            // 22
 #define SPELL_ATTR_EX2_UNK23                      0x00800000            // 23 Only mage Arcane Concentration have this flag
 #define SPELL_ATTR_EX2_UNK24                      0x01000000            // 24
@@ -440,7 +440,7 @@ enum ItemQualities
 #define SPELL_ATTR_EX6_UNK30                      0x40000000            // 30 not set in 3.0.3
 #define SPELL_ATTR_EX6_UNK31                      0x80000000            // 31 not set in 3.0.3
 
-#define MAX_GLYPH_SLOT_INDEX    5
+#define MAX_GLYPH_SLOT_INDEX    6
 
 enum SheathTypes
 {
@@ -683,8 +683,7 @@ enum SpellEffects
 
 enum SpellCastResult
 {
-    SPELL_CAST_OK = 0,                                      //FIXME: used as success result currently
-    SPELL_FAILED_AFFECTING_COMBAT = 0,                      //FIXME: used as success result currently
+    SPELL_FAILED_AFFECTING_COMBAT = 0,
     SPELL_FAILED_ALREADY_AT_FULL_HEALTH = 1,
     SPELL_FAILED_ALREADY_AT_FULL_MANA = 2,
     SPELL_FAILED_ALREADY_AT_FULL_POWER = 3,
@@ -865,7 +864,9 @@ enum SpellCastResult
     SPELL_FAILED_ITEM_AT_MAX_CHARGES = 178,
     SPELL_FAILED_NOT_IN_BARBERSHOP = 179,
     SPELL_FAILED_FISHING_TOO_LOW = 180,
-    SPELL_FAILED_UNKNOWN = 181
+    SPELL_FAILED_UNKNOWN = 181,
+
+    SPELL_CAST_OK = 255                                     //custom value, don't must be send to client
 };
 
 // Spell aura states
