@@ -99,24 +99,33 @@ struct MANGOS_DLL_DECL mercenary_mpetAI : public ScriptedAI
 
 /***********************************************************************************************************************/
 
-void mercenary_mageAI::InitMove(Unit * target)
+void mercenary_mageAI::DoMove(volatile Unit * target, bool force)
 {
 	if (!target)
 		return;
-
-	int degrees = (int)FollowingOrientation;
-	if ( GetRandomInteger(0,1) )
-		degrees += GetRandomInteger(0,(int)FollowingDegreesSD);
+	if (force||(lastX==0&&lastY==0)||((Unit*)target)->GetDistance2d(lastX,lastY)>MovingGap)
+	{
+		lastX=((Unit*)target)->GetPositionX();
+		lastY=((Unit*)target)->GetPositionY();
+	}
 	else
-		degrees -= GetRandomInteger(0,(int)FollowingDegreesSD);
-	if ( degrees < 0 )
-		degrees = 0;
-	while(degrees>360)
-		degrees-=360;
+		return;
+
+	float a = (float)FollowingOrientation;
+	if (GetRandomInteger(0,1))
+		 a+=(float)GetRandomInteger(0,FollowingDegreesSD);
+	else a-=(float)GetRandomInteger(0,FollowingDegreesSD);
+	if (a<0) a=0;
+	while(a>360) a-=360;
+	float X=0,Y=0,Z=0,d=0;
+	((Unit*)target)->GetPosition(X,Y,Z);
+	d=GetRandomFloat(FollowingDistance_Min,FollowingDistance_Max);
+	X+=d*sin(a);
+	Y+=d*cos(a);
 
 	// Déplacement effectif
 	m_creature->GetMotionMaster()->Clear(false);
-	m_creature->GetMotionMaster()->MoveFollow(target,GetRandomInteger(FollowingDistance_Min,FollowingDistance_Max),degrees);
+	m_creature->GetMotionMaster()->MovePoint(3,X,Y,Z);
 }
 
 void mercenary_mageAI::LoadVolatileConsts()
@@ -146,6 +155,7 @@ void mercenary_mageAI::LoadVolatileConsts()
 	SheepEntry = mysql.GetMercenaryData()[(uint32)MERCENARY_MAGE].spell1_entry;/*28272*/
 	IsNonAttackable = mysql.GetMercenaryData()[(uint32)MERCENARY_MAGE].is_non_attackable;
 	SummonLifeSpan = mysql.GetMercenaryData()[(uint32)MERCENARY_MAGE].summon_lifespan;
+	MovingMode = mysql.GetMercenaryData()[(uint32)MERCENARY_MAGE].moving_mode;
 }
 
 void mercenary_mageAI::SelfCastFreecast()
@@ -228,6 +238,10 @@ void mercenary_mageAI::Reset()
 	cooldown_sheep = 0;
 	summonXpos = 0;
 	summonYpos = 0;
+	m_master = NULL;
+	lastX = 0;
+	lastY = 0;
+	m_creature->GetMotionMaster()->Clear();
 
 	sheeps.clear();
 	s_names.clear();
@@ -243,7 +257,10 @@ void mercenary_mageAI::Reset()
 void mercenary_mageAI::Init(Player* buying_player)
 {
 	g_master = buying_player->GetGroup();
-	InitMove(buying_player->GetGroup()->GetFirstMember()->getSource());
+	m_master = buying_player->GetGroup()->GetFirstMember()->getSource();
+	m_creature->GetMotionMaster()->Clear();
+	if ( MovingMode == 1 )
+		m_creature->GetMotionMaster()->MoveFollow((Unit*)m_master,MovingGap,0);
 }
 
 void mercenary_mageAI::Aggro(Unit *who)
@@ -373,7 +390,10 @@ bool mercenary_mageAI::TreatPacket(WodexManager &wodex, uint32 t_packet__h)
 		DebuffAll(LogLevel);
 		DoStopAttack();
 		gm_answer_only = true;
-		m_creature->GetMotionMaster()->Clear(false);
+		m_creature->GetMotionMaster()->Clear();
+		m_master = NULL;
+		lastX = 0;
+		lastY = 0;
 		return_true = true;
 	}
 	else if ( ce_flag_code == (uint32)CODE_GM_RESETGROUP )
@@ -434,7 +454,10 @@ bool mercenary_mageAI::TreatPacket(WodexManager &wodex, uint32 t_packet__h)
 		UnsummonAll(LogLevel);
 		DebuffAll(LogLevel);
 		DoStopAttack();
-		m_creature->GetMotionMaster()->Clear(false);
+		m_creature->GetMotionMaster()->Clear();
+		m_master = NULL;
+		lastX = 0;
+		lastY = 0;
 		DoSay(mysql.GetText((uint32)TEXT_COMMAND_STAY),LANG_UNIVERSAL,NULL);
 		return_true = true; // signifie que le paquet a été traité
 	}
@@ -443,7 +466,12 @@ bool mercenary_mageAI::TreatPacket(WodexManager &wodex, uint32 t_packet__h)
 		if ( wodex.GetSourceFromCEnDExPPacket(t_packet__h) )
 		{
 			DoSay(mysql.GetText((uint32)TEXT_COMMAND_FOLLOW),LANG_UNIVERSAL,NULL);
-			InitMove(wodex.GetSourceFromCEnDExPPacket(t_packet__h));
+			m_master = wodex.GetSourceFromCEnDExPPacket(t_packet__h);
+			lastX = 0;
+			lastY = 0;
+			m_creature->GetMotionMaster()->Clear();
+			if ( MovingMode == 1 )
+				m_creature->GetMotionMaster()->MoveFollow((Unit*)m_master,(float)MovingGap,0);
 		}
 		else
 			error_log("MISS: Error while finding unit for command \"Follow\"");
@@ -650,6 +678,10 @@ void mercenary_mageAI::UpdateAI(const uint32 diff)
 
 	// On recherche les données pour tous
 	OrderTreatment("all",false);
+
+	// Move
+	if ( !m_creature->getVictim() && MovingMode == 0 )
+		DoMove(m_master);
 
 	// Seule l'attitude 112 permet d'attaquer
 	if ( !may_attack )

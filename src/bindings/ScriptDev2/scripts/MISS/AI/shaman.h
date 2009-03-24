@@ -57,12 +57,13 @@ struct MANGOS_DLL_DECL mercenary_shamanAI : public ScriptedAI
 	uint32 BuffEntry;
 	uint32 SummonHP_a;
 	uint32 SummonHP_b;
+	uint32 MovingMode;
 
 	int LogLevel;
 
 	// Déclaration des fonctions
 
-	void DoMove(volatile Unit*,bool=true);
+	void DoMove(volatile Unit*,bool=false);
 	void LoadVolatileConsts();
 	void ModifySummonsTarget(Unit*);
 	void Reset();

@@ -135,7 +135,7 @@ enum BuffParams
 	PARAMS_MAXCOUNT
 };
 
-#define MERCENARIES_FIELDS_MAXCOUNT		62
+#define MERCENARIES_FIELDS_MAXCOUNT		63
 #define TEXTS_FIELDS_MAXCOUNT			10
 #define BUFFS_FIELDS_MAXCOUNT			7
 
@@ -193,6 +193,7 @@ struct MercenaryData
 	uint32 spell5_length;
 	uint32 spell5_entry;
 	int is_non_attackable;
+	uint32 moving_mode;
 };
 
 class Loop

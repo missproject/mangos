@@ -159,7 +159,6 @@ void mercenary_shamanAI::DoMove(volatile Unit * target, bool force)
 	else
 		return;
 
-	//* prep _t2
 	float a = (float)FollowingOrientation;
 	if (GetRandomInteger(0,1))
 		 a+=(float)GetRandomInteger(0,FollowingDegreesSD);
@@ -171,25 +170,10 @@ void mercenary_shamanAI::DoMove(volatile Unit * target, bool force)
 	d=GetRandomFloat(FollowingDistance_Min,FollowingDistance_Max);
 	X+=d*sin(a);
 	Y+=d*cos(a);
-	//*/
-
-	/* prep _t1
-	float a = (float)FollowingOrientation;
-	if (GetRandomInteger(0,1))
-		 a+=(float)GetRandomInteger(0,FollowingDegreesSD);
-	else a-=(float)GetRandomInteger(0,FollowingDegreesSD);
-	if (a<0) a=0;
-	while(a>360) a-=360;
-	//*/
 
 	// Déplacement effectif
 	m_creature->GetMotionMaster()->Clear(false);
-	/* move _t1
-	m_creature->GetMotionMaster()->MoveChase((Unit*)target,GetRandomFloat(FollowingDistance_Min,FollowingDistance_Max),a);
-	//*/
-	//* move_t2
 	m_creature->GetMotionMaster()->MovePoint(3,X,Y,Z);
-	//*/
 }
 
 void mercenary_shamanAI::LoadVolatileConsts()
@@ -229,6 +213,7 @@ void mercenary_shamanAI::LoadVolatileConsts()
 	SummonHP_b = mysql.GetMercenaryData()[(uint32)MERCENARY_SHAMAN].summon_HP_b;
 	IsNonAttackable = mysql.GetMercenaryData()[(uint32)MERCENARY_SHAMAN].is_non_attackable;
 	SummonLifeSpan = mysql.GetMercenaryData()[(uint32)MERCENARY_SHAMAN].summon_lifespan;
+	MovingMode = mysql.GetMercenaryData()[(uint32)MERCENARY_SHAMAN].moving_mode;
 }
 
 void mercenary_shamanAI::Reset()
@@ -253,6 +238,7 @@ void mercenary_shamanAI::Reset()
 	cooldown_buffs = 0;
 	lastX = 0;
 	lastY = 0;
+	m_creature->GetMotionMaster()->Clear();
 
 	// Reset des listes
 
@@ -271,6 +257,9 @@ void mercenary_shamanAI::Init(Player* buying_player)
 {
 	g_master = buying_player->GetGroup();
 	m_master = buying_player->GetGroup()->GetFirstMember()->getSource();
+	m_creature->GetMotionMaster()->Clear();
+	if ( MovingMode == 1 )
+		m_creature->GetMotionMaster()->MoveFollow((Unit*)m_master,MovingGap,0);
 }
 
 void mercenary_shamanAI::Aggro(Unit *who)
@@ -432,6 +421,7 @@ bool mercenary_shamanAI::TreatPacket(WodexManager &wodex, uint32 t_packet__h)
 		UnsummonAll(LogLevel);
 		DoStopAttack();
 		gm_answer_only = true;
+		m_creature->GetMotionMaster()->Clear();
 		m_master = NULL;
 		lastX = 0;
 		lastY = 0;
@@ -494,6 +484,7 @@ bool mercenary_shamanAI::TreatPacket(WodexManager &wodex, uint32 t_packet__h)
 		DoStopAttack();
 		UnsummonAll(LogLevel);
 		DebuffAll(LogLevel);
+		m_creature->GetMotionMaster()->Clear();
 		m_master = NULL;
 		lastX = 0;
 		lastY = 0;
@@ -508,6 +499,9 @@ bool mercenary_shamanAI::TreatPacket(WodexManager &wodex, uint32 t_packet__h)
 			m_master = wodex.GetSourceFromCEnDExPPacket(t_packet__h);
 			lastX = 0;
 			lastY = 0;
+			m_creature->GetMotionMaster()->Clear();
+			if ( MovingMode == 1 )
+				m_creature->GetMotionMaster()->MoveFollow((Unit*)m_master,(float)MovingGap,0);
 		}
 		else
 			error_log("MISS: Error while finding unit for command \"Follow\"");
@@ -720,7 +714,8 @@ void mercenary_shamanAI::UpdateAI(const uint32 diff)
 	OrderTreatment("all",false);
 
 	// Move
-	DoMove(m_master);
+	if ( !m_creature->getVictim() && MovingMode == 0 )
+		DoMove(m_master);
 
 	// Seule l'attitude 112 permet d'attaquer
 	if ( !may_attack )

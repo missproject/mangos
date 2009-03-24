@@ -16,6 +16,9 @@ struct MANGOS_DLL_DECL mercenary_paladinAI : public ScriptedAI
 
 	volatile Group* g_master;
 
+	volatile Unit * m_master;
+	float lastX,lastY;
+
 	float summonXpos, summonYpos;
 
 	std::list<volatile Unit*> s_names;
@@ -63,13 +66,14 @@ struct MANGOS_DLL_DECL mercenary_paladinAI : public ScriptedAI
 	float SummonAttack_b;
 	uint32 SpellFreeCast;
 	int Spell2Effect;
+	uint32 MovingMode;
 
 	int direct_heal_number;
 	volatile Unit * direct_heal_target;
 
 	// Déclaration des fonctions
 
-	void InitMove(Unit*);
+	void DoMove(volatile Unit*,bool=false);
 	void LoadVolatileConsts();
 	void SelfCastFreecast();
 	void Summon();

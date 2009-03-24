@@ -16,6 +16,9 @@ struct MANGOS_DLL_DECL mercenary_mageAI : public ScriptedAI
 
 	volatile Group* g_master;
 
+	volatile Unit * m_master;
+	float lastX,lastY;
+
 	float summonXpos, summonYpos;
 
 	std::list<volatile Unit*> s_names;
@@ -47,10 +50,11 @@ struct MANGOS_DLL_DECL mercenary_mageAI : public ScriptedAI
 	uint32 FollowingDistance_Min;
 	uint32 FollowingDistance_Max;
 	uint32 MovingGap;
+	uint32 MovingMode;
 
 	// Déclaration des fonctions
 
-	void InitMove(Unit*);
+	void DoMove(volatile Unit*,bool=false);
 	void LoadVolatileConsts();
 	void SelfCastFreecast();
 	void Summon();

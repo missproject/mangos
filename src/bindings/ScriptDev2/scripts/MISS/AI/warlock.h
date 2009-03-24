@@ -16,6 +16,9 @@ struct MANGOS_DLL_DECL mercenary_warlockAI : public ScriptedAI
 
 	volatile Group* g_master;
 
+	volatile Unit * m_master;
+	float lastX,lastY;
+
 	std::list<volatile Unit*> s_names;
 	std::list<volatile Creature*> s_summons;
 	std::list<SpellInfo> s_spells;
@@ -62,12 +65,13 @@ struct MANGOS_DLL_DECL mercenary_warlockAI : public ScriptedAI
 	float SummonAPower_b;
 	uint32 SummonHP_a;
 	uint32 SummonHP_b;
+	uint32 MovingMode;
 
 	int LogLevel;
 
 	// Déclaration des fonctions
 
-	void InitMove(Unit*);
+	void DoMove(volatile Unit*,bool=false);
 	void Reset();
 	void LoadVolatileConsts();
 	void Init(Player* buying_player);

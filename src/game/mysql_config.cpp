@@ -279,6 +279,7 @@ void MySQLConfig::Load()
 					md[(uint32)type].spell5_length = fields[loop].GetUInt32();
 					md[(uint32)type].spell5_entry = fields[loop].GetUInt32();
 					md[(uint32)type].is_non_attackable = fields[loop].GetInt32();
+					md[(uint32)type].moving_mode = fields[loop].GetUInt32();
 
 					Count++;
 				}
