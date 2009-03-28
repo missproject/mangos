@@ -2287,8 +2287,8 @@ bool Unit::isSpellBlocked(Unit *pVictim, SpellEntry const *spellProto, WeaponAtt
            ((Creature*)pVictim)->GetCreatureInfo()->flags_extra & CREATURE_FLAG_EXTRA_NO_BLOCK )
                 return false;
 
-        float blockChance = GetUnitBlockChance();
-        blockChance += (GetWeaponSkillValue(attackType) - pVictim->GetMaxSkillValueForLevel() )*0.04;
+        float blockChance = pVictim->GetUnitBlockChance();
+        blockChance += (int32(GetWeaponSkillValue(attackType)) - int32(pVictim->GetMaxSkillValueForLevel()))*0.04f;
         if (roll_chance_f(blockChance))
             return true;
     }
@@ -6968,15 +6968,13 @@ bool Unit::IsHostileTo(Unit const* unit) const
         // forced reaction
         if(target_faction->faction)
         {
-            ForcedReactions::const_iterator forceItr = ((Player*)tester)->m_forcedReactions.find(target_faction->faction);
-            if(forceItr!=((Player*)tester)->m_forcedReactions.end())
-                return forceItr->second <= REP_HOSTILE;
+            if(ReputationRank const* force =((Player*)tester)->GetReputationMgr().GetForcedRankIfAny(target_faction))
+                return *force <= REP_HOSTILE;
 
             // if faction have reputation then hostile state for tester at 100% dependent from at_war state
             if(FactionEntry const* raw_target_faction = sFactionStore.LookupEntry(target_faction->faction))
-                if(raw_target_faction->reputationListID >=0)
-                    if(FactionState const* factionState = ((Player*)tester)->GetFactionState(raw_target_faction))
-                        return (factionState->Flags & FACTION_FLAG_AT_WAR);
+                if(FactionState const* factionState = ((Player*)tester)->GetReputationMgr().GetState(raw_target_faction))
+                    return (factionState->Flags & FACTION_FLAG_AT_WAR);
         }
     }
     // CvP forced reaction and reputation case
@@ -6985,14 +6983,13 @@ bool Unit::IsHostileTo(Unit const* unit) const
         // forced reaction
         if(tester_faction->faction)
         {
-            ForcedReactions::const_iterator forceItr = ((Player const*)target)->m_forcedReactions.find(tester_faction->faction);
-            if(forceItr!=((Player const*)target)->m_forcedReactions.end())
-                return forceItr->second <= REP_HOSTILE;
+            if(ReputationRank const* force = ((Player*)target)->GetReputationMgr().GetForcedRankIfAny(tester_faction))
+                return *force <= REP_HOSTILE;
 
             // apply reputation state
             FactionEntry const* raw_tester_faction = sFactionStore.LookupEntry(tester_faction->faction);
             if(raw_tester_faction && raw_tester_faction->reputationListID >=0 )
-                return ((Player const*)target)->GetReputationRank(raw_tester_faction) <= REP_HOSTILE;
+                return ((Player const*)target)->GetReputationMgr().GetRank(raw_tester_faction) <= REP_HOSTILE;
         }
     }
 
@@ -7083,15 +7080,13 @@ bool Unit::IsFriendlyTo(Unit const* unit) const
         // forced reaction
         if(target_faction->faction)
         {
-            ForcedReactions::const_iterator forceItr = ((Player const*)tester)->m_forcedReactions.find(target_faction->faction);
-            if(forceItr!=((Player const*)tester)->m_forcedReactions.end())
-                return forceItr->second >= REP_FRIENDLY;
+            if(ReputationRank const* force =((Player*)tester)->GetReputationMgr().GetForcedRankIfAny(target_faction))
+                return *force >= REP_FRIENDLY;
 
             // if faction have reputation then friendly state for tester at 100% dependent from at_war state
             if(FactionEntry const* raw_target_faction = sFactionStore.LookupEntry(target_faction->faction))
-                if(raw_target_faction->reputationListID >=0)
-                    if(FactionState const* FactionState = ((Player*)tester)->GetFactionState(raw_target_faction))
-                        return !(FactionState->Flags & FACTION_FLAG_AT_WAR);
+                if(FactionState const* factionState = ((Player*)tester)->GetReputationMgr().GetState(raw_target_faction))
+                    return !(factionState->Flags & FACTION_FLAG_AT_WAR);
         }
     }
     // CvP forced reaction and reputation case
@@ -7100,14 +7095,13 @@ bool Unit::IsFriendlyTo(Unit const* unit) const
         // forced reaction
         if(tester_faction->faction)
         {
-            ForcedReactions::const_iterator forceItr = ((Player const*)target)->m_forcedReactions.find(tester_faction->faction);
-            if(forceItr!=((Player const*)target)->m_forcedReactions.end())
-                return forceItr->second >= REP_FRIENDLY;
+            if(ReputationRank const* force =((Player*)target)->GetReputationMgr().GetForcedRankIfAny(tester_faction))
+                return *force >= REP_FRIENDLY;
 
             // apply reputation state
             if(FactionEntry const* raw_tester_faction = sFactionStore.LookupEntry(tester_faction->faction))
                 if(raw_tester_faction->reputationListID >=0 )
-                    return ((Player const*)target)->GetReputationRank(raw_tester_faction) >= REP_FRIENDLY;
+                    return ((Player const*)target)->GetReputationMgr().GetRank(raw_tester_faction) >= REP_FRIENDLY;
         }
     }
 
@@ -7372,7 +7366,7 @@ Unit* Unit::GetCharm() const
             return pet;
 
         sLog.outError("Unit::GetCharm: Charmed creature %u not exist.",GUID_LOPART(charm_guid));
-        const_cast<Unit*>(this)->SetCharm(0);
+        const_cast<Unit*>(this)->SetCharm(NULL);
     }
 
     return NULL;
@@ -8244,6 +8238,9 @@ bool Unit::IsImmunedToSpell(SpellEntry const* spellInfo)
         if ( hasUnitState(UNIT_STAT_STUNNED) )
             return true;
     }
+
+    //TODO add spellEffect immunity checks!, player with flag in bg is imune to imunity buffs from other friendly players!
+    //SpellImmuneList const& dispelList = m_spellImmune[IMMUNITY_EFFECT];
 
     SpellImmuneList const& dispelList = m_spellImmune[IMMUNITY_DISPEL];
     for(SpellImmuneList::const_iterator itr = dispelList.begin(); itr != dispelList.end(); ++itr)
