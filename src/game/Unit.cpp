@@ -7372,6 +7372,16 @@ Unit* Unit::GetCharm() const
     return NULL;
 }
 
+float Unit::GetCombatDistance( const Unit* target ) const
+{
+    float radius = target->GetFloatValue(UNIT_FIELD_COMBATREACH) + GetFloatValue(UNIT_FIELD_COMBATREACH);
+    float dx = GetPositionX() - target->GetPositionX();
+    float dy = GetPositionY() - target->GetPositionY();
+    float dz = GetPositionZ() - target->GetPositionZ();
+    float dist = sqrt((dx*dx) + (dy*dy) + (dz*dz)) - radius;
+    return ( dist > 0 ? dist : 0);
+}
+
 void Unit::SetPet(Pet* pet)
 {
     SetUInt64Value(UNIT_FIELD_SUMMON, pet ? pet->GetGUID() : 0);
@@ -7692,8 +7702,8 @@ uint32 Unit::SpellDamageBonus(Unit *pVictim, SpellEntry const *spellProto, uint3
                     DotTicks = DotDuration / spellProto->EffectAmplitude[x];
                 if(DotTicks)
                 {
-                    DoneAdvertisedBenefit /= DotTicks*int32(stack);
-                    TakenAdvertisedBenefit /= DotTicks*int32(stack);
+                    DoneAdvertisedBenefit = DoneAdvertisedBenefit * int32(stack) / DotTicks;
+                    TakenAdvertisedBenefit = TakenAdvertisedBenefit * int32(stack) / DotTicks;
                 }
             }
         }
@@ -8110,8 +8120,8 @@ uint32 Unit::SpellHealingBonus(Unit *pVictim, SpellEntry const *spellProto, uint
                     DotTicks = DotDuration / spellProto->EffectAmplitude[x];
                 if(DotTicks)
                 {
-                    DoneAdvertisedBenefit /= DotTicks*int32(stack);
-                    TakenAdvertisedBenefit /= DotTicks*int32(stack);
+                    DoneAdvertisedBenefit = DoneAdvertisedBenefit * int32(stack) / DotTicks;
+                    TakenAdvertisedBenefit = TakenAdvertisedBenefit * int32(stack) / DotTicks;
                 }
             }
         }
