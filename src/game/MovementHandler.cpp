@@ -474,7 +474,7 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
     // ---- anti-cheat features -->>>
     uint32 Anti_TeleTimeDiff=time(NULL) - GetPlayer()->m_anti_TeleTime;
     static const uint32 Anti_TeleTimeIgnoreDiff=sWorld.GetMvAnticheatIgnoreAfterTeleport();
-    if ((plMover->m_transport == 0) && sWorld.GetMvAnticheatEnable() &&
+    if (plMover && (plMover->m_transport == 0) && sWorld.GetMvAnticheatEnable() &&
         GetPlayer()->GetSession()->GetSecurity() <= sWorld.GetMvAnticheatGmLevel() &&
         GetPlayer()->GetMotionMaster()->GetCurrentMovementGeneratorType()!=FLIGHT_MOTION_TYPE &&
         Anti_TeleTimeDiff>Anti_TeleTimeIgnoreDiff)
