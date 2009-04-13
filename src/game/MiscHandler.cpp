@@ -405,7 +405,8 @@ void WorldSession::HandleSetTargetOpcode( WorldPacket & recv_data )
     if(!unit)
         return;
 
-    _player->SetFactionVisibleForFactionTemplateId(unit->getFaction());
+    if(FactionTemplateEntry const* factionTemplateEntry = sFactionTemplateStore.LookupEntry(unit->getFaction()))
+        _player->GetReputationMgr().SetVisible(factionTemplateEntry);
 }
 
 void WorldSession::HandleSetSelectionOpcode( WorldPacket & recv_data )
@@ -422,7 +423,8 @@ void WorldSession::HandleSetSelectionOpcode( WorldPacket & recv_data )
     if(!unit)
         return;
 
-    _player->SetFactionVisibleForFactionTemplateId(unit->getFaction());
+    if(FactionTemplateEntry const* factionTemplateEntry = sFactionTemplateStore.LookupEntry(unit->getFaction()))
+        _player->GetReputationMgr().SetVisible(factionTemplateEntry);
 }
 
 void WorldSession::HandleStandStateChangeOpcode( WorldPacket & recv_data )
@@ -1116,22 +1118,6 @@ void WorldSession::HandleMoveRootAck(WorldPacket&/* recv_data*/)
         DEBUG_LOG("Y %f",PositionY);
         DEBUG_LOG("Z %f",PositionZ);
         DEBUG_LOG("O %f",Orientation);
-    */
-}
-
-void WorldSession::HandleMoveTeleportAck(WorldPacket&/* recv_data*/)
-{
-    /*
-        CHECK_PACKET_SIZE(recv_data,8+4);
-
-        sLog.outDebug("MSG_MOVE_TELEPORT_ACK");
-        uint64 guid;
-        uint32 flags, time;
-
-        recv_data >> guid;
-        recv_data >> flags >> time;
-        DEBUG_LOG("Guid " I64FMTD,guid);
-        DEBUG_LOG("Flags %u, time %u",flags, time/IN_MILISECONDS);
     */
 }
 

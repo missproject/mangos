@@ -149,7 +149,7 @@ bool ChatHandler::HandleNotifyCommand(const char* args)
 }
 
 //Enable\Dissable GM Mode
-bool ChatHandler::HandleGMmodeCommand(const char* args)
+bool ChatHandler::HandleGMCommand(const char* args)
 {
     if(!*args)
     {
@@ -362,7 +362,7 @@ bool ChatHandler::HandleNamegoCommand(const char* args)
         if (HasLowerSecurity(chr, 0))
             return false;
 
-        if(chr->IsBeingTeleported()==true)
+        if(chr->IsBeingTeleported())
         {
             PSendSysMessage(LANG_IS_TELEPORTED, nameLink.c_str());
             SetSentErrorMessage(true);
@@ -2432,6 +2432,11 @@ bool ChatHandler::HandleGoZoneXYCommand(const char* args)
 
     float x = (float)atof(px);
     float y = (float)atof(py);
+
+    // prevent accept wrong numeric args
+    if (x==0.0f && *px!='0' || y==0.0f && *py!='0')
+        return false;
+
     uint32 areaid = cAreaId ? (uint32)atoi(cAreaId) : _player->GetZoneId();
 
     AreaTableEntry const* areaEntry = GetAreaEntryByAreaID(areaid);

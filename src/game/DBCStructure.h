@@ -16,8 +16,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef DBCSTRUCTURE_H
-#define DBCSTRUCTURE_H
+#ifndef MANGOS_DBCSTRUCTURE_H
+#define MANGOS_DBCSTRUCTURE_H
 
 #include "DBCEnums.h"
 #include "Platform/Define.h"
@@ -52,8 +52,8 @@ struct AchievementEntry
     //uint32    icon;                                       // 42 icon (from SpellIcon.dbc)
     //char *titleReward[16];                                // 43-58
     //uint32 titleReward_flags;                             // 59
-    //uint32 count;                                         // 60 - need this count Criteria for complete
-    uint32 refAchievement;                                  // 61 - related achievement?
+    uint32 count;                                           // 60 - need this count of completed criterias (own or referenced achievement criterias)
+    uint32 refAchievement;                                  // 61 - referenced achievement (counting of all completed criterias)
 };
 
 struct AchievementCategoryEntry
@@ -476,7 +476,7 @@ struct AchievementCriteriaEntry
         struct
         {
             uint32  field3;                                 // 3 main requirement
-            uint32  field4;                                 // 4 main requirement count
+            uint32  count;                                  // 4 main requirement count
             uint32  additionalRequirement1_type;            // 5 additional requirement 1 type
             uint32  additionalRequirement1_value;           // 6 additional requirement 1 value
             uint32  additionalRequirement2_type;            // 7 additional requirement 2 type
@@ -646,6 +646,27 @@ struct ChrRacesEntry
                                                             // 64 string flags, unused
                                                             // 65-67 unused
     uint32      addon;                                      // 68 (0 - original race, 1 - tbc addon, ...)
+};
+
+/* not used
+struct CinematicCameraEntry
+{
+    uint32      id;                                         // 0 index
+    char*       filename;                                   // 1
+    uint32      soundid;                                    // 2 in SoundEntries.dbc or 0
+    float       start_x;                                    // 3
+    float       start_y;                                    // 4
+    float       start_z;                                    // 5
+    float       unk6;                                       // 6 speed?     
+};
+*/
+
+struct CinematicSequencesEntry
+{
+    uint32      Id;                                         // 0 index
+    //uint32      unk1;                                     // 1 always 0
+    //uint32      cinematicCamera;                          // 2 id in CinematicCamera.dbc
+                                                            // 3-9 always 0
 };
 
 struct CreatureDisplayInfoEntry
@@ -1077,6 +1098,13 @@ struct MapEntry
     }
 };
 
+struct MovieEntry
+{
+    uint32      Id;                                         // 0 index
+    //char*       filename;                                 // 1
+    //uint32      unk2;                                     // 2 always 100
+};
+
 struct QuestSortEntry
 {
     uint32      id;                                         // 0        m_ID
@@ -1288,6 +1316,9 @@ struct SpellEntry
     uint32    SchoolMask;                                   // 228      m_schoolMask
     uint32    runeCostID;                                   // 229      m_runeCostID
     //uint32    spellMissileID;                             // 230      m_spellMissileID not used
+
+    // helpers
+    int32 CalculateSimpleValue(uint8 eff) const { return EffectBasePoints[eff]+int32(EffectBaseDice[eff]); }
 
     private:
         // prevent creating custom entries (copy data from original in fact)
@@ -1593,6 +1624,7 @@ struct WorldMapAreaEntry
     float   x1;                                             // 6
     float   x2;                                             // 7
     int32   virtual_map_id;                                 // 8 -1 (map_id have correct map) other: virtual map where zone show (map_id - where zone in fact internally)
+    // int32   dungeonMap_id;                               // 9 pointer to DungeonMap.dbc (owerride x1,x2,y1,y2 coordinates)
 };
 
 struct WorldSafeLocsEntry
@@ -1609,7 +1641,7 @@ struct WorldSafeLocsEntry
 struct WorldMapOverlayEntry
 {
     uint32    ID;                                           // 0
-    uint32    areatableID;                                  // 2
+    uint32    areatableID[4];                               // 2-5
 };
 
 // GCC have alternative #pragma pack() syntax and old gcc version not support pack(pop), also any gcc version not support it at some platform
