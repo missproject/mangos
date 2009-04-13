@@ -387,6 +387,7 @@ void WorldSession::HandleMoveTeleportAck(WorldPacket& recv_data)
 
     // resummon pet
     GetPlayer()->ResummonPetTemporaryUnSummonedIfAny();
+    plMover->Anti__SetLastTeleTime(time(NULL));
 }
 
 void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
