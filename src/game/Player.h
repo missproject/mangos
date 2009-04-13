@@ -2256,10 +2256,9 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         //movement anticheat
         uint32 m_anti_lastmovetime;     //last movement time
-        uint64 m_anti_transportGUID;    //current transport GUID
         float  m_anti_MovedLen;         //Length of traveled way
         uint32 m_anti_NextLenCheck;
-        float  m_anti_BeginFallZ;    //alternative falling begin time
+        float  m_anti_BeginFallZ;    //alternative falling begin
         uint32 m_anti_lastalarmtime;    //last time when alarm generated
         uint32 m_anti_alarmcount;       //alarm counter
         uint32 m_anti_TeleTime;

@@ -428,26 +428,6 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
             movementInfo.z+movementInfo.t_z, movementInfo.o+movementInfo.t_o) )
             return;
 
-        /* ToDo
-        if ((GetPlayer()->m_anti_transportGUID == 0) && (movementInfo.t_guid !=0)) 
-        {
-            // if we boarded a transport, add us to it
-            if (!GetPlayer()->m_transport)
-            {
-                // elevators also cause the client to send MOVEMENTFLAG_ONTRANSPORT - just unmount if the guid can be found in the transport list
-                for (MapManager::TransportSet::iterator iter = MapManager::Instance().m_Transports.begin(); iter != MapManager::Instance().m_Transports.end(); ++iter)
-                {
-                    if ((*iter)->GetGUID() == movementInfo.t_guid)
-                    {
-                        GetPlayer()->m_transport = (*iter);
-                        (*iter)->AddPassenger(GetPlayer());
-                        break;
-                    }
-                }
-            }
-            GetPlayer()->m_anti_transportGUID = movementInfo.t_guid;
-        }
-        else*/
         // if we boarded a transport, add us to it
         if (plMover && !plMover->m_transport)
         {
@@ -466,7 +446,6 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
                 movementInfo.t_o = 0.0f;
                 movementInfo.t_time = 0;
                 movementInfo.t_seat = -1;
-                GetPlayer()->m_anti_transportGUID = 0;
             }
         }
     }
@@ -480,7 +459,6 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
         movementInfo.t_o = 0.0f;
         movementInfo.t_time = 0;
         movementInfo.t_seat = -1;
-        GetPlayer()->m_anti_transportGUID = 0;
     }
 
     // fall damage generation (ignore in flight case that can be triggered also at lags in moment teleportation to another map).
@@ -496,7 +474,7 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
     // ---- anti-cheat features -->>>
     uint32 Anti_TeleTimeDiff=time(NULL) - GetPlayer()->m_anti_TeleTime;
     static const uint32 Anti_TeleTimeIgnoreDiff=sWorld.GetMvAnticheatIgnoreAfterTeleport();
-    if ((GetPlayer()->m_anti_transportGUID == 0) && sWorld.GetMvAnticheatEnable() &&
+    if ((plMover->m_transport == 0) && sWorld.GetMvAnticheatEnable() &&
         GetPlayer()->GetSession()->GetSecurity() <= sWorld.GetMvAnticheatGmLevel() &&
         GetPlayer()->GetMotionMaster()->GetCurrentMovementGeneratorType()!=FLIGHT_MOTION_TYPE &&
         Anti_TeleTimeDiff>Anti_TeleTimeIgnoreDiff)

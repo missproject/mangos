@@ -406,7 +406,6 @@ Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputa
 
     //movement anticheat
     m_anti_lastmovetime = 0;   //last movement time
-    m_anti_transportGUID = 0;  //current transport GUID
     m_anti_NextLenCheck = 0;
     m_anti_MovedLen = 0.0f;
     m_anti_BeginFallZ = INVALID_HEIGHT;
