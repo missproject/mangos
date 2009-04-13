@@ -387,7 +387,7 @@ void WorldSession::HandleMoveTeleportAck(WorldPacket& recv_data)
 
     // resummon pet
     GetPlayer()->ResummonPetTemporaryUnSummonedIfAny();
-    plMover->Anti__SetLastTeleTime(time(NULL));
+    plMover->Anti__SetLastTeleTime(::time(NULL));
 }
 
 void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
@@ -435,18 +435,17 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
             float trans_rad = movementInfo.t_x*movementInfo.t_x + movementInfo.t_y*movementInfo.t_y + movementInfo.t_z*movementInfo.t_z;
             if (trans_rad > 3600.0f) // transport radius = 60 yards //cheater with on_transport_flag
             {
-                if (GetPlayer()->m_transport)
+	            return;
+            }
+            // elevators also cause the client to send MOVEMENTFLAG_ONTRANSPORT - just unmount if the guid can be found in the transport list
+            for (MapManager::TransportSet::iterator iter = MapManager::Instance().m_Transports.begin(); iter != MapManager::Instance().m_Transports.end(); ++iter)
+            {
+                if ((*iter)->GetGUID() == movementInfo.t_guid)
                 {
                     plMover->m_transport = (*iter);
                     (*iter)->AddPassenger(plMover);
                     break;
                 }
-                movementInfo.t_x = 0.0f;
-                movementInfo.t_y = 0.0f;
-                movementInfo.t_z = 0.0f;
-                movementInfo.t_o = 0.0f;
-                movementInfo.t_time = 0;
-                movementInfo.t_seat = -1;
             }
         }
     }
