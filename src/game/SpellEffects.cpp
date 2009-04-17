@@ -2097,6 +2097,7 @@ void Spell::EffectTeleportUnits(uint32 i)
             ((Player*)unitTarget)->TeleportTo(((Player*)unitTarget)->m_homebindMapId,((Player*)unitTarget)->m_homebindX,((Player*)unitTarget)->m_homebindY,((Player*)unitTarget)->m_homebindZ,unitTarget->GetOrientation(),unitTarget==m_caster ? TELE_TO_SPELL : 0);
             return;
         }
+        case TARGET_AREAEFFECT_INSTANT:                     // in all cases first TARGET_TABLE_X_Y_Z_COORDINATES
         case TARGET_TABLE_X_Y_Z_COORDINATES:
         {
             SpellTargetPosition const* st = spellmgr.GetSpellTargetPosition(m_spellInfo->Id);
@@ -3508,7 +3509,7 @@ void Spell::EffectPickPocket(uint32 /*i*/)
             // Reveal action + get attack
             m_caster->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
             if (((Creature*)unitTarget)->AI())
-                ((Creature*)unitTarget)->AI()->AttackStart(m_caster);
+                ((Creature*)unitTarget)->AI()->AttackedBy(m_caster);
         }
     }
 }
