@@ -487,13 +487,24 @@ void Spell::FillTargetMap()
                 }
                 break;
             case TARGET_TABLE_X_Y_Z_COORDINATES:
-                // All 17/7 pairs used for dest teleportation, A processed in effect code
-                if(m_spellInfo->EffectImplicitTargetB[i]==TARGET_AREAEFFECT_INSTANT)
-                    SetTargetMap(i,m_spellInfo->EffectImplicitTargetB[i],tmpUnitMap);
-                else
+                switch(m_spellInfo->EffectImplicitTargetB[i])
                 {
-                    SetTargetMap(i,m_spellInfo->EffectImplicitTargetA[i],tmpUnitMap);
-                    SetTargetMap(i,m_spellInfo->EffectImplicitTargetB[i],tmpUnitMap);
+                    case 0:
+                        SetTargetMap(i,m_spellInfo->EffectImplicitTargetA[i],tmpUnitMap);
+
+                        // need some target for proccesing
+                        if(m_targets.getUnitTarget())
+                            tmpUnitMap.push_back(m_targets.getUnitTarget());
+                        else
+                            tmpUnitMap.push_back(m_caster); 
+                        break;
+                    case TARGET_AREAEFFECT_INSTANT:         // All 17/7 pairs used for dest teleportation, A processed in effect code
+                        SetTargetMap(i,m_spellInfo->EffectImplicitTargetB[i],tmpUnitMap);
+                        break;
+                    default:
+                        SetTargetMap(i,m_spellInfo->EffectImplicitTargetA[i],tmpUnitMap);
+                        SetTargetMap(i,m_spellInfo->EffectImplicitTargetB[i],tmpUnitMap);
+                    break;
                 }
                 break;
             default:
@@ -1770,7 +1781,7 @@ void Spell::SetTargetMap(uint32 i,uint32 cur,UnitList& TagUnitMap)
         {
             // Check original caster is GO - set its coordinates as dst cast
             WorldObject *caster = NULL;
-            if (m_originalCasterGUID)
+            if (IS_GAMEOBJECT_GUID(m_originalCasterGUID))
                 caster = ObjectAccessor::GetGameObject(*m_caster, m_originalCasterGUID);
             if (!caster)
                 caster = m_caster;
@@ -5396,7 +5407,7 @@ bool Spell::CheckTarget( Unit* target, uint32 eff )
         default:                                            // normal case
             // Get GO cast coordinates if original caster -> GO
             WorldObject *caster = NULL;
-            if (m_originalCasterGUID)
+            if (IS_GAMEOBJECT_GUID(m_originalCasterGUID))
                 caster = ObjectAccessor::GetGameObject(*m_caster, m_originalCasterGUID);
             if (!caster)
                 caster = m_caster;
