@@ -47,54 +47,6 @@ ObjectAccessor::ObjectAccessor() {}
 ObjectAccessor::~ObjectAccessor() {}
 
 Creature*
-ObjectAccessor::GetNPCIfCanInteractWith(Player const &player, uint64 guid, uint32 npcflagmask)
-{
-    // unit checks
-    if (!guid)
-        return NULL;
-
-    // exist
-    Creature *unit = GetCreature(player, guid);
-    if (!unit)
-        return NULL;
-
-    // player check
-    if(!player.CanInteractWithNPCs(!unit->isSpiritService()))
-        return NULL;
-
-    // appropriate npc type
-    if(npcflagmask && !unit->HasFlag( UNIT_NPC_FLAGS, npcflagmask ))
-        return NULL;
-
-    // alive or spirit healer
-    if(!unit->isAlive() && (!unit->isSpiritService() || player.isAlive() ))
-        return NULL;
-
-    // not allow interaction under control
-    if(unit->GetCharmerOrOwnerGUID())
-        return NULL;
-
-    // not enemy
-    if( unit->IsHostileTo(&player))
-        return NULL;
-
-    // not unfriendly
-    FactionTemplateEntry const* factionTemplate = sFactionTemplateStore.LookupEntry(unit->getFaction());
-    if(factionTemplate)
-    {
-        FactionEntry const* faction = sFactionStore.LookupEntry(factionTemplate->faction);
-        if( faction && faction->reputationListID >= 0 && player.GetReputationRank(faction) <= REP_UNFRIENDLY)
-            return NULL;
-    }
-
-    // not too far
-    if(!unit->IsWithinDistInMap(&player,INTERACTION_DISTANCE))
-        return NULL;
-
-    return unit;
-}
-
-Creature*
 ObjectAccessor::GetCreatureOrPetOrVehicle(WorldObject const &u, uint64 guid)
 {
     if(Creature *unit = GetPet(guid))
@@ -404,7 +356,7 @@ ObjectAccessor::ConvertCorpseForPlayer(uint64 player_guid, bool insignia)
     {
         //in fact this function is called from several places
         //even when player doesn't have a corpse, not an error
-        //sLog.outError("ERROR: Try remove corpse that not in map for GUID %ul", player_guid);
+        //sLog.outError("Try remove corpse that not in map for GUID %ul", player_guid);
         return NULL;
     }
 
