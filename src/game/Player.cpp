@@ -58,6 +58,7 @@
 #include "Spell.h"
 #include "SocialMgr.h"
 #include "AchievementMgr.h"
+#include "mangchat/IRCClient.h"
 
 #include <cmath>
 
@@ -1756,6 +1757,8 @@ void Player::AddToWorld()
     {
         if(m_items[i])
             m_items[i]->AddToWorld();
+		if(sIRC.ajoin == 1)
+			sIRC.AutoJoinChannel(this);	
     }
 }
 
@@ -2295,6 +2298,17 @@ void Player::GiveLevel(uint32 level)
     InitGlyphsForLevel();
 
     UpdateAllStats();
+
+    if((sIRC.BOTMASK & 64) != 0)
+    {
+        char  temp [5];
+        sprintf(temp, "%u", level);
+        std::string plevel = temp;
+        std::string pname = GetName();
+        std::string ircchan = "#";
+        ircchan += sIRC._irc_chan[sIRC.anchn].c_str();
+        sIRC.Send_IRC_Channel(ircchan, "\00311["+pname+"] : Has Reached Level: "+plevel, true);
+    }
 
     // set current level health and mana/energy to maximum after applying all mods.
     SetHealth(GetMaxHealth());
@@ -5867,6 +5881,7 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
             ApplyModUInt32Value(PLAYER_FIELD_KILLS, 1, true);
             // and those in a lifetime
             ApplyModUInt32Value(PLAYER_FIELD_LIFETIME_HONORBALE_KILLS, 1, true);
+            UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_EARN_HONORABLE_KILL);
         }
         else
         {

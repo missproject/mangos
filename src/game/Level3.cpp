@@ -3911,7 +3911,7 @@ bool ChatHandler::HandleModifyArenaCommand(const char * args)
 bool ChatHandler::HandleReviveCommand(const char* args)
 {
     Player* player = NULL;
-    uint32 player_guid = 0;
+    uint64 player_guid = 0;
 
     if (*args)
     {
@@ -4992,6 +4992,8 @@ bool ChatHandler::HandleResetHonorCommand (const char * args)
     player->SetUInt32Value(PLAYER_FIELD_HONOR_CURRENCY, 0);
     player->SetUInt32Value(PLAYER_FIELD_TODAY_CONTRIBUTION, 0);
     player->SetUInt32Value(PLAYER_FIELD_YESTERDAY_CONTRIBUTION, 0);
+
+    player->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_EARN_HONORABLE_KILL);
 
     return true;
 }

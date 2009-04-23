@@ -61,6 +61,7 @@
 #include "InstanceSaveMgr.h"
 #include "WaypointManager.h"
 #include "GMTicketMgr.h"
+#include "mangchat/IRCClient.h"
 #include "Util.h"
 #include "AuctionHouseBot.h"
 
@@ -1383,14 +1384,17 @@ void World::SetInitialWorldSettings()
     loginDatabase.PExecute("INSERT INTO uptime (realmid, starttime, startstring, uptime) VALUES('%u', " I64FMTD ", '%s', 0)",
         realmID, uint64(m_startTime), isoDate);
 
+    static uint32 autoanc = 1;
+    autoanc = sIRC.autoanc;
+
     m_timers[WUPDATE_OBJECTS].SetInterval(0);
     m_timers[WUPDATE_SESSIONS].SetInterval(0);
     m_timers[WUPDATE_WEATHERS].SetInterval(1*IN_MILISECONDS);
     m_timers[WUPDATE_AUCTIONS].SetInterval(MINUTE*IN_MILISECONDS);
     m_timers[WUPDATE_UPTIME].SetInterval(m_configs[CONFIG_UPTIME_UPDATE]*MINUTE*IN_MILISECONDS);
                                                             //Update "uptime" table based on configuration entry in minutes.
-    m_timers[WUPDATE_CORPSES].SetInterval(20*MINUTE*IN_MILISECONDS);
-                                                            //erase corpses every 20 minutes
+    m_timers[WUPDATE_CORPSES].SetInterval(20*MINUTE*IN_MILISECONDS);  //erase corpses every 20 minutes
+		m_timers[WUPDATE_AUTOANC].SetInterval(autoanc*MINUTE*IN_MILISECONDS);	//IRC autoannounce time
 
     //to set mailtimer to return mails every day between 4 and 5 am
     //mailtimer is increased when updating auctions
@@ -1589,6 +1593,12 @@ void World::Update(uint32 diff)
         uint32 nextGameEvent = gameeventmgr.Update();
         m_timers[WUPDATE_EVENTS].SetInterval(nextGameEvent);
         m_timers[WUPDATE_EVENTS].Reset();
+    }
+
+    if (m_timers[WUPDATE_AUTOANC].Passed())
+    {
+        m_timers[WUPDATE_AUTOANC].Reset();
+        SendRNDBroadcast();
     }
 
     /// </ul>
@@ -2746,7 +2756,21 @@ void World::ProcessCliCommands()
     // print the console message here so it looks right
     zprint("mangos>");
 }
-
+void World::SendRNDBroadcast()
+{
+    std::string msg;
+    QueryResult *result = WorldDatabase.PQuery("SELECT `message` FROM `IRC_AutoAnnounce` ORDER BY RAND() LIMIT 1");
+    if(!result)
+        return;
+    msg = result->Fetch()[0].GetString();
+    delete result;
+    std::string str = "|cffff0000[Automatic]:|r";
+    str += msg;
+    sWorld.SendWorldText(3000,msg.c_str());
+    std::string ircchan = "#";
+    ircchan += sIRC._irc_chan[sIRC.anchn].c_str();
+	sIRC.Send_IRC_Channel(ircchan, sIRC.MakeMsg("\00304,08\037/!\\\037\017\00304 Automatic System Message \00304,08\037/!\\\037\017 %s", "%s", msg.c_str()), true);
+}
 void World::InitResultQueue()
 {
     m_resultQueue = new SqlResultQueue;

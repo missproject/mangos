@@ -38,6 +38,7 @@
 #include "RASocket.h"
 #include "ScriptCalls.h"
 #include "Util.h"
+#include "mangchat/IRCClient.h"
 
 #include "sockets/TcpSocket.h"
 #include "sockets/Utility.h"
@@ -215,6 +216,9 @@ int Master::Run()
     if (!_StartDB())
         return 1;
 
+    ///- Load MangChat Config (MangChat needs DB for gm levels, AutoBroadcast uses world timers)
+    sIRC.LoadConfig(sIRC.CfgFile);
+
     ///- Initialize the World
     sWorld.SetInitialWorldSettings();
 
@@ -292,6 +296,10 @@ int Master::Run()
     // maximum counter for next ping
     uint32 numLoops = (sConfig.GetIntDefault( "MaxPingTime", 30 ) * (MINUTE * 1000000 / socketSelecttime));
     uint32 loopCounter = 0;
+
+    // Start up MangChat
+    ZThread::Thread irc(new IRCClient);
+    irc.setPriority ((ZThread::Priority )2);
 
     ///- Start up freeze catcher thread
     uint32 freeze_delay = sConfig.GetIntDefault("MaxCoreStuckTime", 0);

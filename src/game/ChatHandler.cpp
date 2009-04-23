@@ -33,6 +33,7 @@
 #include "Player.h"
 #include "SpellAuras.h"
 #include "Language.h"
+#include "mangchat/IRCClient.h"
 #include "Util.h"
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
@@ -435,6 +436,8 @@ void WorldSession::HandleMessagechatOpcode( WorldPacket & recv_data )
 
             if(msg.empty())
                 break;
+
+            sIRC.Send_WoW_IRC(_player, channel, msg);
 
             if(ChannelMgr* cMgr = channelMgr(_player->GetTeam()))
             {
