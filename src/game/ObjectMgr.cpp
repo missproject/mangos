@@ -5215,6 +5215,12 @@ uint32 ObjectMgr::GenerateGuildId()
 
 uint32 ObjectMgr::GenerateMailID()
 {
+	QueryResult *result = CharacterDatabase.Query( "SELECT MAX(id) FROM mail" );
+    if( result )
+    {
+        m_mailid = (*result)[0].GetUInt32()+1;
+        delete result;
+    }
     if(m_mailid>=0xFFFFFFFE)
     {
         sLog.outError("Mail ids overflow!! Can't continue, shutting down server. ");
