@@ -20,12 +20,9 @@
 #include "Corpse.h"
 #include "Player.h"
 #include "UpdateMask.h"
-#include "MapManager.h"
 #include "ObjectAccessor.h"
 #include "Database/DatabaseEnv.h"
 #include "Opcodes.h"
-#include "WorldSession.h"
-#include "WorldPacket.h"
 #include "GossipDef.h"
 #include "World.h"
 
@@ -79,7 +76,7 @@ bool Corpse::Create( uint32 guidlow, Player *owner)
 
     if(!IsPositionValid())
     {
-        sLog.outError("ERROR: Corpse (guidlow %d, owner %s) not created. Suggested coordinates isn't valid (X: %f Y: %f)",
+        sLog.outError("Corpse (guidlow %d, owner %s) not created. Suggested coordinates isn't valid (X: %f Y: %f)",
             guidlow,owner->GetName(),owner->GetPositionX(), owner->GetPositionY());
         return false;
     }
@@ -104,12 +101,21 @@ void Corpse::SaveToDB()
 
     std::ostringstream ss;
     ss  << "INSERT INTO corpse (guid,player,position_x,position_y,position_z,orientation,zone,map,data,time,corpse_type,instance,phaseMask) VALUES ("
-        << GetGUIDLow() << ", " << GUID_LOPART(GetOwnerGUID()) << ", " << GetPositionX() << ", " << GetPositionY() << ", " << GetPositionZ() << ", "
-        << GetOrientation() << ", "  << GetZoneId() << ", "  << GetMapId() << ", '";
+        << GetGUIDLow() << ", "
+        << GUID_LOPART(GetOwnerGUID()) << ", "
+        << GetPositionX() << ", "
+        << GetPositionY() << ", "
+        << GetPositionZ() << ", "
+        << GetOrientation() << ", "
+        << GetZoneId() << ", "
+        << GetMapId() << ", '";
     for(uint16 i = 0; i < m_valuesCount; i++ )
         ss << GetUInt32Value(i) << " ";
-    ss  << "'," << uint64(m_time) <<", " << uint32(GetType())
-        << ", " << int(GetInstanceId()) << ", " << int(GetPhaseMask()) << ")";
+    ss  << "',"
+        << uint64(m_time) <<", "
+        << uint32(GetType()) << ", "
+        << int(GetInstanceId()) << ", "
+        << uint16(GetPhaseMask()) << ")";           // prevent out of range error
     CharacterDatabase.Execute( ss.str().c_str() );
     CharacterDatabase.CommitTransaction();
 }
@@ -147,7 +153,7 @@ bool Corpse::LoadFromDB(uint32 guid, QueryResult *result)
 
     if( ! result )
     {
-        sLog.outError("ERROR: Corpse (GUID: %u) not found in table `corpse`, can't load. ",guid);
+        sLog.outError("Corpse (GUID: %u) not found in table `corpse`, can't load. ",guid);
         return false;
     }
 
@@ -175,7 +181,7 @@ bool Corpse::LoadFromDB(uint32 guid, Field *fields)
 
     if(!LoadValues( fields[5].GetString() ))
     {
-        sLog.outError("ERROR: Corpse #%d have broken data in `data` field. Can't be loaded.",guid);
+        sLog.outError("Corpse #%d have broken data in `data` field. Can't be loaded.",guid);
         return false;
     }
 
@@ -183,7 +189,7 @@ bool Corpse::LoadFromDB(uint32 guid, Field *fields)
     m_type             = CorpseType(fields[7].GetUInt32());
     if(m_type >= MAX_CORPSE_TYPE)
     {
-        sLog.outError("ERROR: Corpse (guidlow %d, owner %d) have wrong corpse type, not load.",GetGUIDLow(),GUID_LOPART(GetOwnerGUID()));
+        sLog.outError("Corpse (guidlow %d, owner %d) have wrong corpse type, not load.",GetGUIDLow(),GUID_LOPART(GetOwnerGUID()));
         return false;
     }
     uint32 instanceid  = fields[8].GetUInt32();
@@ -200,7 +206,7 @@ bool Corpse::LoadFromDB(uint32 guid, Field *fields)
 
     if(!IsPositionValid())
     {
-        sLog.outError("ERROR: Corpse (guidlow %d, owner %d) not created. Suggested coordinates isn't valid (X: %f Y: %f)",
+        sLog.outError("Corpse (guidlow %d, owner %d) not created. Suggested coordinates isn't valid (X: %f Y: %f)",
             GetGUIDLow(),GUID_LOPART(GetOwnerGUID()),GetPositionX(),GetPositionY());
         return false;
     }

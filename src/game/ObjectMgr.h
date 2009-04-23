@@ -103,6 +103,7 @@ struct AreaTrigger
     uint32 heroicKey;
     uint32 heroicKey2;
     uint32 requiredQuest;
+    uint32 requiredQuestHeroic;
     std::string requiredFailedText;
     uint32 target_mapId;
     float  target_X;
@@ -414,14 +415,6 @@ class ObjectMgr
         bool IsGameObjectForQuests(uint32 entry) const
         {
             return mGameObjectForQuestSet.find(entry) != mGameObjectForQuestSet.end();
-        }
-
-        bool IsGuildVaultGameObject(Player *player, uint64 guid) const
-        {
-            if(GameObject *go = ObjectAccessor::GetGameObject(*player, guid))
-                if(go->GetGoType() == GAMEOBJECT_TYPE_GUILD_BANK)
-                    return true;
-            return false;
         }
 
         GossipText const* GetGossipText(uint32 Text_ID) const;

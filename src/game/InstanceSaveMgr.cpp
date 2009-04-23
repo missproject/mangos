@@ -16,13 +16,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "InstanceSaveMgr.h"
 #include "Common.h"
 #include "Database/SQLStorage.h"
 
 #include "Player.h"
 #include "GridNotifiers.h"
-#include "WorldSession.h"
 #include "Log.h"
 #include "GridStates.h"
 #include "CellImpl.h"
@@ -34,7 +32,6 @@
 #include "GridNotifiersImpl.h"
 #include "Config/ConfigEnv.h"
 #include "Transports.h"
-#include "ObjectAccessor.h"
 #include "ObjectMgr.h"
 #include "World.h"
 #include "Group.h"
@@ -159,7 +156,7 @@ void InstanceSave::SaveToDB()
     // save instance data too
     std::string data;
 
-    Map *map = MapManager::Instance().FindMap(m_instanceid, GetMapId());
+    Map *map = MapManager::Instance().FindMap(GetMapId(),m_instanceid);
     if(map)
     {
         assert(map->IsDungeon());

@@ -82,7 +82,8 @@ enum MangosStrings
     LANG_MOTD_CURRENT                   = 56,
     LANG_USING_WORLD_DB                 = 57,
     LANG_USING_SCRIPT_LIB               = 58,
-    // Room for more level 0              59-99 not used
+    LANG_USING_EVENT_AI                 = 59,
+    // Room for more level 0              60-99 not used
 
     // level 1 chat
     LANG_GLOBAL_NOTIFY                  = 100,
@@ -170,7 +171,8 @@ enum MangosStrings
     LANG_CONSOLE_COMMAND                = 172,
     LANG_YOU_CHANGE_RUNIC_POWER         = 173,
     LANG_YOURS_RUNIC_POWER_CHANGED      = 174,
-    // Room for more level 1              175-199 not used
+    LANG_LIQUID_STATUS                  = 175,
+    // Room for more level 1              176-199 not used
 
     // level 2 chat
     LANG_NO_SELECTION                   = 200,
@@ -569,9 +571,11 @@ enum MangosStrings
     // Battleground
     LANG_BG_A_WINS                      = 600,
     LANG_BG_H_WINS                      = 601,
-    LANG_BG_WS_ONE_MINUTE               = 602,
-    LANG_BG_WS_HALF_MINUTE              = 603,
-    LANG_BG_WS_BEGIN                    = 604,
+
+    LANG_BG_WS_START_TWO_MINUTES        = 753,
+    LANG_BG_WS_START_ONE_MINUTE         = 602,
+    LANG_BG_WS_START_HALF_MINUTE        = 603,
+    LANG_BG_WS_HAS_BEGUN                = 604,
 
     LANG_BG_WS_CAPTURED_HF              = 605,
     LANG_BG_WS_CAPTURED_AF              = 606,
@@ -585,9 +589,10 @@ enum MangosStrings
     LANG_BG_WS_ALLIANCE_FLAG_RESPAWNED  = 614,
     LANG_BG_WS_HORDE_FLAG_RESPAWNED     = 615,
 
-    LANG_BG_EY_ONE_MINUTE               = 636,
-    LANG_BG_EY_HALF_MINUTE              = 637,
-    LANG_BG_EY_BEGIN                    = 638,
+    LANG_BG_EY_START_TWO_MINUTES        = 755,
+    LANG_BG_EY_START_ONE_MINUTE         = 636,
+    LANG_BG_EY_START_HALF_MINUTE        = 637,
+    LANG_BG_EY_HAS_BEGUN                = 638,
 
     LANG_BG_AB_ALLY                     = 650,
     LANG_BG_AB_HORDE                    = 651,
@@ -600,9 +605,11 @@ enum MangosStrings
     LANG_BG_AB_NODE_DEFENDED            = 658,
     LANG_BG_AB_NODE_ASSAULTED           = 659,
     LANG_BG_AB_NODE_CLAIMED             = 660,
-    LANG_BG_AB_ONEMINTOSTART            = 661,
-    LANG_BG_AB_HALFMINTOSTART           = 662,
-    LANG_BG_AB_STARTED                  = 663,
+
+    LANG_BG_AB_START_TWO_MINUTES        = 754,
+    LANG_BG_AB_START_ONE_MINUTE         = 661,
+    LANG_BG_AB_START_HALF_MINUTE        = 662,
+    LANG_BG_AB_HAS_BEGUN                = 663,
     LANG_BG_AB_A_NEAR_VICTORY           = 664,
     LANG_BG_AB_H_NEAR_VICTORY           = 665,
     LANG_BG_MARK_BY_MAIL                = 666,
@@ -633,7 +640,7 @@ enum MangosStrings
     LANG_ARENA_ONE_MINUTE               = 701,
     LANG_ARENA_THIRTY_SECONDS           = 702,
     LANG_ARENA_FIFTEEN_SECONDS          = 703,
-    LANG_ARENA_BEGUN                    = 704,
+    LANG_ARENA_HAS_BEGUN                = 704,
 
     LANG_WAIT_BEFORE_SPEAKING           = 705,
     LANG_NOT_EQUIPPED_ITEM              = 706,
@@ -658,7 +665,7 @@ enum MangosStrings
     LANG_ARENA_NOT_ENOUGH_PLAYERS       = 723,              // "Your group does not have enough players to join this match."
     LANG_ARENA_GOLD_WINS                = 724,              // "The Gold Team wins!"
     LANG_ARENA_GREEN_WINS               = 725,              // "The Green Team wins!"
-    LANG_BATTLEGROUND_PREMATURE_FINISH_WARNING = 726,       // The battleground will end soon, because there aren't enough players. Get more ppl or win already!
+//                                      = 726, not used
     LANG_BG_GROUP_OFFLINE_MEMBER        = 727,              // "Your group has an offline member. Please remove him before joining."
     LANG_BG_GROUP_MIXED_FACTION         = 728,              // "Your group has players from the opposing faction. You can't join the battleground as a group."
     LANG_BG_GROUP_MIXED_LEVELS          = 729,              // "Your group has players from different battleground brakets. You can't join as group."
@@ -680,7 +687,16 @@ enum MangosStrings
     LANG_DIST_ARENA_POINTS_TEAM_START   = 744,
     LANG_DIST_ARENA_POINTS_TEAM_END     = 745,
     LANG_DIST_ARENA_POINTS_END          = 746,
-    // Room for batleground/arena strings 747-799 not used
+//                                      = 747, not used
+//                                      = 748, not used
+//                                      = 749, not used
+    LANG_BATTLEGROUND_PREMATURE_FINISH_WARNING = 750,       // "Not enough players. This game will close in %u mins."
+    LANG_BATTLEGROUND_PREMATURE_FINISH_WARNING_SECS = 751,  // "Not enough players. This game will close in %u seconds."
+//                                      = 752, not used
+//  LANG_BG_WS_START_TWO_MINUTES        = 753, - defined above
+//  LANG_BG_AB_START_TWO_MINUTES        = 754, - defined above
+//  LANG_BG_EY_START_TWO_MINUTES        = 755, - defined above
+    // Room for batleground/arena strings 756-799 not used
 
     // in game strings
     //                                  = 800, not used
@@ -694,7 +710,12 @@ enum MangosStrings
     LANG_PLAYER_NOT_EXIST_OR_OFFLINE    = 808,
     LANG_ACCOUNT_FOR_PLAYER_NOT_FOUND   = 809,
     LANG_ACHIEVEMENT_EARNED             = 810,
-    // Room for in-game strings           811-999 not used
+    LANG_GUILD_MASTER                   = 811,
+    LANG_GUILD_OFFICER                  = 812,
+    LANG_GUILD_VETERAN                  = 813,
+    LANG_GUILD_MEMBER                   = 814,
+    LANG_GUILD_INITIATE                 = 815,
+    // Room for in-game strings           816-999 not used
 
     // Level 4 (CLI only commands)
     LANG_COMMAND_EXIT                   = 1000,
@@ -709,7 +730,10 @@ enum MangosStrings
     LANG_CHARACTER_DELETED              = 1009,
     LANG_ACCOUNT_LIST_HEADER            = 1010,
     LANG_ACCOUNT_LIST_ERROR             = 1011,
-    // Room for more level 4              1012-1099 not used
+    LANG_ACCOUNT_LIST_BAR               = 1012,
+    LANG_ACCOUNT_LIST_LINE              = 1013,
+    LANG_ACCOUNT_LIST_EMPTY             = 1014,
+    // Room for more level 4              1015-1099 not used
 
     // Level 3 (continue)
     LANG_ACCOUNT_SETADDON               = 1100,
@@ -735,9 +759,19 @@ enum MangosStrings
     LANG_YOU_CHANGE_GENDER              = 1120,
     LANG_YOUR_GENDER_CHANGED            = 1121,
     LANG_SKILL_VALUES                   = 1122,
-    // Room for more level 3              1123-1199 not used
+    LANG_NO_PET_FOUND                   = 1123,
+    LANG_WRONG_PET_TYPE                 = 1124,
+    LANG_COMMAND_LEARN_PET_TALENTS      = 1125,
+    LANG_RESET_PET_TALENTS              = 1126,
+    LANG_RESET_PET_TALENTS_ONLINE       = 1127,
+    // Room for more level 3              1128-1199 not used
 
-    // FREE IDS                           1200-9999
+    // Debug commands
+    LANG_CINEMATIC_NOT_EXIST            = 1200,
+    LANG_MOVIE_NOT_EXIST                = 1201,
+    // Room for more debug                1202-1299 not used
+
+    // FREE IDS                           1300-9999
 
     // Use for not-in-offcial-sources patches
     //                                    10000-10999

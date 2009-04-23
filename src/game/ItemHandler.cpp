@@ -19,7 +19,6 @@
 #include "Common.h"
 #include "WorldPacket.h"
 #include "WorldSession.h"
-#include "World.h"
 #include "Opcodes.h"
 #include "Log.h"
 #include "ObjectMgr.h"
@@ -355,7 +354,7 @@ void WorldSession::HandleItemQuerySingleOpcode( WorldPacket & recv_data )
         }
         data << pProto->ScalingStatDistribution;            // scaling stats distribution
         data << pProto->ScalingStatValue;                   // some kind of flags used to determine stat values column
-        for(int i = 0; i < 5; ++i)
+        for(int i = 0; i < MAX_ITEM_PROTO_DAMAGES; ++i)
         {
             data << pProto->Damage[i].DamageMin;
             data << pProto->Damage[i].DamageMax;
@@ -375,7 +374,7 @@ void WorldSession::HandleItemQuerySingleOpcode( WorldPacket & recv_data )
         data << pProto->AmmoType;
         data << pProto->RangedModRange;
 
-        for(int s = 0; s < 5; s++)
+        for(int s = 0; s < MAX_ITEM_PROTO_SPELLS; ++s)
         {
             // send DBC data for cooldowns in same way as it used in Spell::SendSpellCooldown
             // use `item_template` or if not set then only use spell cooldowns
@@ -429,7 +428,7 @@ void WorldSession::HandleItemQuerySingleOpcode( WorldPacket & recv_data )
         data << pProto->Map;                                // Added in 1.12.x & 2.0.1 client branch
         data << pProto->BagFamily;
         data << pProto->TotemCategory;
-        for(int s = 0; s < 3; s++)
+        for(int s = 0; s < MAX_ITEM_PROTO_SOCKETS; ++s)
         {
             data << pProto->Socket[s].Color;
             data << pProto->Socket[s].Content;
@@ -517,7 +516,7 @@ void WorldSession::HandleSellItemOpcode( WorldPacket & recv_data )
     if(!itemguid)
         return;
 
-    Creature *pCreature = ObjectAccessor::GetNPCIfCanInteractWith(*_player, vendorguid,UNIT_NPC_FLAG_VENDOR);
+    Creature *pCreature = GetPlayer()->GetNPCIfCanInteractWith(vendorguid,UNIT_NPC_FLAG_VENDOR);
     if (!pCreature)
     {
         sLog.outDebug( "WORLD: HandleSellItemOpcode - Unit (GUID: %u) not found or you can't interact with him.", uint32(GUID_LOPART(vendorguid)) );
@@ -622,7 +621,7 @@ void WorldSession::HandleBuybackItem(WorldPacket & recv_data)
 
     recv_data >> vendorguid >> slot;
 
-    Creature *pCreature = ObjectAccessor::GetNPCIfCanInteractWith(*_player, vendorguid,UNIT_NPC_FLAG_VENDOR);
+    Creature *pCreature = GetPlayer()->GetNPCIfCanInteractWith(vendorguid,UNIT_NPC_FLAG_VENDOR);
     if (!pCreature)
     {
         sLog.outDebug( "WORLD: HandleBuybackItem - Unit (GUID: %u) not found or you can't interact with him.", uint32(GUID_LOPART(vendorguid)) );
@@ -709,7 +708,7 @@ void WorldSession::SendListInventory( uint64 vendorguid )
 {
     sLog.outDebug(  "WORLD: Sent SMSG_LIST_INVENTORY" );
 
-    Creature *pCreature = ObjectAccessor::GetNPCIfCanInteractWith(*_player, vendorguid,UNIT_NPC_FLAG_VENDOR);
+    Creature *pCreature = GetPlayer()->GetNPCIfCanInteractWith(vendorguid,UNIT_NPC_FLAG_VENDOR);
     if (!pCreature)
     {
         sLog.outDebug( "WORLD: SendListInventory - Unit (GUID: %u) not found or you can't interact with him.", uint32(GUID_LOPART(vendorguid)) );
@@ -826,9 +825,22 @@ void WorldSession::HandleAutoStoreBagItemOpcode( WorldPacket & recv_data )
     _player->StoreItem( dest, pItem, true );
 }
 
-void WorldSession::HandleBuyBankSlotOpcode(WorldPacket& /*recvPacket*/)
+void WorldSession::HandleBuyBankSlotOpcode(WorldPacket& recvPacket)
 {
+    CHECK_PACKET_SIZE(recvPacket, 8);
+
     sLog.outDebug("WORLD: CMSG_BUY_BANK_SLOT");
+
+    uint64 guid;
+    recvPacket >> guid;
+
+    // cheating protection
+    Creature *pCreature = GetPlayer()->GetNPCIfCanInteractWith(guid, UNIT_NPC_FLAG_BANKER);
+    if(!pCreature)
+    {
+        sLog.outDebug( "WORLD: HandleBuyBankSlotOpcode - Unit (GUID: %u) not found or you can't interact with him.", uint32(GUID_LOPART(guid)) );
+        return;
+    }
 
     uint32 slot = _player->GetByteValue(PLAYER_BYTES_2, 2);
 

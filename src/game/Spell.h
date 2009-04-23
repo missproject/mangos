@@ -20,6 +20,7 @@
 #define __SPELL_H
 
 #include "GridDefines.h"
+#include "SharedDefines.h"
 
 class WorldSession;
 class Unit;
@@ -204,7 +205,16 @@ enum SpellState
     SPELL_STATE_DELAYED   = 5
 };
 
-#define SPELL_SPELL_CHANNEL_UPDATE_INTERVAL 1000
+enum SpellTargets
+{
+    SPELL_TARGETS_HOSTILE,
+    SPELL_TARGETS_NOT_FRIENDLY,
+    SPELL_TARGETS_NOT_HOSTILE,
+    SPELL_TARGETS_FRIENDLY,
+    SPELL_TARGETS_AOE_DAMAGE
+};
+
+#define SPELL_SPELL_CHANNEL_UPDATE_INTERVAL (1*IN_MILISECONDS)
 
 typedef std::multimap<uint64, uint64> SpellTargetTimeMap;
 
@@ -249,6 +259,7 @@ class Spell
         void EffectSummonWild(uint32 i);
         void EffectSummonGuardian(uint32 i);
         void EffectHealMechanical(uint32 i);
+        void EffectJump(uint32 i);
         void EffectTeleUnitsFaceCaster(uint32 i);
         void EffectLearnSkill(uint32 i);
         void EffectAddHonor(uint32 i);
@@ -331,14 +342,13 @@ class Spell
         void cast(bool skipCheck = false);
         void finish(bool ok = true);
         void TakePower();
-        uint8 CheckRuneCost(uint32 runeCostID);
         void TakeRunePower();
         void TakeReagents();
         void TakeCastItem();
         void TriggerSpell();
-        uint8 CanCast(bool strict);
-        int16 PetCanCast(Unit* target);
-        bool CanAutoCast(Unit* target);
+
+        SpellCastResult CheckCast(bool strict);
+        SpellCastResult CheckPetCast(Unit* target);
 
         // handlers
         void handle_immediate();
@@ -347,10 +357,11 @@ class Spell
         void _handle_immediate_phase();
         void _handle_finish_phase();
 
-        uint8 CheckItems();
-        uint8 CheckRange(bool strict);
-        uint8 CheckPower();
-        uint8 CheckCasterAuras() const;
+        SpellCastResult CheckItems();
+        SpellCastResult CheckRange(bool strict);
+        SpellCastResult CheckPower();
+        SpellCastResult CheckRuneCost(uint32 runeCostID);
+        SpellCastResult CheckCasterAuras() const;
 
         int32 CalculateDamage(uint8 i, Unit* target) { return m_caster->CalculateSpellDamage(m_spellInfo,i,m_currentBasePoints[i],target); }
         int32 CalculatePowerCost();
@@ -364,14 +375,16 @@ class Spell
         void DoCreateItem(uint32 i, uint32 itemtype);
         void WriteSpellGoTargets( WorldPacket * data );
         void WriteAmmoToPacket( WorldPacket * data );
+
+        typedef std::list<Unit*> UnitList;
         void FillTargetMap();
+        void SetTargetMap(uint32 i,uint32 cur,UnitList& TagUnitMap);
+        void FillAreaTargets( UnitList& TagUnitMap, float x, float y, float radius, SpellNotifyPushType pushType, SpellTargets spellTargets );
 
-        void SetTargetMap(uint32 i,uint32 cur,std::list<Unit*> &TagUnitMap);
-
-        Unit* SelectMagnetTarget();
         bool CheckTarget( Unit* target, uint32 eff );
+        bool CanAutoCast(Unit* target);
 
-        void SendCastResult(uint8 result);
+        void SendCastResult(SpellCastResult result);
         void SendSpellStart();
         void SendSpellGo();
         void SendSpellCooldown();
@@ -546,6 +559,7 @@ class Spell
         void DoAllEffectOnTarget(GOTargetInfo *target);
         void DoAllEffectOnTarget(ItemTargetInfo *target);
         bool IsAliveUnitPresentInTargetList();
+        SpellCastResult CanOpenLock(uint32 effIndex, uint32 lockid, SkillType& skillid, int32& reqSkillValue, int32& skillValue);
         // -------------------------------------------
 
         //List For Triggered Spells
@@ -573,15 +587,6 @@ enum ReplenishType
     REPLENISH_HEALTH    = 20,
     REPLENISH_MANA      = 21,
     REPLENISH_RAGE      = 22
-};
-
-enum SpellTargets
-{
-    SPELL_TARGETS_HOSTILE,
-    SPELL_TARGETS_NOT_FRIENDLY,
-    SPELL_TARGETS_NOT_HOSTILE,
-    SPELL_TARGETS_FRIENDLY,
-    SPELL_TARGETS_AOE_DAMAGE
 };
 
 namespace MaNGOS
@@ -625,12 +630,12 @@ namespace MaNGOS
     {
         std::list<Unit*> *i_data;
         Spell &i_spell;
-        const uint32& i_push_type;
+        SpellNotifyPushType i_push_type;
         float i_radius;
         SpellTargets i_TargetType;
         Unit* i_originalCaster;
 
-        SpellNotifierCreatureAndPlayer(Spell &spell, std::list<Unit*> &data, float radius, const uint32 &type,
+        SpellNotifierCreatureAndPlayer(Spell &spell, std::list<Unit*> &data, float radius, SpellNotifyPushType type,
             SpellTargets TargetType = SPELL_TARGETS_NOT_FRIENDLY)
             : i_data(&data), i_spell(spell), i_push_type(type), i_radius(radius), i_TargetType(TargetType)
         {

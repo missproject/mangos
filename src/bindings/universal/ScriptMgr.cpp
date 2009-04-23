@@ -236,15 +236,6 @@ bool AreaTrigger      ( Player *player, AreaTriggerEntry* atEntry )
 }
 
 MANGOS_DLL_EXPORT
-bool ReceiveEmote ( Player *player, Creature *_Creature, uint32 emote )
-{
-    Script *tmpscript = m_scripts[_Creature->GetScriptId()];
-    if(!tmpscript || !tmpscript->pReceiveEmote) return false;
-
-    return tmpscript->pReceiveEmote(player,_Creature, emote);
-}
-
-MANGOS_DLL_EXPORT
 bool ItemUse( Player *player, Item* _Item, SpellCastTargets const& targets)
 {
     Script *tmpscript = NULL;
@@ -274,6 +265,36 @@ InstanceData* CreateInstanceData(Map *map)
     return tmpscript->GetInstanceData(map);
 }
 
+MANGOS_DLL_EXPORT
+bool EffectDummyGameObj(Unit *caster, uint32 spellId, uint32 effIndex, GameObject *gameObjTarget )
+{
+    Script *tmpscript = m_scripts[gameObjTarget->GetGOInfo()->ScriptId];
+
+    if (!tmpscript || !tmpscript->pEffectDummyGameObj) return false;
+
+    return tmpscript->pEffectDummyGameObj(caster, spellId,effIndex,gameObjTarget);
+}
+
+MANGOS_DLL_EXPORT
+bool EffectDummyCreature(Unit *caster, uint32 spellId, uint32 effIndex, Creature *crTarget )
+{
+    Script *tmpscript = m_scripts[crTarget->GetScriptId()];
+
+    if (!tmpscript || !tmpscript->pEffectDummyCreature) return false;
+
+    return tmpscript->pEffectDummyCreature(caster, spellId,effIndex,crTarget);
+}
+
+MANGOS_DLL_EXPORT
+bool EffectDummyItem(Unit *caster, uint32 spellId, uint32 effIndex, Item *itemTarget )
+{
+    Script *tmpscript = m_scripts[itemTarget->GetProto()->ScriptId];
+
+    if (!tmpscript || !tmpscript->pEffectDummyItem) return false;
+
+    return tmpscript->pEffectDummyItem(caster, spellId,effIndex,itemTarget);
+}
+
 void ScriptedAI::UpdateAI(const uint32)
 {
     //Check if we have a current target
@@ -293,6 +314,7 @@ void ScriptedAI::UpdateAI(const uint32)
 
 void ScriptedAI::EnterEvadeMode()
 {
+    m_creature->CombatStop(true);
     if( m_creature->isAlive() )
         DoGoHome();
 }

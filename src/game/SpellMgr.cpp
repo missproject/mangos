@@ -20,7 +20,7 @@
 #include "ObjectMgr.h"
 #include "SpellAuraDefines.h"
 #include "ProgressBar.h"
-#include "Database/DBCStores.h"
+#include "DBCStores.h"
 #include "World.h"
 #include "Chat.h"
 #include "Spell.h"
@@ -122,7 +122,8 @@ int32 CompareAuraRanks(uint32 spellId_1, uint32 effIndex_1, uint32 spellId_2, ui
     if (spellId_1 == spellId_2) return 0;
 
     int32 diff = spellInfo_1->EffectBasePoints[effIndex_1] - spellInfo_2->EffectBasePoints[effIndex_2];
-    if (spellInfo_1->EffectBasePoints[effIndex_1]+1 < 0 && spellInfo_2->EffectBasePoints[effIndex_2]+1 < 0) return -diff;
+    if (spellInfo_1->CalculateSimpleValue(effIndex_1) < 0 && spellInfo_2->CalculateSimpleValue(effIndex_2) < 0)
+        return -diff;
     else return diff;
 }
 
@@ -222,7 +223,7 @@ SpellSpecific GetSpellSpecific(uint32 spellId)
     return SPELL_NORMAL;
 }
 
-bool IsSingleFromSpellSpecificPerCaster(uint32 spellSpec1,uint32 spellSpec2)
+bool IsSingleFromSpellSpecificPerCaster(SpellSpecific spellSpec1,SpellSpecific spellSpec2)
 {
     switch(spellSpec1)
     {
@@ -250,6 +251,19 @@ bool IsSingleFromSpellSpecificPerCaster(uint32 spellSpec1,uint32 spellSpec2)
             return spellSpec2==SPELL_BATTLE_ELIXIR
                 || spellSpec2==SPELL_GUARDIAN_ELIXIR
                 || spellSpec2==SPELL_FLASK_ELIXIR;
+        default:
+            return false;
+    }
+}
+
+bool IsSingleFromSpellSpecificRanksPerTarget(SpellSpecific spellId_spec, SpellSpecific i_spellId_spec)
+{
+    switch(spellId_spec)
+    {
+        case SPELL_BLESSING:
+        case SPELL_AURA:
+        case SPELL_CURSE:
+            return spellId_spec==i_spellId_spec;
         default:
             return false;
     }
@@ -285,10 +299,6 @@ bool IsPositiveEffect(uint32 spellId, uint32 effIndex)
 
     switch(spellId)
     {
-        case 23333:                                         // BG spell
-        case 23335:                                         // BG spell
-        case 34976:                                         // BG spell
-            return true;
         case 28441:                                         // not positive dummy spell
         case 37675:                                         // Chaos Blast
             return false;
@@ -317,6 +327,7 @@ bool IsPositiveEffect(uint32 spellId, uint32 effIndex)
                     {
                         case 13139:                         // net-o-matic special effect
                         case 23445:                         // evil twin
+                        case 35679:                         // Protectorate Demolitionist
                         case 38637:                         // Nether Exhaustion (red)
                         case 38638:                         // Nether Exhaustion (green)
                         case 38639:                         // Nether Exhaustion (blue)
@@ -329,7 +340,7 @@ bool IsPositiveEffect(uint32 spellId, uint32 effIndex)
                 case SPELL_AURA_MOD_DAMAGE_DONE:            // dependent from bas point sign (negative -> negative)
                 case SPELL_AURA_MOD_HEALING_DONE:
                 {
-                    if(spellproto->EffectBasePoints[effIndex]+int32(spellproto->EffectBaseDice[effIndex]) < 0)
+                    if(spellproto->CalculateSimpleValue(effIndex) < 0)
                         return false;
                     break;
                 }
@@ -427,7 +438,7 @@ bool IsPositiveEffect(uint32 spellId, uint32 effIndex)
                     switch(spellproto->EffectMiscValue[effIndex])
                     {
                         case SPELLMOD_COST:                 // dependent from bas point sign (negative -> positive)
-                            if(spellproto->EffectBasePoints[effIndex]+int32(spellproto->EffectBaseDice[effIndex]) > 0)
+                            if(spellproto->CalculateSimpleValue(effIndex) > 0)
                                 return false;
                             break;
                         default:
@@ -435,11 +446,11 @@ bool IsPositiveEffect(uint32 spellId, uint32 effIndex)
                     }
                 }   break;
                 case SPELL_AURA_MOD_HEALING_PCT:
-                    if(spellproto->EffectBasePoints[effIndex]+int32(spellproto->EffectBaseDice[effIndex]) < 0)
+                    if(spellproto->CalculateSimpleValue(effIndex) < 0)
                         return false;
                     break;
                 case SPELL_AURA_MOD_SKILL:
-                    if(spellproto->EffectBasePoints[effIndex]+int32(spellproto->EffectBaseDice[effIndex]) < 0)
+                    if(spellproto->CalculateSimpleValue(effIndex) < 0)
                         return false;
                     break;
                 case SPELL_AURA_FORCE_REACTION:
@@ -516,6 +527,7 @@ bool IsSingleTargetSpells(SpellEntry const *spellInfo1, SpellEntry const *spellI
     switch(spec1)
     {
         case SPELL_JUDGEMENT:
+        case SPELL_MAGE_POLYMORPH:
             if(GetSpellSpecific(spellInfo2->Id) == spec1)
                 return true;
             break;
@@ -535,13 +547,13 @@ bool IsAuraAddedBySpell(uint32 auraType, uint32 spellId)
     return false;
 }
 
-uint8 GetErrorAtShapeshiftedCast (SpellEntry const *spellInfo, uint32 form)
+SpellCastResult GetErrorAtShapeshiftedCast (SpellEntry const *spellInfo, uint32 form)
 {
     // talents that learn spells can have stance requirements that need ignore
     // (this requirement only for client-side stance show in talent description)
     if( GetTalentSpellCost(spellInfo->Id) > 0 &&
         (spellInfo->Effect[0]==SPELL_EFFECT_LEARN_SPELL || spellInfo->Effect[1]==SPELL_EFFECT_LEARN_SPELL || spellInfo->Effect[2]==SPELL_EFFECT_LEARN_SPELL) )
-        return 0;
+        return SPELL_CAST_OK;
 
     uint32 stanceMask = (form ? 1 << (form - 1) : 0);
 
@@ -549,7 +561,7 @@ uint8 GetErrorAtShapeshiftedCast (SpellEntry const *spellInfo, uint32 form)
         return SPELL_FAILED_NOT_SHAPESHIFT;
 
     if (stanceMask & spellInfo->Stances)                    // can explicitly be casted in this stance
-        return 0;
+        return SPELL_CAST_OK;
 
     bool actAsShifted = false;
     if (form > 0)
@@ -558,7 +570,7 @@ uint8 GetErrorAtShapeshiftedCast (SpellEntry const *spellInfo, uint32 form)
         if (!shapeInfo)
         {
             sLog.outError("GetErrorAtShapeshiftedCast: unknown shapeshift %u", form);
-            return 0;
+            return SPELL_CAST_OK;
         }
         actAsShifted = !(shapeInfo->flags1 & 1);            // shapeshift acts as normal form for spells
     }
@@ -577,7 +589,7 @@ uint8 GetErrorAtShapeshiftedCast (SpellEntry const *spellInfo, uint32 form)
             return SPELL_FAILED_ONLY_SHAPESHIFT;
     }
 
-    return 0;
+    return SPELL_CAST_OK;
 }
 
 void SpellMgr::LoadSpellTargetPositions()
@@ -1216,6 +1228,9 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                     break;
                 }
             }
+            // Dragonmaw Illusion, Blood Elf Illusion, Human Illusion, Illidari Agent Illusion, Scarlet Crusade Disguise
+            if(spellInfo_1->SpellIconID == 1691 && spellInfo_2->SpellIconID == 1691)
+                return false;
             break;
         case SPELLFAMILY_MAGE:
             if( spellInfo_2->SpellFamilyName == SPELLFAMILY_MAGE )
@@ -1336,6 +1351,10 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                 // Cat Energy (Feral T4 (2)) and Omen of Clarity
                 if( spellInfo_1->Id == 16864 && spellInfo_2->Id == 37311 || spellInfo_2->Id == 16864 && spellInfo_1->Id == 37311 )
                     return false;
+
+                // Survival Instincts and Survival Instincts
+                if( spellInfo_1->Id == 61336 && spellInfo_2->Id == 50322 || spellInfo_2->Id == 61336 && spellInfo_1->Id == 50322 )
+                    return false;
             }
 
             // Leader of the Pack and Scroll of Stamina (multi-family check)
@@ -1354,6 +1373,10 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                 if (spellId_1 == 31665 && spellId_2 == 31666 || spellId_1 == 31666 && spellId_2 == 31665 )
                     return false;
             }
+
+            //Overkill
+            if( spellInfo_1->SpellIconID == 2285 && spellInfo_2->SpellIconID == 2285 )
+                return false;
 
             // Garrote -> Garrote-Silence (multi-family check)
             if( spellInfo_1->SpellIconID == 498 && spellInfo_2->SpellIconID == 498 && spellInfo_2->SpellVisual[0] == 0 )
@@ -1759,10 +1782,10 @@ void SpellMgr::LoadSpellLearnSkills()
                 SpellLearnSkillNode dbc_node;
                 dbc_node.skill    = entry->EffectMiscValue[i];
                 if ( dbc_node.skill != SKILL_RIDING )
-                    dbc_node.value    = 1;
+                    dbc_node.value = 1;
                 else
-                    dbc_node.value    = (entry->EffectBasePoints[i]+1)*75;
-                dbc_node.maxvalue = (entry->EffectBasePoints[i]+1)*75;
+                    dbc_node.value = entry->CalculateSimpleValue(i)*75;
+                dbc_node.maxvalue = entry->CalculateSimpleValue(i)*75;
 
                 mSpellLearnSkills[spell] = dbc_node;
                 ++dbc_count;
@@ -2080,7 +2103,7 @@ void SpellMgr::LoadSpellPetAuras()
                 continue;
             }
 
-            PetAura pa(pet, aura, spellInfo->EffectImplicitTargetA[i] == TARGET_PET, spellInfo->EffectBasePoints[i] + spellInfo->EffectBaseDice[i]);
+            PetAura pa(pet, aura, spellInfo->EffectImplicitTargetA[i] == TARGET_PET, spellInfo->CalculateSimpleValue(i));
             mSpellPetAuraMap[spell] = pa;
         }
 
@@ -2348,7 +2371,218 @@ bool SpellMgr::IsSpellValid(SpellEntry const* spellInfo, Player* pl, bool msg)
     return true;
 }
 
-uint8 GetSpellAllowedInLocationError(SpellEntry const *spellInfo,uint32 map_id,uint32 zone_id,uint32 area_id, uint32 bgInstanceId)
+void SpellMgr::LoadSpellAreas()
+{
+    mSpellAreaMap.clear();                                  // need for reload case
+    mSpellAreaForQuestMap.clear();
+    mSpellAreaForActiveQuestMap.clear();
+    mSpellAreaForQuestEndMap.clear();
+    mSpellAreaForAuraMap.clear();
+
+    uint32 count = 0;
+
+    //                                                0      1     2            3                   4          5           6         7       8
+    QueryResult *result = WorldDatabase.Query("SELECT spell, area, quest_start, quest_start_active, quest_end, aura_spell, racemask, gender, autocast FROM spell_area");
+
+    if( !result )
+    {
+        barGoLink bar( 1 );
+
+        bar.step();
+
+        sLog.outString();
+        sLog.outString( ">> Loaded %u spell area requirements", count );
+        return;
+    }
+
+    barGoLink bar( result->GetRowCount() );
+
+    do
+    {
+        Field *fields = result->Fetch();
+
+        bar.step();
+
+        uint32 spell = fields[0].GetUInt32();
+        SpellArea spellArea;
+        spellArea.spellId             = spell;
+        spellArea.areaId              = fields[1].GetUInt32();
+        spellArea.questStart          = fields[2].GetUInt32();
+        spellArea.questStartCanActive = fields[3].GetBool();
+        spellArea.questEnd            = fields[4].GetUInt32();
+        spellArea.auraSpell           = fields[5].GetInt32();
+        spellArea.raceMask            = fields[6].GetUInt32();
+        spellArea.gender              = Gender(fields[7].GetUInt8());
+        spellArea.autocast            = fields[8].GetBool();
+
+        if(!sSpellStore.LookupEntry(spell))
+        {
+            sLog.outErrorDb("Spell %u listed in `spell_area` does not exist", spell);
+            continue;
+        }
+
+        {
+            bool ok = true;
+            SpellAreaMapBounds sa_bounds = GetSpellAreaMapBounds(spellArea.spellId);
+            for(SpellAreaMap::const_iterator itr = sa_bounds.first; itr != sa_bounds.second; ++itr)
+            {
+                if(spellArea.spellId && itr->second.spellId && spellArea.spellId != itr->second.spellId)
+                    continue;
+                if(spellArea.areaId && itr->second.areaId && spellArea.areaId!= itr->second.areaId)
+                    continue;
+                if(spellArea.questStart && itr->second.questStart && spellArea.questStart!= itr->second.questStart)
+                    continue;
+                if(spellArea.auraSpell && itr->second.auraSpell && spellArea.auraSpell!= itr->second.auraSpell)
+                    continue;
+                if(spellArea.raceMask && itr->second.raceMask && (spellArea.raceMask & itr->second.raceMask)==0)
+                    continue;
+                if(spellArea.gender != GENDER_NONE && itr->second.gender != GENDER_NONE && spellArea.gender!= itr->second.gender)
+                    continue;
+
+                // duplicate by requirements
+                ok =false;
+                break;
+            }
+
+            if(!ok)
+            {
+                sLog.outErrorDb("Spell %u listed in `spell_area` already listed with similar requirements.", spell);
+                continue;
+            }
+
+        }
+
+        if(spellArea.areaId && !GetAreaEntryByAreaID(spellArea.areaId))
+        {
+            sLog.outErrorDb("Spell %u listed in `spell_area` have wrong area (%u) requirement", spell,spellArea.areaId);
+            continue;
+        }
+
+        if(spellArea.questStart && !objmgr.GetQuestTemplate(spellArea.questStart))
+        {
+            sLog.outErrorDb("Spell %u listed in `spell_area` have wrong start quest (%u) requirement", spell,spellArea.questStart);
+            continue;
+        }
+
+        if(spellArea.questEnd)
+        {
+            if(!objmgr.GetQuestTemplate(spellArea.questEnd))
+            {
+                sLog.outErrorDb("Spell %u listed in `spell_area` have wrong end quest (%u) requirement", spell,spellArea.questEnd);
+                continue;
+            }
+
+            if(spellArea.questEnd==spellArea.questStart && !spellArea.questStartCanActive)
+            {
+                sLog.outErrorDb("Spell %u listed in `spell_area` have quest (%u) requirement for start and end in same time", spell,spellArea.questEnd);
+                continue;
+            }
+        }
+
+        if(spellArea.auraSpell)
+        {
+            SpellEntry const* spellInfo = sSpellStore.LookupEntry(abs(spellArea.auraSpell));
+            if(!spellInfo)
+            {
+                sLog.outErrorDb("Spell %u listed in `spell_area` have wrong aura spell (%u) requirement", spell,abs(spellArea.auraSpell));
+                continue;
+            }
+
+            if(spellInfo->EffectApplyAuraName[0]!=SPELL_AURA_DUMMY && spellInfo->EffectApplyAuraName[0]!=SPELL_AURA_PHASE)
+            {
+                sLog.outErrorDb("Spell %u listed in `spell_area` have aura spell requirement (%u) without dummy/phase aura in effect 0", spell,abs(spellArea.auraSpell));
+                continue;
+            }
+
+            if(abs(spellArea.auraSpell)==spellArea.spellId)
+            {
+                sLog.outErrorDb("Spell %u listed in `spell_area` have aura spell (%u) requirement for itself", spell,abs(spellArea.auraSpell));
+                continue;
+            }
+
+            // not allow autocast chains by auraSpell field (but allow use as alternative if not present)
+            if(spellArea.autocast && spellArea.auraSpell > 0)
+            {
+                bool chain = false;
+                SpellAreaForAuraMapBounds saBound = GetSpellAreaForAuraMapBounds(spellArea.spellId);
+                for(SpellAreaForAuraMap::const_iterator itr = saBound.first; itr != saBound.second; ++itr)
+                {
+                    if(itr->second->autocast && itr->second->auraSpell > 0)
+                    {
+                        chain = true;
+                        break;
+                    }
+                }
+
+                if(chain)
+                {
+                    sLog.outErrorDb("Spell %u listed in `spell_area` have aura spell (%u) requirement that itself autocast from aura", spell,spellArea.auraSpell);
+                    continue;
+                }
+
+                SpellAreaMapBounds saBound2 = GetSpellAreaMapBounds(spellArea.auraSpell);
+                for(SpellAreaMap::const_iterator itr2 = saBound2.first; itr2 != saBound2.second; ++itr2)
+                {
+                    if(itr2->second.autocast && itr2->second.auraSpell > 0)
+                    {
+                        chain = true;
+                        break;
+                    }
+                }
+
+                if(chain)
+                {
+                    sLog.outErrorDb("Spell %u listed in `spell_area` have aura spell (%u) requirement that itself autocast from aura", spell,spellArea.auraSpell);
+                    continue;
+                }
+            }
+        }
+
+        if(spellArea.raceMask && (spellArea.raceMask & RACEMASK_ALL_PLAYABLE)==0)
+        {
+            sLog.outErrorDb("Spell %u listed in `spell_area` have wrong race mask (%u) requirement", spell,spellArea.raceMask);
+            continue;
+        }
+
+        if(spellArea.gender!=GENDER_NONE && spellArea.gender!=GENDER_FEMALE && spellArea.gender!=GENDER_MALE)
+        {
+            sLog.outErrorDb("Spell %u listed in `spell_area` have wrong gender (%u) requirement", spell,spellArea.gender);
+            continue;
+        }
+
+        SpellArea const* sa = &mSpellAreaMap.insert(SpellAreaMap::value_type(spell,spellArea))->second;
+
+        // for search by current zone/subzone at zone/subzone change
+        if(spellArea.areaId)
+            mSpellAreaForAreaMap.insert(SpellAreaForAreaMap::value_type(spellArea.areaId,sa));
+
+        // for search at quest start/reward
+        if(spellArea.questStart)
+        {
+            if(spellArea.questStartCanActive)
+                mSpellAreaForActiveQuestMap.insert(SpellAreaForQuestMap::value_type(spellArea.questStart,sa));
+            else
+                mSpellAreaForQuestMap.insert(SpellAreaForQuestMap::value_type(spellArea.questStart,sa));
+        }
+
+        // for search at quest start/reward
+        if(spellArea.questEnd)
+            mSpellAreaForQuestEndMap.insert(SpellAreaForQuestMap::value_type(spellArea.questEnd,sa));
+
+        // for search at aura apply
+        if(spellArea.auraSpell)
+            mSpellAreaForAuraMap.insert(SpellAreaForAuraMap::value_type(abs(spellArea.auraSpell),sa));
+
+        ++count;
+    } while( result->NextRow() );
+
+    delete result;
+
+    sLog.outString();
+    sLog.outString( ">> Loaded %u spell area requirements", count );
+}
+
+SpellCastResult SpellMgr::GetSpellAllowedInLocationError(SpellEntry const *spellInfo, uint32 map_id, uint32 zone_id, uint32 area_id, Player const* player)
 {
     // normal case
     if( spellInfo->AreaGroupId > 0)
@@ -2367,75 +2601,26 @@ uint8 GetSpellAllowedInLocationError(SpellEntry const *spellInfo,uint32 map_id,u
             return SPELL_FAILED_INCORRECT_AREA;
     }
 
-    // elixirs (all area dependent elixirs have family SPELLFAMILY_POTION, use this for speedup)
-    if(spellInfo->SpellFamilyName==SPELLFAMILY_POTION)
+    // DB base check (if non empty then must fit at least single for allow)
+    SpellAreaMapBounds saBounds = spellmgr.GetSpellAreaMapBounds(spellInfo->Id);
+    if(saBounds.first != saBounds.second)
     {
-        if(uint32 mask = spellmgr.GetSpellElixirMask(spellInfo->Id))
+        for(SpellAreaMap::const_iterator itr = saBounds.first; itr != saBounds.second; ++itr)
         {
-            if(mask & ELIXIR_BATTLE_MASK)
-            {
-                if(spellInfo->Id==45373)                    // Bloodberry Elixir
-                    return zone_id==4075 ? 0 : SPELL_FAILED_REQUIRES_AREA;
-            }
-            if(mask & ELIXIR_UNSTABLE_MASK)
-            {
-                // in the Blade's Edge Mountains Plateaus and Gruul's Lair.
-                return zone_id ==3522 || map_id==565 ? 0 : SPELL_FAILED_INCORRECT_AREA;
-            }
-            if(mask & ELIXIR_SHATTRATH_MASK)
-            {
-                // in Tempest Keep, Serpentshrine Cavern, Caverns of Time: Mount Hyjal, Black Temple, Sunwell Plateau
-                if(zone_id ==3607 || map_id==534 || map_id==564 || zone_id==4075)
-                    return 0;
-
-                MapEntry const* mapEntry = sMapStore.LookupEntry(map_id);
-                if(!mapEntry)
-                    return SPELL_FAILED_INCORRECT_AREA;
-
-                return mapEntry->multimap_id==206 ? 0 : SPELL_FAILED_INCORRECT_AREA;
-            }
-
-            // elixirs not have another limitations
-            return 0;
+            if(itr->second.IsFitToRequirements(player,zone_id,area_id))
+                return SPELL_CAST_OK;
         }
+        return SPELL_FAILED_INCORRECT_AREA;
     }
 
-    // special cases zone check (maps checked by multimap common id)
+    // bg spell checks
     switch(spellInfo->Id)
     {
-        case 41618:                                         // Bottled Nethergon Energy
-        case 41620:                                         // Bottled Nethergon Vapor
-        {
-            MapEntry const* mapEntry = sMapStore.LookupEntry(map_id);
-            if(!mapEntry)
-                return SPELL_FAILED_INCORRECT_AREA;
-
-            return mapEntry->multimap_id==206 ? 0 : SPELL_FAILED_REQUIRES_AREA;
-        }
-        case 41617:                                         // Cenarion Mana Salve
-        case 41619:                                         // Cenarion Healing Salve
-        {
-            MapEntry const* mapEntry = sMapStore.LookupEntry(map_id);
-            if(!mapEntry)
-                return SPELL_FAILED_INCORRECT_AREA;
-
-            return mapEntry->multimap_id==207 ? 0 : SPELL_FAILED_REQUIRES_AREA;
-        }
-        case 40216:                                         // Dragonmaw Illusion
-        case 42016:                                         // Dragonmaw Illusion
-            return area_id == 3759 || area_id == 3966 || area_id == 3939 ? 0 : SPELL_FAILED_INCORRECT_AREA;
-        case 51721:                                         // Dominion Over Acherus
-        case 54055:                                         // Dominion Over Acherus
-            return area_id == 4281 || area_id == 4342 ? 0 : SPELL_FAILED_INCORRECT_AREA;
-        case 51852:                                         // The Eye of Acherus
-            return map_id == 609 ? 0 : SPELL_FAILED_REQUIRES_AREA;
-        case 54119:                                         // Mist of the Kvaldir
-            return area_id == 4028 || area_id == 4029 || area_id == 4106 || area_id == 4031 ? 0 : SPELL_FAILED_INCORRECT_AREA;
         case 23333:                                         // Warsong Flag
         case 23335:                                         // Silverwing Flag
-            return map_id == 489 && bgInstanceId ? 0 : SPELL_FAILED_REQUIRES_AREA;
+            return map_id == 489 && player && player->InBattleGround() ? SPELL_CAST_OK : SPELL_FAILED_REQUIRES_AREA;
         case 34976:                                         // Netherstorm Flag
-            return map_id == 566 && bgInstanceId ? 0 : SPELL_FAILED_REQUIRES_AREA;
+            return map_id == 566 && player && player->InBattleGround() ? SPELL_CAST_OK : SPELL_FAILED_REQUIRES_AREA;
         case 2584:                                          // Waiting to Resurrect
         case 22011:                                         // Spirit Heal Channel
         case 22012:                                         // Spirit Heal
@@ -2448,11 +2633,11 @@ uint8 GetSpellAllowedInLocationError(SpellEntry const *spellInfo,uint32 map_id,u
             if(!mapEntry)
                 return SPELL_FAILED_INCORRECT_AREA;
 
-            return mapEntry->IsBattleGround() && bgInstanceId ? 0 : SPELL_FAILED_REQUIRES_AREA;
+            return mapEntry->IsBattleGround() && player && player->InBattleGround() ? SPELL_CAST_OK : SPELL_FAILED_REQUIRES_AREA;
         }
         case 44521:                                         // Preparation
         {
-            if(!bgInstanceId)
+            if(!player)
                 return SPELL_FAILED_REQUIRES_AREA;
 
             MapEntry const* mapEntry = sMapStore.LookupEntry(map_id);
@@ -2462,8 +2647,8 @@ uint8 GetSpellAllowedInLocationError(SpellEntry const *spellInfo,uint32 map_id,u
             if(!mapEntry->IsBattleGround())
                 return SPELL_FAILED_REQUIRES_AREA;
 
-            BattleGround* bg = sBattleGroundMgr.GetBattleGround(bgInstanceId);
-            return bg && bg->GetStatus()==STATUS_WAIT_JOIN ? 0 : SPELL_FAILED_REQUIRES_AREA;
+            BattleGround* bg = player->GetBattleGround();
+            return bg && bg->GetStatus()==STATUS_WAIT_JOIN ? SPELL_CAST_OK : SPELL_FAILED_REQUIRES_AREA;
         }
         case 32724:                                         // Gold Team (Alliance)
         case 32725:                                         // Green Team (Alliance)
@@ -2474,11 +2659,11 @@ uint8 GetSpellAllowedInLocationError(SpellEntry const *spellInfo,uint32 map_id,u
             if(!mapEntry)
                 return SPELL_FAILED_INCORRECT_AREA;
 
-            return mapEntry->IsBattleArena() && bgInstanceId ? 0 : SPELL_FAILED_REQUIRES_AREA;
+            return mapEntry->IsBattleArena() && player && player->InBattleGround() ? SPELL_CAST_OK : SPELL_FAILED_REQUIRES_AREA;
         }
         case 32727:                                         // Arena Preparation
         {
-            if(!bgInstanceId)
+            if(!player)
                 return SPELL_FAILED_REQUIRES_AREA;
 
             MapEntry const* mapEntry = sMapStore.LookupEntry(map_id);
@@ -2488,12 +2673,12 @@ uint8 GetSpellAllowedInLocationError(SpellEntry const *spellInfo,uint32 map_id,u
             if(!mapEntry->IsBattleArena())
                 return SPELL_FAILED_REQUIRES_AREA;
 
-            BattleGround* bg = sBattleGroundMgr.GetBattleGround(bgInstanceId);
-            return bg && bg->GetStatus()==STATUS_WAIT_JOIN ? 0 : SPELL_FAILED_REQUIRES_AREA;
+            BattleGround* bg = player->GetBattleGround();
+            return bg && bg->GetStatus()==STATUS_WAIT_JOIN ? SPELL_CAST_OK : SPELL_FAILED_REQUIRES_AREA;
         }
     }
 
-    return 0;
+    return SPELL_CAST_OK;
 }
 
 void SpellMgr::LoadSkillLineAbilityMap()
@@ -2631,4 +2816,57 @@ DiminishingReturnsType GetDiminishingReturnsGroupType(DiminishingGroup group)
     }
 
     return DRTYPE_NONE;
+}
+
+bool SpellArea::IsFitToRequirements(Player const* player, uint32 newZone, uint32 newArea) const
+{
+    if(gender!=GENDER_NONE)
+    {
+        // not in expected gender
+        if(!player || gender != player->getGender())
+            return false;
+    }
+
+    if(raceMask)
+    {
+        // not in expected race
+        if(!player || !(raceMask & player->getRaceMask()))
+            return false;
+    }
+
+    if(areaId)
+    {
+        // not in expected zone
+        if(newZone!=areaId && newArea!=areaId)
+            return false;
+    }
+
+    if(questStart)
+    {
+        // not in expected required quest state
+        if(!player || (!questStartCanActive || !player->IsActiveQuest(questStart)) && !player->GetQuestRewardStatus(questStart))
+            return false;
+    }
+
+    if(questEnd)
+    {
+        // not in expected forbidden quest state
+        if(!player || player->GetQuestRewardStatus(questEnd))
+            return false;
+    }
+
+    if(auraSpell)
+    {
+        // not have expected aura
+        if(!player)
+            return false;
+        if(auraSpell > 0)
+            // have expected aura
+            return player->HasAura(auraSpell,0);
+        else
+            // not have expected aura
+            return !player->HasAura(-auraSpell,0);
+    }
+
+    return true;
 }

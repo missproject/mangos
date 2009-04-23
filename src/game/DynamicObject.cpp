@@ -17,16 +17,11 @@
  */
 
 #include "Common.h"
-#include "GameObject.h"
 #include "UpdateMask.h"
 #include "Opcodes.h"
-#include "WorldPacket.h"
-#include "WorldSession.h"
 #include "World.h"
 #include "ObjectAccessor.h"
 #include "Database/DatabaseEnv.h"
-#include "SpellAuras.h"
-#include "MapManager.h"
 #include "GridNotifiers.h"
 #include "CellImpl.h"
 #include "GridNotifiersImpl.h"
@@ -64,7 +59,7 @@ bool DynamicObject::Create( uint32 guidlow, Unit *caster, uint32 spellId, uint32
 
     if(!IsPositionValid())
     {
-        sLog.outError("ERROR: DynamicObject (spell %u eff %u) not created. Suggested coordinates isn't valid (X: %f Y: %f)",spellId,effIndex,GetPositionX(),GetPositionY());
+        sLog.outError("DynamicObject (spell %u eff %u) not created. Suggested coordinates isn't valid (X: %f Y: %f)",spellId,effIndex,GetPositionX(),GetPositionY());
         return false;
     }
 

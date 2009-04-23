@@ -18,13 +18,10 @@
 
 #include "Common.h"
 #include "Database/DatabaseEnv.h"
-#include "WorldPacket.h"
-#include "WorldSession.h"
 #include "World.h"
 #include "Player.h"
 #include "Opcodes.h"
 #include "Chat.h"
-#include "MapManager.h"
 #include "ObjectAccessor.h"
 #include "Language.h"
 #include "AccountMgr.h"
@@ -103,6 +100,7 @@ bool ChatHandler::HandleServerInfoCommand(const char* /*args*/)
     SendSysMessage(full);
     PSendSysMessage(LANG_USING_SCRIPT_LIB,sWorld.GetScriptsVersion());
     PSendSysMessage(LANG_USING_WORLD_DB,sWorld.GetDBVersion());
+    PSendSysMessage(LANG_USING_EVENT_AI,sWorld.GetCreatureEventAIVersion());
     PSendSysMessage(LANG_CONNECTED_USERS, activeClientsNum, maxActiveClientsNum, queuedClientsNum, maxQueuedClientsNum);
     PSendSysMessage(LANG_UPTIME, str.c_str());
 
@@ -145,7 +143,7 @@ bool ChatHandler::HandleSaveCommand(const char* /*args*/)
 
     // save or plan save after 20 sec (logout delay) if current next save time more this value and _not_ output any messages to prevent cheat planning
     uint32 save_interval = sWorld.getConfig(CONFIG_INTERVAL_SAVE);
-    if(save_interval==0 || save_interval > 20*1000 && player->GetSaveTimer() <= save_interval - 20*1000)
+    if(save_interval==0 || save_interval > 20*IN_MILISECONDS && player->GetSaveTimer() <= save_interval - 20*IN_MILISECONDS)
         player->SaveToDB();
 
     return true;

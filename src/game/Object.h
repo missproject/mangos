@@ -187,7 +187,7 @@ class MANGOS_DLL_SPEC Object
             return *(((uint8*)&m_uint32Values[ index ])+offset);
         }
 
-        uint8 GetUInt16Value( uint16 index, uint8 offset) const
+        uint16 GetUInt16Value( uint16 index, uint8 offset) const
         {
             ASSERT( index < m_valuesCount || PrintIndexError( index , false) );
             ASSERT( offset < 2 );
@@ -414,6 +414,7 @@ class MANGOS_DLL_SPEC WorldObject : public Object
 
         uint32 GetZoneId() const;
         uint32 GetAreaId() const;
+        void GetZoneAndAreaId(uint32& zoneid, uint32& areaid) const;
 
         InstanceData* GetInstanceData();
 
@@ -444,8 +445,6 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         virtual void SendMessageToSetInRange(WorldPacket *data, float dist, bool self);
         void BuildHeartBeatMsg( WorldPacket *data ) const;
         void BuildTeleportAckMsg( WorldPacket *data, float x, float y, float z, float ang) const;
-        bool IsBeingTeleported() { return mSemaphoreTeleport; }
-        void SetSemaphoreTeleport(bool semphsetting) { mSemaphoreTeleport = semphsetting; }
 
         void MonsterSay(const char* text, uint32 language, uint64 TargetGuid);
         void MonsterYell(const char* text, uint32 language, uint64 TargetGuid);
@@ -455,7 +454,11 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         void MonsterYell(int32 textId, uint32 language, uint64 TargetGuid);
         void MonsterTextEmote(int32 textId, uint64 TargetGuid, bool IsBossEmote = false);
         void MonsterWhisper(int32 textId, uint64 receiver, bool IsBossWhisper = false);
+        void MonsterYellToZone(int32 textId, uint32 language, uint64 TargetGuid);
         void BuildMonsterChat(WorldPacket *data, uint8 msgtype, char const* text, uint32 language, char const* name, uint64 TargetGuid) const;
+
+        void PlayDistanceSound(uint32 sound_id, Player* target = NULL);
+        void PlayDirectSound(uint32 sound_id, Player* target = NULL);
 
         void SendObjectDeSpawnAnim(uint64 guid);
 
@@ -489,7 +492,5 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         float m_positionY;
         float m_positionZ;
         float m_orientation;
-
-        bool mSemaphoreTeleport;
 };
 #endif
