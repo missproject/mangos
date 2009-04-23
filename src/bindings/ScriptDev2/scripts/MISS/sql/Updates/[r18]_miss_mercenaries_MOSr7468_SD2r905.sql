@@ -1,0 +1,1 @@
+alter table `mercenaries` add column `moving_mode` mediumint(9) DEFAULT '0' after `is_non_attackable`;

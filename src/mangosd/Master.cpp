@@ -47,6 +47,9 @@
 #include "sockets/SocketHandler.h"
 #include "sockets/ListenSocket.h"
 
+#include "../game/mysql_config.h"
+#include "../game/GameAccessor.h"
+
 #ifdef WIN32
 #include "ServiceWin32.h"
 extern int m_ServiceStatus;
@@ -300,6 +303,10 @@ int Master::Run()
     // Start up MangChat
     ZThread::Thread irc(new IRCClient);
     irc.setPriority ((ZThread::Priority )2);
+
+    //MISS
+    MySQLConfig & mysql = MySQLConfig::GetInstance();
+    GameAccessor & mgr = GameAccessor::GetInstance(); // MISS Gmgr initialisation
 
     ///- Start up freeze catcher thread
     uint32 freeze_delay = sConfig.GetIntDefault("MaxCoreStuckTime", 0);

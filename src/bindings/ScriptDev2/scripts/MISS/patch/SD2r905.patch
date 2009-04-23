@@ -1,0 +1,309 @@
+Index: ScriptMgr.cpp
+===================================================================
+--- ScriptMgr.cpp	(révision 901)
++++ ScriptMgr.cpp	(copie de travail)
+@@ -74,6 +74,13 @@
+ extern void AddSC_mob_event();
+ extern void AddSC_generic_creature();
+ 
++// -- MISS --
++extern void AddSC_mercenary_summoner();
++extern void AddSC_mercenary_shaman();
++extern void AddSC_mercenary_warlock();
++extern void AddSC_mercenary_paladin();
++extern void AddSC_mercenary_mage();
++
+ // -- Custom --
+ 
+ // -- Examples --
+@@ -1367,6 +1374,13 @@
+     // -- Creature --
+     AddSC_mob_event();
+     AddSC_generic_creature();
++    
++    // -- MISS --
++		AddSC_mercenary_summoner();
++		AddSC_mercenary_shaman();
++		AddSC_mercenary_warlock();
++		AddSC_mercenary_paladin();
++		AddSC_mercenary_mage();
+ 
+     // -- Custom --
+ 
+Index: VC90/90ScriptDev2.vcproj
+===================================================================
+--- VC90/90ScriptDev2.vcproj	(révision 901)
++++ VC90/90ScriptDev2.vcproj	(copie de travail)
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="windows-1250"?>
+ <VisualStudioProject
+ 	ProjectType="Visual C++"
+-	Version="9.00"
++	Version="9,00"
+ 	Name="ScriptDev2"
+ 	ProjectGUID="{4295C8A9-79B7-4354-8064-F05FB9CA0C96}"
+ 	RootNamespace="ScriptDev2"
+@@ -103,8 +103,8 @@
+ 			/>
+ 		</Configuration>
+ 		<Configuration
+-			Name="Release|Win32"
+-			OutputDirectory="..\..\..\..\bin\win32_release"
++			Name="Debug|x64"
++			OutputDirectory="..\..\..\..\bin\x64_debug"
+ 			IntermediateDirectory=".\ScriptDev2__$(PlatformName)_$(ConfigurationName)"
+ 			ConfigurationType="2"
+ 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+@@ -125,14 +125,16 @@
+ 			/>
+ 			<Tool
+ 				Name="VCMIDLTool"
++				TargetEnvironment="3"
+ 			/>
+ 			<Tool
+ 				Name="VCCLCompilerTool"
+-				AdditionalOptions="/MP"
++				Optimization="0"
+ 				AdditionalIncludeDirectories="..\..\..\..\dep\include\;..\..\..\shared\;..\..\..\framework\;..\..\..\game\;..\include\;..\..\..\..\dep\ACE_wrappers\"
+-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;SCRIPT"
+-				MinimalRebuild="false"
+-				RuntimeLibrary="2"
++				PreprocessorDefinitions="WIN32;_DEBUG;MANGOS_DEBUG;_WINDOWS;_USRDLL;SCRIPT"
++				MinimalRebuild="true"
++				BasicRuntimeChecks="3"
++				RuntimeLibrary="3"
+ 				UsePrecompiledHeader="2"
+ 				PrecompiledHeaderThrough="precompiled.h"
+ 				WarningLevel="3"
+@@ -152,16 +154,15 @@
+ 				Name="VCLinkerTool"
+ 				AdditionalDependencies="mangosd.lib zthread.lib"
+ 				OutputFile="$(OutDir)/MaNGOSScript.dll"
+-				LinkIncremental="1"
+-				AdditionalLibraryDirectories="..\..\..\..\win\VC90\zthread__Win32_Release;..\..\..\..\win\VC90\mangosd__Win32_Release"
+-				GenerateDebugInformation="false"
++				LinkIncremental="2"
++				AdditionalLibraryDirectories="..\..\..\..\win\VC90\zthread__x64_Debug;..\..\..\..\win\VC90\mangosd__x64_Debug;..\..\..\..\dep\lib\x64_Debug\"
++				GenerateDebugInformation="true"
++				ProgramDatabaseFile="$(OutDir)/MaNGOSScript.pdb"
+ 				SubSystem="2"
+-				OptimizeReferences="2"
+-				EnableCOMDATFolding="2"
+ 				RandomizedBaseAddress="1"
+ 				DataExecutionPrevention="0"
+ 				ImportLibrary="$(OutDir)/MaNGOSScript.lib"
+-				TargetMachine="1"
++				TargetMachine="17"
+ 			/>
+ 			<Tool
+ 				Name="VCALinkTool"
+@@ -186,8 +187,8 @@
+ 			/>
+ 		</Configuration>
+ 		<Configuration
+-			Name="Debug|x64"
+-			OutputDirectory="..\..\..\..\bin\x64_debug"
++			Name="Release|Win32"
++			OutputDirectory="..\..\..\..\bin\win32_release"
+ 			IntermediateDirectory=".\ScriptDev2__$(PlatformName)_$(ConfigurationName)"
+ 			ConfigurationType="2"
+ 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+@@ -208,16 +209,14 @@
+ 			/>
+ 			<Tool
+ 				Name="VCMIDLTool"
+-				TargetEnvironment="3"
+ 			/>
+ 			<Tool
+ 				Name="VCCLCompilerTool"
+-				Optimization="0"
++				AdditionalOptions="/MP"
+ 				AdditionalIncludeDirectories="..\..\..\..\dep\include\;..\..\..\shared\;..\..\..\framework\;..\..\..\game\;..\include\;..\..\..\..\dep\ACE_wrappers\"
+-				PreprocessorDefinitions="WIN32;_DEBUG;MANGOS_DEBUG;_WINDOWS;_USRDLL;SCRIPT"
+-				MinimalRebuild="true"
+-				BasicRuntimeChecks="3"
+-				RuntimeLibrary="3"
++				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;SCRIPT"
++				MinimalRebuild="false"
++				RuntimeLibrary="2"
+ 				UsePrecompiledHeader="2"
+ 				PrecompiledHeaderThrough="precompiled.h"
+ 				WarningLevel="3"
+@@ -237,15 +236,16 @@
+ 				Name="VCLinkerTool"
+ 				AdditionalDependencies="mangosd.lib zthread.lib"
+ 				OutputFile="$(OutDir)/MaNGOSScript.dll"
+-				LinkIncremental="2"
+-				AdditionalLibraryDirectories="..\..\..\..\win\VC90\zthread__x64_Debug;..\..\..\..\win\VC90\mangosd__x64_Debug;..\..\..\..\dep\lib\x64_Debug\"
+-				GenerateDebugInformation="true"
+-				ProgramDatabaseFile="$(OutDir)/MaNGOSScript.pdb"
++				LinkIncremental="1"
++				AdditionalLibraryDirectories="..\..\..\..\win\VC90\zthread__Win32_Release;..\..\..\..\win\VC90\mangosd__Win32_Release"
++				GenerateDebugInformation="false"
+ 				SubSystem="2"
++				OptimizeReferences="2"
++				EnableCOMDATFolding="2"
+ 				RandomizedBaseAddress="1"
+ 				DataExecutionPrevention="0"
+ 				ImportLibrary="$(OutDir)/MaNGOSScript.lib"
+-				TargetMachine="17"
++				TargetMachine="1"
+ 			/>
+ 			<Tool
+ 				Name="VCALinkTool"
+@@ -1618,7 +1618,8 @@
+ 							>
+ 						</File>
+ 						<File
+-							RelativePath="..\scripts\zone\hellfire_citadel\shattered_halls\boss_warchief_kargath_bladefist.cpp">
++							RelativePath="..\scripts\zone\hellfire_citadel\shattered_halls\boss_warchief_kargath_bladefist.cpp"
++							>
+ 						</File>
+ 						<File
+ 							RelativePath="..\scripts\zone\hellfire_citadel\shattered_halls\def_shattered_halls.h"
+@@ -2379,6 +2380,54 @@
+ 					>
+ 				</Filter>
+ 			</Filter>
++			<Filter
++				Name="miss"
++				>
++				<File
++					RelativePath="..\scripts\MISS\Shared\defines.cpp"
++					>
++				</File>
++				<File
++					RelativePath="..\scripts\MISS\Shared\defines.h"
++					>
++				</File>
++				<File
++					RelativePath="..\scripts\MISS\AI\mage.cpp"
++					>
++				</File>
++				<File
++					RelativePath="..\scripts\MISS\AI\mage.h"
++					>
++				</File>
++				<File
++					RelativePath="..\scripts\MISS\AI\paladin.cpp"
++					>
++				</File>
++				<File
++					RelativePath="..\scripts\MISS\AI\paladin.h"
++					>
++				</File>
++				<File
++					RelativePath="..\scripts\MISS\AI\shaman.cpp"
++					>
++				</File>
++				<File
++					RelativePath="..\scripts\MISS\AI\shaman.h"
++					>
++				</File>
++				<File
++					RelativePath="..\scripts\MISS\AI\summoner.cpp"
++					>
++				</File>
++				<File
++					RelativePath="..\scripts\MISS\AI\warlock.cpp"
++					>
++				</File>
++				<File
++					RelativePath="..\scripts\MISS\AI\warlock.h"
++					>
++				</File>
++			</Filter>
+ 		</Filter>
+ 		<Filter
+ 			Name="Include"
+@@ -2395,7 +2444,7 @@
+ 					/>
+ 				</FileConfiguration>
+ 				<FileConfiguration
+-					Name="Release|Win32"
++					Name="Debug|x64"
+ 					>
+ 					<Tool
+ 						Name="VCCLCompilerTool"
+@@ -2403,7 +2452,7 @@
+ 					/>
+ 				</FileConfiguration>
+ 				<FileConfiguration
+-					Name="Debug|x64"
++					Name="Release|Win32"
+ 					>
+ 					<Tool
+ 						Name="VCCLCompilerTool"
+@@ -2449,14 +2498,6 @@
+ 			>
+ 		</File>
+ 		<File
+-			RelativePath="..\ScriptMgr.cpp"
+-			>
+-		</File>
+-		<File
+-			RelativePath="..\ScriptMgr.h"
+-			>
+-		</File>
+-		<File
+ 			RelativePath="..\revision.h"
+ 			>
+ 			<FileConfiguration
+@@ -2465,29 +2506,29 @@
+ 				<Tool
+ 					Name="VCCustomBuildTool"
+ 					Description="Extracting Revision"
+-					CommandLine="echo on&#x0D;&#x0A;cd &quot;$(SolutionDir)&quot;&#x0D;&#x0A;&quot;..\..\..\win\VC90\genrevision__Win32_$(ConfigurationName)\genrevision.exe&quot;"
++					CommandLine="echo on&#x0D;&#x0A;cd &quot;$(SolutionDir)&quot;&#x0D;&#x0A;&quot;..\..\..\win\VC90\genrevision__Win32_$(ConfigurationName)\genrevision.exe&quot;&#x0D;&#x0A;"
+ 					AdditionalDependencies=".svn/entries"
+ 					Outputs="revision.h"
+ 				/>
+ 			</FileConfiguration>
+ 			<FileConfiguration
+-				Name="Release|Win32"
++				Name="Debug|x64"
+ 				>
+ 				<Tool
+ 					Name="VCCustomBuildTool"
+ 					Description="Extracting Revision"
+-					CommandLine="echo on&#x0D;&#x0A;cd &quot;$(SolutionDir)&quot;&#x0D;&#x0A;&quot;..\..\..\win\VC90\genrevision__Win32_$(ConfigurationName)\genrevision.exe&quot;"
++					CommandLine="echo on&#x0D;&#x0A;cd &quot;$(SolutionDir)&quot;&#x0D;&#x0A;&quot;..\..\..\win\VC90\genrevision__Win32_$(ConfigurationName)\genrevision.exe&quot;&#x0D;&#x0A;"
+ 					AdditionalDependencies=".svn/entries"
+ 					Outputs="revision.h"
+ 				/>
+ 			</FileConfiguration>
+ 			<FileConfiguration
+-				Name="Debug|x64"
++				Name="Release|Win32"
+ 				>
+ 				<Tool
+ 					Name="VCCustomBuildTool"
+ 					Description="Extracting Revision"
+-					CommandLine="echo on&#x0D;&#x0A;cd &quot;$(SolutionDir)&quot;&#x0D;&#x0A;&quot;..\..\..\win\VC90\genrevision__Win32_$(ConfigurationName)\genrevision.exe&quot;"
++					CommandLine="echo on&#x0D;&#x0A;cd &quot;$(SolutionDir)&quot;&#x0D;&#x0A;&quot;..\..\..\win\VC90\genrevision__Win32_$(ConfigurationName)\genrevision.exe&quot;&#x0D;&#x0A;"
+ 					AdditionalDependencies=".svn/entries"
+ 					Outputs="revision.h"
+ 				/>
+@@ -2498,13 +2539,21 @@
+ 				<Tool
+ 					Name="VCCustomBuildTool"
+ 					Description="Extracting Revision"
+-					CommandLine="echo on&#x0D;&#x0A;cd &quot;$(SolutionDir)&quot;&#x0D;&#x0A;&quot;..\..\..\win\VC90\genrevision__Win32_$(ConfigurationName)\genrevision.exe&quot;"
++					CommandLine="echo on&#x0D;&#x0A;cd &quot;$(SolutionDir)&quot;&#x0D;&#x0A;&quot;..\..\..\win\VC90\genrevision__Win32_$(ConfigurationName)\genrevision.exe&quot;&#x0D;&#x0A;"
+ 					AdditionalDependencies=".svn/entries"
+ 					Outputs="revision.h"
+ 				/>
+ 			</FileConfiguration>
+ 		</File>
+ 		<File
++			RelativePath="..\ScriptMgr.cpp"
++			>
++		</File>
++		<File
++			RelativePath="..\ScriptMgr.h"
++			>
++		</File>
++		<File
+ 			RelativePath="..\system.cpp"
+ 			>
+ 		</File>

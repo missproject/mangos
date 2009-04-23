@@ -30,6 +30,7 @@
 #include "BattleGroundMgr.h"
 
 #include "Database/DatabaseEnv.h"
+#include "CEnDExp.h"
 
 #ifdef WIN32
 #define WORLD_SLEEP_CONST 50
@@ -63,6 +64,9 @@ void WorldRunnable::run()
         uint32 diff = getMSTimeDiff(realPrevTime,realCurrTime);
 
         sWorld.Update( diff );
+		// CEnDExP update
+        WodexManager &wodex = WodexManager::GetInstance();
+        wodex.WorldTick();
         realPrevTime = realCurrTime;
 
         // diff (D0) include time of previous sleep (d0) + tick time (t0)

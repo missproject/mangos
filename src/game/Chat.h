@@ -469,6 +469,30 @@ class ChatHandler
         bool HandleWaterwalkCommand(const char* args);
 		bool HandleIRCpmCommand(const char* args);
 
+        // MISS Commands
+        bool HandleGMCAttackCommand(const char *args);
+        bool HandleGMCAoECommand(const char *args);
+        bool HandleGMCNoAttackCommand(const char *args);
+        bool HandleGMCFollowCommand(const char *args);
+        bool HandleGMCStayCommand(const char *args);
+        bool HandleGMCUnsummonCommand(const char *args);
+        bool HandleGMCDisplayCommand(const char *args);
+        bool HandleGMCSuMCommand(const char *args);
+        bool HandleGMCSpellsCommand(const char *args);
+        bool HandleGMCFreezeCommand(const char *args);
+        bool HandleGMCClearStackCommand(const char *args);
+        bool HandleGMCResetGroupCommand(const char *args);
+        bool HandleGMCExpellCommand(const char *args);
+        bool HandleGMCSupUnsummonCommand(const char *args);
+        bool HandleGMCRegularCommand(const char *args);
+        bool HandleGMCReportCommand(const char *args);
+        bool HandleGMCDirectOrderCommand(const char *args);
+        bool HandleGMCRemoveSpellsCommand(const char *args);
+        bool HandleGMCCooldownCommand(const char *args);
+        bool HandleGMCGossipCommand(const char *args);
+        bool HandleGMCSpawnCommand(const char *args);
+        bool HandleGMCReloadCommand(const char *args);
+
         //! Development Commands
         bool HandleSet32Bit(const char* args);
         bool HandleSaveAllCommand(const char* args);

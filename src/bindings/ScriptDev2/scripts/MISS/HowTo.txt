@@ -1,0 +1,8 @@
+1. Apply SD2r905.patch on SD2 dir.
+2. Compile mangos then SD2.
+3. Apply sql/[r18]_mangos_creature_template_MOSr7468_SD2r905_full.sql on MaNGOS DB.
+4. Apply sql/[r18]_miss_MOSr7468_SD2r905_full.sql on MySQL connection.
+
+Edit config if needed.
+
+ENJOY !!

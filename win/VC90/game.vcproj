@@ -1483,6 +1483,34 @@
 				>
 			</File>
 		</Filter>		
+		<Filter
+			Name="Miss"
+			>
+			<File
+				RelativePath="..\..\src\game\CEnDExP.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\CEnDExP.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\GameAccessor.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\GameAccessor.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\mysql_config.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\game\mysql_config.h"
+				>
+			</File>
+		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

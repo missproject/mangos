@@ -1,0 +1,130 @@
+############################################################################################################################################
+############################################################################################################################################
+############################################################################################################################################
+########################################			Différentes commandes prises en charges			########################################
+############################################################################################################################################
+############################################################################################################################################
+############################################################################################################################################
+
+Syntaxe globale :
+
+	<argument> représente un argument obligatoire, il doit être précisé lors de l'entrée de la commande
+
+	[argument] représente un argument facultatif, il peut ne pas être précisé lors de l'entrée de la commande
+	
+	Attention! il est nécessaire de placer des point-virgules entre chaque argument pour les différencier, néanmoins il n'est pas indispensable
+	de placer un point-virgule entre l'index de la commande et le premier argument, ni après le dernier argument ; de même, si un seul argument
+	est entré, que celà soit lors de l'entrée d'une commande à un seul argument ou à un argument obligatoire plus autres arguments facultatifs
+	non entrés, alors aucun point-virgule ne sera nécessaire ; exemples : ".gmc a all" sera reconnu car un seul argument est entré, néanmoins la
+	syntaxe ".gmc a all austinpower" ne sera pas reconnue, il faudra la remplacer par ".gmc a all ; austinpower"
+
+	<mercenaire> ou [mercenaire] représente un argument renseignant sur le destinataire de la commande ; cet argument peut être donné en spécifiant
+	le nom en toutes lettres, sans tenir compte de la casse du mercenaire ; dans certains cas l'argument peut aussi être remplacé par les mots-clés
+	"all", pour s'adresser à tous les mercenaires sous le contrôle du joueur, ou encore "shamans", "warlocks", "paladins" ou "mages" pour s'adresser
+	à tous les mercenaires de la classe spécifiée ; attention toutefois, si pour les joueurs normaux seuls les mercenaires achetés par le joueur en
+	question, ou par un membre du groupe du joueur répondront aux commandes de ce même joueur, pour les joueurs GM, tous les mercenaires de la carte
+	répondront à la commande si elle est destinée à "all"
+
+	<cible> ou [cible] représente la cible de l'ordre ; cet argument peut être donné en donnant le nom en toutes lettres, sans tenir compte de la
+	casse, de la cible
+	
+	<bool> ou [bool] représente une variable booléenne ; celle ci peut être donnée sous la forme d'un "on" ou d'un "off"
+
+Liste des commandes de niveau 0:
+
+	Attaque : Mets le mercenaire en position d'attaque face à la cible, ce qui déclenche son mode de combat, et lui permet régulièrement d'invoquer
+	des créatures, de lancer des sorts de buff sur ses alliés, ou de debuff sur ses ennemis, selon sa classe et son état ; si aucune cible n'est
+	spécifiée, le mercenaire choisira comme cible la cible du joueur ayant lancé la commande ; si aucune cible n'est trouvée, la commande n'aura
+	aucun effet ; un mercenaire ne peut attaquer que les factions considérées comme ennemies par tous les joueurs, et ne pourra jamais attaquer
+	aucun joueur ni aucun NPC de quelque faction que ce soit
+		Syntaxe :	.gmc attack <mercenaire> [cible]
+		Raccourci :	.gmc a <mercenaire> [cible]
+
+	Repos : Mets le mercenaire en état de repos ; celui-ci arrêtera d'attaquer sa cible, renvoiera toutes ses invocations et retirera tous
+	les buffs et debuffs qu'il a posé ; si le mercenaire n'était pas en état de combat, cette commande n'aura aucun effet
+		Syntaxe :	.gmc noattack <mercenaire>
+		Raccourci : .gmc noa <mercenaire>
+
+	AoE : Autorise ou empêche le lancement d'effets de zone par le mercenaire
+		Syntaxe :	.gmc aoe <mercenaire> <bool>
+		Raccourci :	-
+
+	Faire suivre : Oblige le mercenaire à suivre le joueur qui lance la commande
+		Syntaxe :	.gmc follow <mercenaire>
+		Raccourci :	.gmc f <mercenaire>
+
+	Tenir position : Oblige le mercenaire à rester sur place et à ne plus suivre aucun joueur jusqu'à nouvel ordre ; le mercenaire arrête
+	d'attaquer, annule tous les buffs et debuffs qu'il a lancé et renvoie toutes ses invocations
+		Syntaxe :	.gmc stay <mercenaire>
+		Raccourci :	.gmc s <mercenaire>
+
+	Invocations : Permet ou empêche le mercenaire d'utiliser des invocations lors des combats
+		Syntaxe :	.gmc sum <mercenaire> <bool>
+		Raccourci :	-
+
+	Sorts : Permet ou empêche le mercenaire d'utiliser des sorts lors des combats
+		Syntaxe :	.gmc spells <mercenaire> <bool>
+		Raccourci :	-
+
+	Renvoyer : Désinvoque le mercenaire ; cette commande est irréversible
+		Syntaxe :	.gmc unsummon <mercenaire>
+		Raccourci :	.gmc u <mercenaire>
+
+	Bavard : Active ou désactive les textes du mercenaire lors des évènements peu importants (sorts de dégâts, invocations...)
+		Syntaxe :	.gmc gossip <mercenaire> <bool>
+		Raccourci :	.gmc g <mercenaire> <bool>
+
+	Affichage : Interroge le mercenaire sur les commandes auxquelles il peut répondre
+		Syntaxe :	.gmc display <mercenaire>
+		Raccourci :	.gmc d <mercenaire>
+
+	Rapport : Interroge le mercenaire sur une de ses statistiques ; les différentes statistiques peuvent être "health", "mana"... ; pour connaître
+	la liste des statistiques pouvant être affichées par un mercenaire, tapper simplement la commande sans l'argument <type>
+		Syntaxe :	.gmc report <mercenaire> [type]
+		Raccourci :	.gmc r <mercenaire> [type]
+
+Liste des commandes de niveau 1:
+
+	Invocation : Invoque de façon permanente un vendeur de mercenaire à l'endroit où est le joueur ; identique à ".npc add 50505"
+		Syntaxe :	.gmc spawn
+		Raccourci :	-
+
+Liste des commandes de niveau 2:
+
+	Freeze : Fait sortir le mercenaire du combat, renvoie toutes ses invocations et annule tous les buffs et debuffs qu'il a lancé ; empêche
+	le mercenaire de répondre aux commandes de niveau 0 ; identique à ".gmc noa <mercenaire>" et ".gmc rc <mercenaire> ; off" combinés
+		Syntaxe :	.gmc freeze <mercenaire>
+		Raccourci :	-
+
+	Temps de rafraîchissement : Place tous les cooldowns du mercenaire au nombre donné ; si aucun nombre n'est spécifié, les cooldowns seront
+	remis à 0
+		Syntaxe :	.gmc cooldown <mercenaire> [nombre]
+		Raccourci :	.gmc cd <mercenaire> [nombre]
+
+	Retrait des sorts : Oblige le mercenaire à annuler tous les buffs et debuffs qu'il a lancé
+		Syntaxe :	.gmc remspells <mercenaire>
+		Raccourci :	-
+
+	Renvoi des invocations : Oblige le mercenaire à renvoyer toutes ses invocations
+		Syntaxe :	.gmc expell <mercenaire>
+		Raccourci :	-
+
+	Réinitialisation du groupe : Remplace le groupe de référence du mercenaire par le groupe du joueur ayant lancé la commande
+		Syntaxe :	.gmc resetgroup <mercenaire>
+		Raccourci :	-
+
+	Commandes de niveau 0 : Permet ou empêche un mercenaire de répondre aux commandes de niveau 0
+		Syntaxe :	.gmc regularcommands <mercenaire> <bool>
+		Raccourci :	.gmc rc <mercenaire> <bool>
+		Raccourci :	-
+
+Liste des commandes de niveau 3:
+
+	Réinitialisation de la pile : Oblige le mercenaire à vider un type de pile ; lancer la commande sans l'argument <type> pour avoir la liste
+	des types de piles que le mercenaire peut vider
+		Syntaxe :	.gmc clearstack <mercenaire> [type]
+		Raccourci :	-
+
+	Recharger les constantes volatiles : Recharge toutes les données volatiles présentes dans la base de données
+		Syntaxe :	.gmc reload
+		Raccourci :	.gmc l

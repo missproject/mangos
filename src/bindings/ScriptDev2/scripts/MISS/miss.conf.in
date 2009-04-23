@@ -1,0 +1,23 @@
+# MISS Configuration file
+# This file must be placed within the directory which holds mangosd.conf and realmd.conf
+ConfVersion=15
+
+# Database connection settings for the world server.
+# Default: hostname;port;username;password;database
+#          .;somenumber;username;password;database - use named pipes at Windows
+#                Named pipes: mySQL required adding "enable-named-pipe" to [mysqld] section my.ini
+#          .;/path/to/unix_socket;username;password;database - use Unix sockets at Unix/Linux
+#                Unix sockets: experimental, not tested
+MISSDatabaseInfo="127.0.0.1;3306;root;mangos;miss"
+
+# LogLevel
+# 0 = No debug
+# 1 = Saves commands/sales history
+# 2 = Saves commands/sales/statistics history
+# 3 = Saves commands/sales/statistics + advanced debug functions history
+LogLevel=3
+
+# Locale
+# 0 = English; 1 = Korean; 2 = French; 3 = German; 4 = Chinese; 5 = Taiwanese; 6 = Spanish; 7 = Spanish Mexico
+# 8 = Russian;
+Locale=2
