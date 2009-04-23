@@ -7,7 +7,7 @@
 #include "Map.h"
 
 #include "../shared/ProgressBar.h"
-#include "../shared/Database/DBCStores.h"
+#include "DBCStores.h"
 #include "../shared/Database/DatabaseMysql.h"
 
 enum Mercenaries
