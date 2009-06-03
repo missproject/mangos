@@ -1,9 +1,9 @@
 Index: ScriptMgr.cpp
 ===================================================================
---- ScriptMgr.cpp	(révision 901)
+--- ScriptMgr.cpp	(révision 1110)
 +++ ScriptMgr.cpp	(copie de travail)
-@@ -74,6 +74,13 @@
- extern void AddSC_mob_event();
+@@ -50,6 +50,13 @@
+ // -- Creature --
  extern void AddSC_generic_creature();
  
 +// -- MISS --
@@ -16,9 +16,9 @@ Index: ScriptMgr.cpp
  // -- Custom --
  
  // -- Examples --
-@@ -1367,6 +1374,13 @@
+@@ -902,6 +909,13 @@
+ 
      // -- Creature --
-     AddSC_mob_event();
      AddSC_generic_creature();
 +    
 +    // -- MISS --
@@ -32,7 +32,7 @@ Index: ScriptMgr.cpp
  
 Index: VC90/90ScriptDev2.vcproj
 ===================================================================
---- VC90/90ScriptDev2.vcproj	(révision 901)
+--- VC90/90ScriptDev2.vcproj	(révision 1110)
 +++ VC90/90ScriptDev2.vcproj	(copie de travail)
 @@ -1,7 +1,7 @@
  <?xml version="1.0" encoding="windows-1250"?>
@@ -75,15 +75,18 @@ Index: VC90/90ScriptDev2.vcproj
  				UsePrecompiledHeader="2"
  				PrecompiledHeaderThrough="precompiled.h"
  				WarningLevel="3"
-@@ -152,16 +154,15 @@
+@@ -150,18 +152,17 @@
+ 			/>
+ 			<Tool
  				Name="VCLinkerTool"
- 				AdditionalDependencies="mangosd.lib zthread.lib"
+-				AdditionalDependencies="mangosd.lib ACE.lib"
++				AdditionalDependencies="mangosd.lib ACEd.lib"
  				OutputFile="$(OutDir)/MaNGOSScript.dll"
 -				LinkIncremental="1"
--				AdditionalLibraryDirectories="..\..\..\..\win\VC90\zthread__Win32_Release;..\..\..\..\win\VC90\mangosd__Win32_Release"
+-				AdditionalLibraryDirectories="..\..\..\..\win\VC90\mangosd__Win32_Release;..\..\..\..\dep\lib\win32_release\"
 -				GenerateDebugInformation="false"
 +				LinkIncremental="2"
-+				AdditionalLibraryDirectories="..\..\..\..\win\VC90\zthread__x64_Debug;..\..\..\..\win\VC90\mangosd__x64_Debug;..\..\..\..\dep\lib\x64_Debug\"
++				AdditionalLibraryDirectories="..\..\..\..\win\VC90\mangosd__x64_Debug;..\..\..\..\dep\lib\x64_Debug\"
 +				GenerateDebugInformation="true"
 +				ProgramDatabaseFile="$(OutDir)/MaNGOSScript.pdb"
  				SubSystem="2"
@@ -129,16 +132,19 @@ Index: VC90/90ScriptDev2.vcproj
  				UsePrecompiledHeader="2"
  				PrecompiledHeaderThrough="precompiled.h"
  				WarningLevel="3"
-@@ -237,15 +236,16 @@
+@@ -235,17 +234,18 @@
+ 			/>
+ 			<Tool
  				Name="VCLinkerTool"
- 				AdditionalDependencies="mangosd.lib zthread.lib"
+-				AdditionalDependencies="mangosd.lib ACEd.lib"
++				AdditionalDependencies="mangosd.lib ACE.lib"
  				OutputFile="$(OutDir)/MaNGOSScript.dll"
 -				LinkIncremental="2"
--				AdditionalLibraryDirectories="..\..\..\..\win\VC90\zthread__x64_Debug;..\..\..\..\win\VC90\mangosd__x64_Debug;..\..\..\..\dep\lib\x64_Debug\"
+-				AdditionalLibraryDirectories="..\..\..\..\win\VC90\mangosd__x64_Debug;..\..\..\..\dep\lib\x64_Debug\"
 -				GenerateDebugInformation="true"
 -				ProgramDatabaseFile="$(OutDir)/MaNGOSScript.pdb"
 +				LinkIncremental="1"
-+				AdditionalLibraryDirectories="..\..\..\..\win\VC90\zthread__Win32_Release;..\..\..\..\win\VC90\mangosd__Win32_Release"
++				AdditionalLibraryDirectories="..\..\..\..\win\VC90\mangosd__Win32_Release;..\..\..\..\dep\lib\win32_release\"
 +				GenerateDebugInformation="false"
  				SubSystem="2"
 +				OptimizeReferences="2"
@@ -151,7 +157,7 @@ Index: VC90/90ScriptDev2.vcproj
  			/>
  			<Tool
  				Name="VCALinkTool"
-@@ -1618,7 +1618,8 @@
+@@ -1658,7 +1658,8 @@
  							>
  						</File>
  						<File
@@ -161,7 +167,7 @@ Index: VC90/90ScriptDev2.vcproj
  						</File>
  						<File
  							RelativePath="..\scripts\zone\hellfire_citadel\shattered_halls\def_shattered_halls.h"
-@@ -2379,6 +2380,54 @@
+@@ -2459,6 +2460,54 @@
  					>
  				</Filter>
  			</Filter>
@@ -216,7 +222,7 @@ Index: VC90/90ScriptDev2.vcproj
  		</Filter>
  		<Filter
  			Name="Include"
-@@ -2395,7 +2444,7 @@
+@@ -2475,7 +2524,7 @@
  					/>
  				</FileConfiguration>
  				<FileConfiguration
@@ -225,7 +231,7 @@ Index: VC90/90ScriptDev2.vcproj
  					>
  					<Tool
  						Name="VCCLCompilerTool"
-@@ -2403,7 +2452,7 @@
+@@ -2483,7 +2532,7 @@
  					/>
  				</FileConfiguration>
  				<FileConfiguration
@@ -234,7 +240,7 @@ Index: VC90/90ScriptDev2.vcproj
  					>
  					<Tool
  						Name="VCCLCompilerTool"
-@@ -2449,14 +2498,6 @@
+@@ -2537,14 +2586,6 @@
  			>
  		</File>
  		<File
@@ -249,7 +255,7 @@ Index: VC90/90ScriptDev2.vcproj
  			RelativePath="..\revision.h"
  			>
  			<FileConfiguration
-@@ -2465,29 +2506,29 @@
+@@ -2553,29 +2594,29 @@
  				<Tool
  					Name="VCCustomBuildTool"
  					Description="Extracting Revision"
@@ -284,7 +290,7 @@ Index: VC90/90ScriptDev2.vcproj
  					AdditionalDependencies=".svn/entries"
  					Outputs="revision.h"
  				/>
-@@ -2498,13 +2539,21 @@
+@@ -2586,13 +2627,21 @@
  				<Tool
  					Name="VCCustomBuildTool"
  					Description="Extracting Revision"
