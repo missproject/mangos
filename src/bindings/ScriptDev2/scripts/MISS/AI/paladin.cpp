@@ -349,6 +349,36 @@ bool mercenary_paladinAI::TreatPacket(WodexManager &wodex, uint32 t_packet__h)
 			Ordre66();
 		return_true = true;
 	}
+		else if ( ce_flag_code == (uint32)CODE_STATUS )
+	{
+		// Génération de la liste des variables
+		bool attacking = false;
+		if ( m_creature->getVictim() != NULL ) attacking = true;
+		string status = "MISS\tstatus ";
+		status += m_creature->GetName();
+		/* type 1 => shaman, 1 => warlock, 2 => paladin, 3 => mage*/
+		status += " 2 ";
+		status += ((chatty)?"1":"0");
+		status += " ";
+		status += ((gm_answer_only)?"1":"0");
+		status += " ";
+		status += ((Unit*)m_master)->GetName();
+		status += " ";
+		status += ((attacking)?"1":"0");
+		status += " ";
+		status += ((may_attack)?"1":"0");
+		status += " ";
+		status += ((can_use_all_spells)?"1":"0");
+		status += " -1 ";
+		status += "-1";
+
+		Player* plr = wodex.GetSourceFromCEnDExPPacket(t_packet__h);
+		if (plr)
+		{
+			plr->Whisper(status.c_str(),LANG_ADDON,plr->GetGUID());
+		}
+		return_true = true;
+	}
 	else if ( ce_flag_code == (uint32)CODE_GM_REGULARCOMMANDS_BLOCK )
 	{
 		DoSay(mysql.GetText((uint32)TEXT_COMMAND_RC_BLOCKED),LANG_UNIVERSAL,NULL);

@@ -508,6 +508,8 @@ class ChatHandler
         bool HandleGMCGossipCommand(const char *args);
         bool HandleGMCSpawnCommand(const char *args);
         bool HandleGMCReloadCommand(const char *args);
+		bool HandleGMCStatusCommand(const char *args);
+		bool HandleGMCGMLevelCommand(const char *args);
 
         //! Development Commands
         bool HandleSet32Bit(const char* args);

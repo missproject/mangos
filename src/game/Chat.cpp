@@ -592,6 +592,9 @@ ChatCommand * ChatHandler::getCommandTable()
        { "order", SEC_ADMINISTRATOR, false, &ChatHandler::HandleGMCDirectOrderCommand, "", NULL },
        { "l", SEC_ADMINISTRATOR, false, &ChatHandler::HandleGMCReloadCommand, "", NULL },
 	   { "reload", SEC_ADMINISTRATOR, false, &ChatHandler::HandleGMCReloadCommand, "", NULL },
+	   { "st", SEC_PLAYER, false, &ChatHandler::HandleGMCStatusCommand, "", NULL },
+	   { "status", SEC_PLAYER, false, &ChatHandler::HandleGMCStatusCommand, "", NULL },
+	   { "gmlevel", SEC_PLAYER, false, &ChatHandler::HandleGMCGMLevelCommand, "", NULL },
        { NULL, 0, false, NULL, "", NULL }
 	};
     

@@ -955,3 +955,43 @@ bool ChatHandler::HandleGMCReloadCommand(const char *args)
 
   return true;
 }
+bool ChatHandler::HandleGMCStatusCommand(const char *args)
+{
+    if (!*args) return false;
+
+  stack<string> s_temp_fill;
+  recursive_decomposition(s_temp_fill,args);
+
+  // Syntax: .gmc follow <mercenary>
+
+  if ( s_temp_fill.empty() || s_temp_fill.size() > 1 ) return false;
+
+  // Remplissage de la variable temporaire arg_i
+  string arg_i = s_temp_fill.top();
+  s_temp_fill.pop();
+
+  if ( arg_i.substr(0,3) == "any" ) return false;
+
+  // Instanciation du protocole d'?change
+  WodexManager &wodex = WodexManager::GetInstance();
+
+  wodex.AutoSCEnDExPCreation(m_session->GetPlayer(),arg_i,"",150,10);
+
+  return true;
+}
+bool ChatHandler::HandleGMCGMLevelCommand(const char *args)
+{
+  // GetGMLevel
+  Player* plr = m_session->GetPlayer();
+  if (plr)
+  {
+	std::ostringstream strgmlevel;
+	AccountTypes intgmlevel = m_session->GetSecurity();
+
+	strgmlevel << intgmlevel;
+	string result = "MISS\tGMLevel " + strgmlevel.str();
+
+	plr->Whisper(result,LANG_ADDON,plr->GetGUID());
+  }
+  return true;
+}
