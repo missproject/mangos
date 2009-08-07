@@ -109,9 +109,10 @@ lootForPickPocketed(false), lootForBody(false), m_groupLootTimer(0), lootingGrou
 m_lootMoney(0), m_lootRecipient(0),
 m_deathTimer(0), m_respawnTime(0), m_respawnDelay(25), m_corpseDelay(60), m_respawnradius(0.0f),
 m_gossipOptionLoaded(false), m_isPet(false), m_isVehicle(false), m_isTotem(false),
-m_defaultMovementType(IDLE_MOTION_TYPE), m_DBTableGuid(0), m_equipmentId(0), m_AlreadyCallAssistance(false),
+m_defaultMovementType(IDLE_MOTION_TYPE), m_DBTableGuid(0), m_equipmentId(0),
+m_AlreadyCallAssistance(false), m_AlreadySearchedAssistance(false),
 m_regenHealth(true), m_AI_locked(false), m_isDeadByDefault(false), m_meleeDamageSchoolMask(SPELL_SCHOOL_MASK_NORMAL),
-m_creatureInfo(NULL), m_isActiveObject(false), m_AlreadySearchedAssistance(false)
+m_creatureInfo(NULL), m_isActiveObject(false), m_monsterMoveFlags(MONSTER_MOVE_WALK)
 {
     m_regenTimer = 200;
     m_valuesCount = UNIT_END;
@@ -122,7 +123,8 @@ m_creatureInfo(NULL), m_isActiveObject(false), m_AlreadySearchedAssistance(false
     m_CreatureSpellCooldowns.clear();
     m_CreatureCategoryCooldowns.clear();
     m_GlobalCooldown = 0;
-    m_unit_movement_flags = MONSTER_MOVE_WALK;
+
+    m_monsterMoveFlags = MONSTER_MOVE_WALK;
 }
 
 Creature::~Creature()
@@ -561,8 +563,8 @@ bool Creature::AIM_Initialize()
 
 bool Creature::Create (uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry, uint32 team, const CreatureData *data)
 {
-    SetMapId(map->GetId());
-    SetInstanceId(map->GetInstanceId());
+    ASSERT(map);
+    SetMap(map);
     SetPhaseMask(phaseMask,false);
 
     //oX = x;     oY = y;    dX = x;    dY = y;    m_moveTime = 0;    m_startMove = 0;
@@ -570,6 +572,12 @@ bool Creature::Create (uint32 guidlow, Map *map, uint32 phaseMask, uint32 Entry,
 
     if (bResult)
     {
+        //Notify the map's instance data.
+        //Only works if you create the object in it, not if it is moves to that map.
+        //Normally non-players do not teleport to other maps.
+        if(map->IsDungeon() && ((InstanceMap*)map)->GetInstanceData())
+            ((InstanceMap*)map)->GetInstanceData()->OnCreatureCreate(this);
+
         switch (GetCreatureInfo()->rank)
         {
             case CREATURE_ELITE_RARE:
@@ -1032,7 +1040,7 @@ void Creature::LoadGossipOptions()
     m_gossipOptionLoaded = true;
 }
 
-void Creature::AI_SendMoveToPacket(float x, float y, float z, uint32 time, uint32 MovementFlags, uint8 type)
+void Creature::AI_SendMoveToPacket(float x, float y, float z, uint32 time, MonsterMovementFlags flags, uint8 type)
 {
     /*    uint32 timeElap = getMSTime();
         if ((timeElap - m_startMove) < m_moveTime)
@@ -1052,7 +1060,7 @@ void Creature::AI_SendMoveToPacket(float x, float y, float z, uint32 time, uint3
 
         m_startMove = getMSTime();
         m_moveTime = time;*/
-    SendMonsterMove(x, y, z, type, MovementFlags, time);
+    SendMonsterMove(x, y, z, type, flags, time);
 }
 
 Player *Creature::GetLootRecipient() const
@@ -1310,15 +1318,6 @@ bool Creature::CreateFromProto(uint32 guidlow, uint32 Entry, uint32 team, const 
     if(!UpdateEntry(Entry, team, data))
         return false;
 
-    //Notify the map's instance data.
-    //Only works if you create the object in it, not if it is moves to that map.
-    //Normally non-players do not teleport to other maps.
-    Map *map = MapManager::Instance().FindMap(GetMapId(), GetInstanceId());
-    if(map && map->IsDungeon() && ((InstanceMap*)map)->GetInstanceData())
-    {
-        ((InstanceMap*)map)->GetInstanceData()->OnCreatureCreate(this);
-    }
-
     return true;
 }
 
@@ -1533,7 +1532,7 @@ void Creature::setDeathState(DeathState s)
         CreatureInfo const *cinfo = GetCreatureInfo();
         SetUInt32Value(UNIT_DYNAMIC_FLAGS, 0);
         RemoveFlag (UNIT_FIELD_FLAGS, UNIT_FLAG_SKINNABLE);
-        AddUnitMovementFlag(MONSTER_MOVE_WALK);
+        AddMonsterMoveFlag(MONSTER_MOVE_WALK);
         SetUInt32Value(UNIT_NPC_FLAGS, cinfo->npcflag);
         clearUnitState(UNIT_STAT_ALL_STATE);
         i_motionMaster.Clear();
@@ -1578,6 +1577,13 @@ void Creature::Respawn()
             objmgr.SaveCreatureRespawnTime(m_DBTableGuid,GetInstanceId(),0);
         m_respawnTime = time(NULL);                         // respawn at next tick
     }
+}
+
+void Creature::ForcedDespawn()
+{
+    setDeathState(JUST_DIED);
+    RemoveCorpse();
+    SetHealth(0);                                           // just for nice GM-mode view
 }
 
 bool Creature::IsImmunedToSpell(SpellEntry const* spellInfo)
@@ -1813,6 +1819,10 @@ bool Creature::CanAssistTo(const Unit* u, const Unit* enemy, bool checkfaction /
     if (!isAlive())
         return false;
 
+    // we don't need help from non-combatant ;)
+    if (isCivilian())
+        return false;
+
     // skip fighting creature
     if (isInCombat())
         return false;
@@ -1931,7 +1941,7 @@ bool Creature::LoadCreaturesAddon(bool reload)
         SetUInt32Value(UNIT_NPC_EMOTESTATE, cainfo->emote);
 
     if (cainfo->move_flags != 0)
-        SetUnitMovementFlags(cainfo->move_flags);
+        SetMonsterMoveFlags(MonsterMovementFlags(cainfo->move_flags));
 
     if(cainfo->auras)
     {
@@ -1969,6 +1979,43 @@ void Creature::SendZoneUnderAttackMessage(Player* attacker)
     WorldPacket data(SMSG_ZONE_UNDER_ATTACK,4);
     data << (uint32)GetZoneId();
     sWorld.SendGlobalMessage(&data,NULL,(enemy_team==ALLIANCE ? HORDE : ALLIANCE));
+}
+
+void Creature::SetInCombatWithZone()
+{
+    if (!CanHaveThreatList())
+    {
+        sLog.outError("Creature entry %u call SetInCombatWithZone but creature cannot have threat list.", GetEntry());
+        return;
+    }
+
+    Map* pMap = GetMap();
+
+    if (!pMap->IsDungeon())
+    {
+        sLog.outError("Creature entry %u call SetInCombatWithZone for map (id: %u) that isn't an instance.", GetEntry(), pMap->GetId());
+        return;
+    }
+
+    Map::PlayerList const &PlList = pMap->GetPlayers();
+
+    if (PlList.isEmpty())
+        return;
+
+    for(Map::PlayerList::const_iterator i = PlList.begin(); i != PlList.end(); ++i)
+    {
+        if (Player* pPlayer = i->getSource())
+        {
+            if (pPlayer->isGameMaster())
+                continue;
+
+            if (pPlayer->isAlive())
+            {
+                pPlayer->SetInCombatWith(this);
+                AddThreat(pPlayer, 0.0f);
+            }
+        }
+    }
 }
 
 void Creature::_AddCreatureSpellCooldown(uint32 spell_id, time_t end_time)
@@ -2234,4 +2281,30 @@ void Creature::SetActiveObjectState( bool on )
 
     if(world)
         map->Add(this);
+}
+
+void Creature::SendMonsterMoveWithSpeedToCurrentDestination(Player* player)
+{
+    float x, y, z;
+    if(GetMotionMaster()->GetDestination(x, y, z))
+        SendMonsterMoveWithSpeed(x, y, z, 0, player);
+}
+
+void Creature::SendMonsterMoveWithSpeed(float x, float y, float z, uint32 transitTime, Player* player)
+{
+    if (!transitTime)
+    {
+        if(GetTypeId()==TYPEID_PLAYER)
+        {
+            Traveller<Player> traveller(*(Player*)this);
+            transitTime = traveller.GetTotalTrevelTimeTo(x,y,z);
+        }
+        else
+        {
+            Traveller<Creature> traveller(*(Creature*)this);
+            transitTime = traveller.GetTotalTrevelTimeTo(x,y,z);
+        }
+    }
+    //float orientation = (float)atan2((double)dy, (double)dx);
+    SendMonsterMove(x, y, z, 0, GetMonsterMoveFlags(), transitTime, player);
 }

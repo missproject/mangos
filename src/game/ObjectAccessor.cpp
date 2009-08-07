@@ -44,18 +44,25 @@ INSTANTIATE_SINGLETON_2(ObjectAccessor, CLASS_LOCK);
 INSTANTIATE_CLASS_MUTEX(ObjectAccessor, ACE_Thread_Mutex);
 
 ObjectAccessor::ObjectAccessor() {}
-ObjectAccessor::~ObjectAccessor() {}
+ObjectAccessor::~ObjectAccessor()
+{
+    for(Player2CorpsesMapType::const_iterator itr = i_player2corpse.begin(); itr != i_player2corpse.end(); ++itr)
+        delete itr->second;
+}
 
 Creature*
 ObjectAccessor::GetCreatureOrPetOrVehicle(WorldObject const &u, uint64 guid)
 {
-    if(Creature *unit = GetPet(guid))
-        return unit;
+    if(IS_PLAYER_GUID(guid))
+        return NULL;
 
-    if(Creature *unit = GetVehicle(guid))
-        return unit;
+    if(IS_PET_GUID(guid))
+        return GetPet(guid);
 
-    return u.GetMap()->GetCreature(guid);
+    if(IS_VEHICLE_GUID(guid))
+        return GetVehicle(guid);
+
+    return u.IsInWorld() ? u.GetMap()->GetCreature(guid) : NULL;
 }
 
 Unit*
@@ -128,7 +135,11 @@ Object* ObjectAccessor::GetObjectByTypeMask(WorldObject const &p, uint64 guid, u
 Player*
 ObjectAccessor::FindPlayer(uint64 guid)
 {
-    return GetObjectInWorld(guid, (Player*)NULL);
+    Player * plr = GetObjectInWorld(guid, (Player*)NULL);
+    if(!plr || !plr->IsInWorld())
+        return NULL;
+
+    return plr;
 }
 
 Player*
@@ -138,7 +149,7 @@ ObjectAccessor::FindPlayerByName(const char *name)
     HashMapHolder<Player>::MapType& m = HashMapHolder<Player>::GetContainer();
     HashMapHolder<Player>::MapType::iterator iter = m.begin();
     for(; iter != m.end(); ++iter)
-        if( ::strcmp(name, iter->second->GetName()) == 0 )
+        if(iter->second->IsInWorld() && ( ::strcmp(name, iter->second->GetName()) == 0 ))
             return iter->second;
     return NULL;
 }
@@ -356,8 +367,6 @@ ObjectAccessor::ConvertCorpseForPlayer(uint64 player_guid, bool insignia)
         // bones->m_inWorld = m_inWorld;                        // don't overwrite world state
         // bones->m_type = m_type;                              // don't overwrite type
         bones->Relocate(corpse->GetPositionX(), corpse->GetPositionY(), corpse->GetPositionZ(), corpse->GetOrientation());
-        bones->SetMapId(corpse->GetMapId());
-        bones->SetInstanceId(corpse->GetInstanceId());
         bones->SetPhaseMask(corpse->GetPhaseMask(), false);
 
         bones->SetUInt32Value(CORPSE_FIELD_FLAGS, CORPSE_FLAG_UNK2 | CORPSE_FLAG_BONES);
