@@ -233,8 +233,8 @@ Item::Item( )
 {
     m_objectType |= TYPEMASK_ITEM;
     m_objectTypeId = TYPEID_ITEM;
-                                                            // 2.3.2 - 0x18
-    m_updateFlag = (UPDATEFLAG_LOWGUID | UPDATEFLAG_HIGHGUID);
+
+    m_updateFlag = UPDATEFLAG_HIGHGUID;
 
     m_valuesCount = ITEM_END;
     m_slot = 0;
@@ -376,6 +376,16 @@ bool Item::LoadFromDB(uint32 guid, uint64 owner_guid, QueryResult *result)
     ItemPrototype const* proto = GetProto();
     if(!proto)
         return false;
+
+    // update max durability (and durability) if need
+    if(proto->MaxDurability!= GetUInt32Value(ITEM_FIELD_MAXDURABILITY))
+    {
+        SetUInt32Value(ITEM_FIELD_MAXDURABILITY,proto->MaxDurability);
+        if(GetUInt32Value(ITEM_FIELD_DURABILITY) > proto->MaxDurability)
+            SetUInt32Value(ITEM_FIELD_DURABILITY,proto->MaxDurability);
+
+        need_save = true;
+    }
 
     // recalculate suffix factor
     if(GetItemRandomPropertyId() < 0)
@@ -762,6 +772,23 @@ bool Item::IsFitToSpellRequirements(SpellEntry const* spellInfo) const
     return true;
 }
 
+bool Item::IsTargetValidForItemUse(Unit* pUnitTarget)
+{
+    ItemRequiredTargetMapBounds bounds = objmgr.GetItemRequiredTargetMapBounds(GetProto()->ItemId);
+
+    if (bounds.first == bounds.second)
+        return true;
+
+    if (!pUnitTarget)
+        return false;
+
+    for(ItemRequiredTargetMap::const_iterator itr = bounds.first; itr != bounds.second; ++itr)
+        if(itr->second.IsFitToRequirements(pUnitTarget))
+            return true;
+
+    return false;
+}
+
 void Item::SetEnchantment(EnchantmentSlot slot, uint32 id, uint32 duration, uint32 charges)
 {
     // Better lost small time at check in comparison lost time at item save to DB.
@@ -966,5 +993,24 @@ bool Item::IsBindedNotWith( Player const* player ) const
     else
     {
         return objmgr.GetPlayerAccountIdByGUID(GetOwnerGUID()) != player->GetSession()->GetAccountId();
+    }
+}
+
+bool ItemRequiredTarget::IsFitToRequirements( Unit* pUnitTarget ) const
+{
+    if(pUnitTarget->GetTypeId() != TYPEID_UNIT)
+        return false;
+
+    if(pUnitTarget->GetEntry() != m_uiTargetEntry)
+        return false;
+
+    switch(m_uiType)
+    {
+        case ITEM_TARGET_TYPE_CREATURE:
+            return pUnitTarget->isAlive();
+        case ITEM_TARGET_TYPE_DEAD:
+            return !pUnitTarget->isAlive();
+        default:
+            return false;
     }
 }

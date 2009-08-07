@@ -46,9 +46,7 @@ enum TypeMask
     TYPEMASK_PLAYER         = 0x0010,
     TYPEMASK_GAMEOBJECT     = 0x0020,
     TYPEMASK_DYNAMICOBJECT  = 0x0040,
-    TYPEMASK_CORPSE         = 0x0080,
-    TYPEMASK_AIGROUP        = 0x0100,
-    TYPEMASK_AREATRIGGER    = 0x0200
+    TYPEMASK_CORPSE         = 0x0080
 };
 
 enum TypeID
@@ -60,11 +58,10 @@ enum TypeID
     TYPEID_PLAYER        = 4,
     TYPEID_GAMEOBJECT    = 5,
     TYPEID_DYNAMICOBJECT = 6,
-    TYPEID_CORPSE        = 7,
-    TYPEID_AIGROUP       = 8,
-    TYPEID_AREATRIGGER   = 9
+    TYPEID_CORPSE        = 7
 };
-#define MAX_TYPEID         10
+
+#define NUM_CLIENT_OBJECT_TYPES             8
 
 uint32 GuidHigh2TypeId(uint32 guid_hi);
 
@@ -101,14 +98,14 @@ typedef UNORDERED_MAP<Player*, UpdateData> UpdateDataMapType;
 struct WorldLocation
 {
     uint32 mapid;
-    float x;
-    float y;
-    float z;
-    float o;
+    float coord_x;
+    float coord_y;
+    float coord_z;
+    float orientation;
     explicit WorldLocation(uint32 _mapid = 0, float _x = 0, float _y = 0, float _z = 0, float _o = 0)
-        : mapid(_mapid), x(_x), y(_y), z(_z), o(_o) {}
+        : mapid(_mapid), coord_x(_x), coord_y(_y), coord_z(_z), orientation(_o) {}
     WorldLocation(WorldLocation const &loc)
-        : mapid(loc.mapid), x(loc.x), y(loc.y), z(loc.z), o(loc.o) {}
+        : mapid(loc.mapid), coord_x(loc.coord_x), coord_y(loc.coord_y), coord_z(loc.coord_z), orientation(loc.orientation) {}
 };
 
 class MANGOS_DLL_SPEC Object
@@ -154,7 +151,7 @@ class MANGOS_DLL_SPEC Object
         void BuildMovementUpdateBlock( UpdateData * data, uint32 flags = 0 ) const;
         void BuildUpdate(UpdateDataMapType &);
 
-        virtual void DestroyForPlayer( Player *target ) const;
+        virtual void DestroyForPlayer( Player *target, bool anim = false ) const;
 
         const int32& GetInt32Value( uint16 index ) const
         {
@@ -310,13 +307,13 @@ class MANGOS_DLL_SPEC Object
         virtual void _SetUpdateBits(UpdateMask *updateMask, Player *target) const;
 
         virtual void _SetCreateBits(UpdateMask *updateMask, Player *target) const;
-        void _BuildMovementUpdate(ByteBuffer * data, uint8 flags, uint32 flags2 ) const;
+        void _BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2 ) const;
         void _BuildValuesUpdate(uint8 updatetype, ByteBuffer *data, UpdateMask *updateMask, Player *target ) const;
 
         uint16 m_objectType;
 
         uint8 m_objectTypeId;
-        uint8 m_updateFlag;
+        uint16 m_updateFlag;
 
         union
         {
@@ -349,7 +346,7 @@ class MANGOS_DLL_SPEC WorldObject : public Object
 
         virtual void Update ( uint32 /*time_diff*/ ) { }
 
-        void _Create( uint32 guidlow, HighGuid guidhigh, uint32 mapid, uint32 phaseMask);
+        void _Create( uint32 guidlow, HighGuid guidhigh, uint32 phaseMask);
 
         void Relocate(float x, float y, float z, float orientation)
         {
@@ -366,12 +363,6 @@ class MANGOS_DLL_SPEC WorldObject : public Object
             m_positionZ = z;
         }
 
-        void Relocate(WorldLocation const & loc)
-        {
-            SetMapId(loc.mapid);
-            Relocate(loc.x, loc.y, loc.z, loc.o);
-        }
-
         void SetOrientation(float orientation) { m_orientation = orientation; }
 
         float GetPositionX( ) const { return m_positionX; }
@@ -380,7 +371,7 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         void GetPosition( float &x, float &y, float &z ) const
             { x = m_positionX; y = m_positionY; z = m_positionZ; }
         void GetPosition( WorldLocation &loc ) const
-            { loc.mapid = GetMapId(); GetPosition(loc.x, loc.y, loc.z); loc.o = GetOrientation(); }
+            { loc.mapid = m_mapId; GetPosition(loc.coord_x, loc.coord_y, loc.coord_z); loc.orientation = GetOrientation(); }
         float GetOrientation( ) const { return m_orientation; }
         void GetNearPoint2D( float &x, float &y, float distance, float absAngle) const;
         void GetNearPoint( WorldObject const* searcher, float &x, float &y, float &z, float searcher_size, float distance2d,float absAngle) const;
@@ -404,8 +395,8 @@ class MANGOS_DLL_SPEC WorldObject : public Object
 
         void GetRandomPoint( float x, float y, float z, float distance, float &rand_x, float &rand_y, float &rand_z ) const;
 
-        void SetMapId(uint32 newMap) { m_mapId = newMap; }
         uint32 GetMapId() const { return m_mapId; }
+        uint32 GetInstanceId() const { return m_InstanceId; }
 
         virtual void SetPhaseMask(uint32 newPhaseMask, bool update);
         uint32 GetPhaseMask() const { return m_phaseMask; }
@@ -430,8 +421,7 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         float GetDistanceZ(const WorldObject* obj) const;
         bool IsInMap(const WorldObject* obj) const
         {
-            return IsInWorld() && obj->IsInWorld() && GetMapId()==obj->GetMapId() &&
-                GetInstanceId()==obj->GetInstanceId() && InSamePhase(obj);
+            return IsInWorld() && obj->IsInWorld() && (GetMap() == obj->GetMap()) && InSamePhase(obj);
         }
         bool IsWithinDist3d(float x, float y, float z, float dist2compare) const;
         bool IsWithinDist2d(float x, float y, float dist2compare) const;
@@ -456,10 +446,10 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         float GetAngle( const float x, const float y ) const;
         bool HasInArc( const float arcangle, const WorldObject* obj ) const;
 
+        virtual void CleanupsBeforeDelete();                // used in destructor or explicitly before mass creature delete to remove cross-references to already deleted units
+
         virtual void SendMessageToSet(WorldPacket *data, bool self);
         virtual void SendMessageToSetInRange(WorldPacket *data, float dist, bool self);
-        void BuildHeartBeatMsg( WorldPacket *data ) const;
-        void BuildTeleportAckMsg( WorldPacket *data, float x, float y, float z, float ang) const;
 
         void MonsterSay(const char* text, uint32 language, uint64 TargetGuid);
         void MonsterYell(const char* text, uint32 language, uint64 TargetGuid);
@@ -478,10 +468,6 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         void SendObjectDeSpawnAnim(uint64 guid);
 
         virtual void SaveRespawnTime() {}
-
-        uint32 GetInstanceId() const { return m_InstanceId; }
-        void SetInstanceId(uint32 val) { m_InstanceId = val; }
-
         void AddObjectToRemoveList();
 
         // main visibility check function in normal case (ignore grey zone distance check)
@@ -490,15 +476,29 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         // low level function for visibility change code, must be define in all main world object subclasses
         virtual bool isVisibleForInState(Player const* u, bool inVisibleList) const = 0;
 
-        Map      * GetMap() const;
+        void SetMap(Map * map);
+        Map * GetMap() const { ASSERT(m_currMap); return m_currMap; }
+        //used to check all object's GetMap() calls when object is not in world!
+        void ResetMap() { m_currMap = NULL; }
+
+        //this function should be removed in nearest time...
         Map const* GetBaseMap() const;
+
         Creature* SummonCreature(uint32 id, float x, float y, float z, float ang,TempSummonType spwtype,uint32 despwtime);
 
     protected:
         explicit WorldObject();
         std::string m_name;
 
+        //these functions are used mostly for Relocate() and Corpse/Player specific stuff...
+        //use them ONLY in LoadFromDB()/Create() funcs and nowhere else!
+        //mapId/instanceId should be set in SetMap() function!
+        void SetLocationMapId(uint32 _mapId) { m_mapId = _mapId; }
+        void SetLocationInstanceId(uint32 _instanceId) { m_InstanceId = _instanceId; }
+
     private:
+        Map * m_currMap;                                    //current object's Map location
+
         uint32 m_mapId;                                     // object at map with map_id
         uint32 m_InstanceId;                                // in map copy with instance id
         uint32 m_phaseMask;                                 // in area phase state

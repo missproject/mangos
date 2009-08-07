@@ -149,7 +149,7 @@ void WorldSession::HandleWhoOpcode( WorldPacket & recv_data )
     uint32 team = _player->GetTeam();
     uint32 security = GetSecurity();
     bool allowTwoSideWhoList = sWorld.getConfig(CONFIG_ALLOW_TWO_SIDE_WHO_LIST);
-    bool gmInWhoList         = sWorld.getConfig(CONFIG_GM_IN_WHO_LIST);
+    uint32 gmLevelInWhoList  = sWorld.getConfig(CONFIG_GM_LEVEL_IN_WHO_LIST);
 
     WorldPacket data( SMSG_WHO, 50 );                       // guess size
     data << clientcount;                                    // clientcount place holder
@@ -166,9 +166,13 @@ void WorldSession::HandleWhoOpcode( WorldPacket & recv_data )
                 continue;
 
             // player can see MODERATOR, GAME MASTER, ADMINISTRATOR only if CONFIG_GM_IN_WHO_LIST
-            if ((itr->second->GetSession()->GetSecurity() > SEC_PLAYER && !gmInWhoList))
+            if ((itr->second->GetSession()->GetSecurity() > gmLevelInWhoList))
                 continue;
         }
+
+        //do not process players which are not in world
+        if(!(itr->second->IsInWorld()))
+            continue;
 
         // check if target is globally visible for player
         if (!(itr->second->IsVisibleGloballyFor(_player)))
@@ -276,7 +280,7 @@ void WorldSession::HandleLogoutRequestOpcode( WorldPacket & /*recv_data*/ )
     if( GetPlayer()->isInCombat() ||                        //...is in combat
         GetPlayer()->duel         ||                        //...is in Duel
                                                             //...is jumping ...is falling
-        GetPlayer()->HasUnitMovementFlag(MOVEMENTFLAG_JUMPING | MOVEMENTFLAG_FALLING))
+        GetPlayer()->m_movementInfo.HasMovementFlag(MovementFlags(MOVEMENTFLAG_JUMPING | MOVEMENTFLAG_FALLING)))
     {
         WorldPacket data( SMSG_LOGOUT_RESPONSE, (2+4) ) ;
         data << (uint8)0xC;
@@ -438,7 +442,7 @@ void WorldSession::HandleStandStateChangeOpcode( WorldPacket & recv_data )
     _player->SetStandState(animstate);
 }
 
-void WorldSession::HandleFriendListOpcode( WorldPacket & recv_data )
+void WorldSession::HandleContactListOpcode( WorldPacket & recv_data )
 {
     CHECK_PACKET_SIZE(recv_data, 4);
     sLog.outDebug( "WORLD: Received CMSG_CONTACT_LIST" );
@@ -611,9 +615,10 @@ void WorldSession::HandleDelIgnoreOpcode( WorldPacket & recv_data )
     sLog.outDebug( "WORLD: Sent motd (SMSG_FRIEND_STATUS)" );
 }
 
-void WorldSession::HandleSetFriendNoteOpcode( WorldPacket & recv_data )
+void WorldSession::HandleSetContactNotesOpcode( WorldPacket & recv_data )
 {
     CHECK_PACKET_SIZE(recv_data, 8+1);
+    sLog.outDebug("CMSG_SET_CONTACT_NOTES");
     uint64 guid;
     std::string note;
     recv_data >> guid >> note;
@@ -649,7 +654,7 @@ void WorldSession::HandleBugOpcode( WorldPacket & recv_data )
     CharacterDatabase.PExecute ("INSERT INTO bugreport (type,content) VALUES('%s', '%s')", type.c_str( ), content.c_str( ));
 }
 
-void WorldSession::HandleCorpseReclaimOpcode(WorldPacket &recv_data)
+void WorldSession::HandleReclaimCorpseOpcode(WorldPacket &recv_data)
 {
     CHECK_PACKET_SIZE(recv_data,8);
 
@@ -957,10 +962,11 @@ void WorldSession::HandleRequestAccountData(WorldPacket& recv_data)
 
     uint32 size = adata->Data.size();
 
-    ByteBuffer dest;
-    dest.resize(size);
+    uLongf destSize = compressBound(size);
 
-    uLongf destSize = size;
+    ByteBuffer dest;
+    dest.resize(destSize);
+
     if(size && compress(const_cast<uint8*>(dest.contents()), &destSize, (uint8*)adata->Data.c_str(), size) != Z_OK)
     {
         sLog.outDebug("RAD: Failed to compress account data");
@@ -983,39 +989,45 @@ void WorldSession::HandleSetActionButtonOpcode(WorldPacket& recv_data)
     CHECK_PACKET_SIZE(recv_data,1+2+1+1);
 
     sLog.outDebug(  "WORLD: Received CMSG_SET_ACTION_BUTTON" );
-    uint8 button, misc, type;
-    uint16 action;
-    recv_data >> button >> action >> misc >> type;
-    sLog.outDetail( "BUTTON: %u ACTION: %u TYPE: %u MISC: %u", button, action, type, misc );
-    if(action==0)
+    uint8 button;
+    uint32 packetData;
+    recv_data >> button >> packetData;
+
+    uint32 action = ACTION_BUTTON_ACTION(packetData);
+    uint8  type   = ACTION_BUTTON_TYPE(packetData);
+
+    sLog.outDetail( "BUTTON: %u ACTION: %u TYPE: %u", button, action, type );
+    if (!packetData)
     {
         sLog.outDetail( "MISC: Remove action from button %u", button );
-
         GetPlayer()->removeActionButton(button);
     }
     else
     {
-        if(type==ACTION_BUTTON_MACRO || type==ACTION_BUTTON_CMACRO)
+        switch(type)
         {
-            sLog.outDetail( "MISC: Added Macro %u into button %u", action, button );
-            GetPlayer()->addActionButton(button,action,type,misc);
+            case ACTION_BUTTON_MACRO:
+            case ACTION_BUTTON_CMACRO:
+                sLog.outDetail( "MISC: Added Macro %u into button %u", action, button );
+                break;
+            case ACTION_BUTTON_EQSET:
+                sLog.outDetail( "MISC: Added EquipmentSet %u into button %u", action, button );
+                break;
+            case ACTION_BUTTON_SPELL:
+                sLog.outDetail( "MISC: Added Spell %u into button %u", action, button );
+                break;
+            case ACTION_BUTTON_ITEM:
+                sLog.outDetail( "MISC: Added Item %u into button %u", action, button );
+                break;
+            default:
+                sLog.outError( "MISC: Unknown action button type %u for action %u into button %u", type, action, button );
+                return;
         }
-        else if(type==ACTION_BUTTON_SPELL)
-        {
-            sLog.outDetail( "MISC: Added Spell %u into button %u", action, button );
-            GetPlayer()->addActionButton(button,action,type,misc);
-        }
-        else if(type==ACTION_BUTTON_ITEM)
-        {
-            sLog.outDetail( "MISC: Added Item %u into button %u", action, button );
-            GetPlayer()->addActionButton(button,action,type,misc);
-        }
-        else
-            sLog.outError( "MISC: Unknown action button type %u for action %u into button %u", type, action, button );
+        GetPlayer()->addActionButton(button,action,type);
     }
 }
 
-void WorldSession::HandleCompleteCinema( WorldPacket & /*recv_data*/ )
+void WorldSession::HandleCompleteCinematic( WorldPacket & /*recv_data*/ )
 {
     DEBUG_LOG( "WORLD: Player is watching cinema" );
 }
@@ -1075,8 +1087,8 @@ void WorldSession::HandleMoveUnRootAck(WorldPacket&/* recv_data*/)
         recv_data >> Orientation;
 
         // TODO for later may be we can use for anticheat
-        DEBUG_LOG("Guid " I64FMTD,guid);
-        DEBUG_LOG("unknown1 " I64FMTD,unknown1);
+        DEBUG_LOG("Guid " UI64FMTD,guid);
+        DEBUG_LOG("unknown1 " UI64FMTD,unknown1);
         DEBUG_LOG("unknown2 %u",unknown2);
         DEBUG_LOG("X %f",PositionX);
         DEBUG_LOG("Y %f",PositionY);
@@ -1109,8 +1121,8 @@ void WorldSession::HandleMoveRootAck(WorldPacket&/* recv_data*/)
         recv_data >> Orientation;
 
         // for later may be we can use for anticheat
-        DEBUG_LOG("Guid " I64FMTD,guid);
-        DEBUG_LOG("unknown1 " I64FMTD,unknown1);
+        DEBUG_LOG("Guid " UI64FMTD,guid);
+        DEBUG_LOG("unknown1 " UI64FMTD,unknown1);
         DEBUG_LOG("unknown1 %u",unknown2);
         DEBUG_LOG("X %f",PositionX);
         DEBUG_LOG("Y %f",PositionY);
@@ -1119,7 +1131,7 @@ void WorldSession::HandleMoveRootAck(WorldPacket&/* recv_data*/)
     */
 }
 
-void WorldSession::HandleSetActionBar(WorldPacket& recv_data)
+void WorldSession::HandleSetActionBarToggles(WorldPacket& recv_data)
 {
     CHECK_PACKET_SIZE(recv_data,1);
 
@@ -1130,7 +1142,7 @@ void WorldSession::HandleSetActionBar(WorldPacket& recv_data)
     if(!GetPlayer())                                        // ignore until not logged (check needed because STATUS_AUTHED)
     {
         if(ActionBar!=0)
-            sLog.outError("WorldSession::HandleSetActionBar in not logged state with value: %u, ignored",uint32(ActionBar));
+            sLog.outError("WorldSession::HandleSetActionBarToggles in not logged state with value: %u, ignored",uint32(ActionBar));
         return;
     }
 
@@ -1148,14 +1160,17 @@ void WorldSession::HandleWardenDataOpcode(WorldPacket& /*recv_data*/)
     */
 }
 
-void WorldSession::HandlePlayedTime(WorldPacket& /*recv_data*/)
+void WorldSession::HandlePlayedTime(WorldPacket& recv_data)
 {
-    uint32 TotalTimePlayed = GetPlayer()->GetTotalPlayedTime();
-    uint32 LevelPlayedTime = GetPlayer()->GetLevelPlayedTime();
+    CHECK_PACKET_SIZE(recv_data, 1);
 
-    WorldPacket data(SMSG_PLAYED_TIME, 8);
-    data << TotalTimePlayed;
-    data << LevelPlayedTime;
+    uint8 unk1;
+    recv_data >> unk1;                                      // 0 or 1 expected
+
+    WorldPacket data(SMSG_PLAYED_TIME, 4 + 4 + 1);
+    data << uint32(_player->GetTotalPlayedTime());
+    data << uint32(_player->GetLevelPlayedTime());
+    data << uint8(unk1);                                    // 0 - will not show in chat frame
     SendPacket(&data);
 }
 
@@ -1165,7 +1180,7 @@ void WorldSession::HandleInspectOpcode(WorldPacket& recv_data)
 
     uint64 guid;
     recv_data >> guid;
-    DEBUG_LOG("Inspected guid is " I64FMTD, guid);
+    DEBUG_LOG("Inspected guid is (GUID: %u TypeId: %u)", GUID_LOPART(guid), GuidHigh2TypeId(GUID_HIPART(guid)));
 
     _player->SetSelection(guid);
 
@@ -1173,76 +1188,20 @@ void WorldSession::HandleInspectOpcode(WorldPacket& recv_data)
     if(!plr)                                                // wrong player
         return;
 
-    uint32 talent_points = 0x3D;
-    uint32 guid_size = plr->GetPackGUID().size();
-    WorldPacket data(SMSG_INSPECT_TALENT, 4+talent_points);
+    WorldPacket data(SMSG_INSPECT_TALENT, 50);
     data.append(plr->GetPackGUID());
-    data << uint32(talent_points);
-
-    // fill by 0 talents array
-    for(uint32 i = 0; i < talent_points; ++i)
-        data << uint8(0);
 
     if(sWorld.getConfig(CONFIG_TALENTS_INSPECTING) || _player->isGameMaster())
     {
-        // find class talent tabs (all players have 3 talent tabs)
-        uint32 const* talentTabIds = GetTalentTabPages(plr->getClass());
-
-        uint32 talentTabPos = 0;                            // pos of first talent rank in tab including all prev tabs
-        for(uint32 i = 0; i < 3; ++i)
-        {
-            uint32 talentTabId = talentTabIds[i];
-
-            // fill by real data
-            for(uint32 talentId = 0; talentId < sTalentStore.GetNumRows(); ++talentId)
-            {
-                TalentEntry const* talentInfo = sTalentStore.LookupEntry(talentId);
-                if(!talentInfo)
-                    continue;
-
-                // skip another tab talents
-                if(talentInfo->TalentTab != talentTabId)
-                    continue;
-
-                // find talent rank
-                uint32 curtalent_maxrank = 0;
-                for(uint32 k = MAX_TALENT_RANK; k > 0; --k)
-                {
-                    if(talentInfo->RankID[k-1] && plr->HasSpell(talentInfo->RankID[k-1]))
-                    {
-                        curtalent_maxrank = k;
-                        break;
-                    }
-                }
-
-                // not learned talent
-                if(!curtalent_maxrank)
-                    continue;
-
-                // 1 rank talent bit index
-                uint32 curtalent_index = talentTabPos + GetTalentInspectBitPosInTab(talentId);
-
-                uint32 curtalent_rank_index = curtalent_index+curtalent_maxrank-1;
-
-                // slot/offset in 7-bit bytes
-                uint32 curtalent_rank_slot7   = curtalent_rank_index / 7;
-                uint32 curtalent_rank_offset7 = curtalent_rank_index % 7;
-
-                // rank pos with skipped 8 bit
-                uint32 curtalent_rank_index2 = curtalent_rank_slot7 * 8 + curtalent_rank_offset7;
-
-                // slot/offset in 8-bit bytes with skipped high bit
-                uint32 curtalent_rank_slot = curtalent_rank_index2 / 8;
-                uint32 curtalent_rank_offset =  curtalent_rank_index2 % 8;
-
-                // apply mask
-                uint32 val = data.read<uint8>(guid_size + 4 + curtalent_rank_slot);
-                val |= (1 << curtalent_rank_offset);
-                data.put<uint8>(guid_size + 4 + curtalent_rank_slot, val & 0xFF);
-            }
-
-            talentTabPos += GetTalentTabInspectBitSize(talentTabId);
-        }
+        plr->BuildPlayerTalentsInfoData(&data);
+        plr->BuildEnchantmentsInfoData(&data);
+    }
+    else
+    {
+        data << uint32(0);                                  // unspentTalentPoints
+        data << uint8(0);                                   // talentGroupCount
+        data << uint8(0);                                   // talentGroupIndex
+        data << uint32(0);                                  // slotUsedMask
     }
 
     SendPacket(&data);
@@ -1370,10 +1329,10 @@ void WorldSession::HandleWhoisOpcode(WorldPacket& recv_data)
     sLog.outDebug("Received whois command from player %s for character %s", GetPlayer()->GetName(), charname.c_str());
 }
 
-void WorldSession::HandleReportSpamOpcode( WorldPacket & recv_data )
+void WorldSession::HandleComplainOpcode( WorldPacket & recv_data )
 {
     CHECK_PACKET_SIZE(recv_data, 1+8);
-    sLog.outDebug("WORLD: CMSG_REPORT_SPAM");
+    sLog.outDebug("WORLD: CMSG_COMPLAIN");
     recv_data.hexlike();
 
     uint8 spam_type;                                        // 0 - mail, 1 - chat
@@ -1414,7 +1373,7 @@ void WorldSession::HandleReportSpamOpcode( WorldPacket & recv_data )
     sLog.outDebug("REPORT SPAM: type %u, guid %u, unk1 %u, unk2 %u, unk3 %u, unk4 %u, message %s", spam_type, GUID_LOPART(spammer_guid), unk1, unk2, unk3, unk4, description.c_str());
 }
 
-void WorldSession::HandleRealmStateRequestOpcode( WorldPacket & recv_data )
+void WorldSession::HandleRealmSplitOpcode( WorldPacket & recv_data )
 {
     CHECK_PACKET_SIZE(recv_data, 4);
 
@@ -1455,12 +1414,12 @@ void WorldSession::HandleFarSightOpcode( WorldPacket & recv_data )
             sLog.outDebug("Removed FarSight from player %u", _player->GetGUIDLow());
             break;
         case 1:
-            sLog.outDebug("Added FarSight " I64FMT " to player %u", _player->GetFarSight(), _player->GetGUIDLow());
+            sLog.outDebug("Added FarSight (GUID:%u TypeId:%u) to player %u", GUID_LOPART(_player->GetFarSight()), GuidHigh2TypeId(GUID_HIPART(_player->GetFarSight())), _player->GetGUIDLow());
             break;
     }
 }
 
-void WorldSession::HandleChooseTitleOpcode( WorldPacket & recv_data )
+void WorldSession::HandleSetTitleOpcode( WorldPacket & recv_data )
 {
     CHECK_PACKET_SIZE(recv_data, 4);
 
@@ -1470,7 +1429,7 @@ void WorldSession::HandleChooseTitleOpcode( WorldPacket & recv_data )
     recv_data >> title;
 
     // -1 at none
-    if(title > 0 && title < 128)
+    if(title > 0 && title < MAX_TITLE_INDEX)
     {
        if(!GetPlayer()->HasTitle(title))
             return;
@@ -1509,7 +1468,7 @@ void WorldSession::HandleResetInstancesOpcode( WorldPacket & /*recv_data*/ )
         _player->ResetInstances(INSTANCE_RESET_ALL);
 }
 
-void WorldSession::HandleDungeonDifficultyOpcode( WorldPacket & recv_data )
+void WorldSession::HandleSetDungeonDifficultyOpcode( WorldPacket & recv_data )
 {
     CHECK_PACKET_SIZE(recv_data, 4);
 
@@ -1523,7 +1482,7 @@ void WorldSession::HandleDungeonDifficultyOpcode( WorldPacket & recv_data )
 
     if(mode > DIFFICULTY_HEROIC)
     {
-        sLog.outError("WorldSession::HandleDungeonDifficultyOpcode: player %d sent an invalid instance mode %d!", _player->GetGUIDLow(), mode);
+        sLog.outError("WorldSession::HandleSetDungeonDifficultyOpcode: player %d sent an invalid instance mode %d!", _player->GetGUIDLow(), mode);
         return;
     }
 
@@ -1531,7 +1490,7 @@ void WorldSession::HandleDungeonDifficultyOpcode( WorldPacket & recv_data )
     Map *map = _player->GetMap();
     if(map && map->IsDungeon())
     {
-        sLog.outError("WorldSession::HandleDungeonDifficultyOpcode: player %d tried to reset the instance while inside!", _player->GetGUIDLow());
+        sLog.outError("WorldSession::HandleSetDungeonDifficultyOpcode: player %d tried to reset the instance while inside!", _player->GetGUIDLow());
         return;
     }
 
@@ -1555,7 +1514,7 @@ void WorldSession::HandleDungeonDifficultyOpcode( WorldPacket & recv_data )
     }
 }
 
-void WorldSession::HandleDismountOpcode( WorldPacket & /*recv_data*/ )
+void WorldSession::HandleCancelMountAuraOpcode( WorldPacket & /*recv_data*/ )
 {
     sLog.outDebug("WORLD: CMSG_CANCEL_MOUNT_AURA");
     //recv_data.hexlike();
@@ -1577,7 +1536,7 @@ void WorldSession::HandleDismountOpcode( WorldPacket & /*recv_data*/ )
     _player->RemoveSpellsCausingAura(SPELL_AURA_MOUNTED);
 }
 
-void WorldSession::HandleMoveFlyModeChangeAckOpcode( WorldPacket & recv_data )
+void WorldSession::HandleMoveSetCanFlyAckOpcode( WorldPacket & recv_data )
 {
     CHECK_PACKET_SIZE(recv_data, 8+4+4);
 
@@ -1591,17 +1550,7 @@ void WorldSession::HandleMoveFlyModeChangeAckOpcode( WorldPacket & recv_data )
 
     recv_data >> guid >> unk >> flags;
 
-    _player->SetUnitMovementFlags(flags);
-    /*
-    on:
-    25 00 00 00 00 00 00 00 | 00 00 00 00 00 00 80 00
-    85 4E A9 01 19 BA 7A C3 | 42 0D 70 44 44 B0 A8 42
-    78 15 94 40 39 03 00 00 | 00 00 80 3F
-    off:
-    25 00 00 00 00 00 00 00 | 00 00 00 00 00 00 00 00
-    10 FD A9 01 19 BA 7A C3 | 42 0D 70 44 44 B0 A8 42
-    78 15 94 40 39 03 00 00 | 00 00 00 00
-    */
+    _player->m_movementInfo.SetMovementFlags(MovementFlags(flags));
 }
 
 void WorldSession::HandleRequestPetInfoOpcode( WorldPacket & /*recv_data */)
@@ -1622,7 +1571,7 @@ void WorldSession::HandleSetTaxiBenchmarkOpcode( WorldPacket & recv_data )
     sLog.outDebug("Client used \"/timetest %d\" command", mode);
 }
 
-void WorldSession::HandleInspectAchievements( WorldPacket & recv_data )
+void WorldSession::HandleQueryInspectAchievements( WorldPacket & recv_data )
 {
     CHECK_PACKET_SIZE(recv_data, 1);
     uint64 guid;

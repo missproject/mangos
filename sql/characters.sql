@@ -21,7 +21,7 @@
 
 DROP TABLE IF EXISTS `character_db_version`;
 CREATE TABLE `character_db_version` (
-  `required_7903_01_characters_character_pet` bit(1) default NULL
+  `required_8104_01_characters` bit(1) default NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Last applied sql update to DB';
 
 --
@@ -197,6 +197,13 @@ CREATE TABLE `characters` (
   `name` varchar(12) NOT NULL default '',
   `race` tinyint(3) unsigned NOT NULL default '0',
   `class` tinyint(3) unsigned NOT NULL default '0',
+  `gender` TINYINT UNSIGNED NOT NULL default '0',
+  `level` TINYINT UNSIGNED NOT NULL default '0',
+  `xp` INT UNSIGNED NOT NULL default '0',
+  `money` INT UNSIGNED NOT NULL default '0',
+  `playerBytes` INT UNSIGNED NOT NULL default '0',
+  `playerBytes2` INT UNSIGNED NOT NULL default '0',
+  `playerFlags` INT UNSIGNED NOT NULL default '0',
   `position_x` float NOT NULL default '0',
   `position_y` float NOT NULL default '0',
   `position_z` float NOT NULL default '0',
@@ -257,7 +264,7 @@ CREATE TABLE `character_achievement` (
   `achievement` int(11) unsigned  NOT NULL,
   `date` bigint(11) unsigned NOT NULL default '0',
   PRIMARY KEY  (`guid`,`achievement`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `character_achievement`
@@ -279,7 +286,7 @@ CREATE TABLE `character_achievement_progress` (
   `counter` int(11) unsigned NOT NULL,
   `date` bigint(11) unsigned NOT NULL default '0',
   PRIMARY KEY  (`guid`,`criteria`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `character_achievement_progress`
@@ -298,9 +305,8 @@ DROP TABLE IF EXISTS `character_action`;
 CREATE TABLE `character_action` (
   `guid` int(11) unsigned NOT NULL default '0' COMMENT 'Global Unique Identifier',
   `button` tinyint(3) unsigned NOT NULL default '0',
-  `action` smallint(5) unsigned NOT NULL default '0',
+  `action` int(11) unsigned NOT NULL default '0',
   `type` tinyint(3) unsigned NOT NULL default '0',
-  `misc` tinyint(3) unsigned NOT NULL default '0',
   PRIMARY KEY  (`guid`,`button`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC COMMENT='Player System';
 
@@ -353,7 +359,7 @@ CREATE TABLE `character_declinedname` (
   `instrumental` varchar(15) NOT NULL default '',
   `prepositional` varchar(15) NOT NULL default '',
   PRIMARY KEY  (`guid`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
 
 --
 -- Dumping data for table `character_declinedname`
@@ -362,6 +368,49 @@ CREATE TABLE `character_declinedname` (
 LOCK TABLES `character_declinedname` WRITE;
 /*!40000 ALTER TABLE `character_declinedname` DISABLE KEYS */;
 /*!40000 ALTER TABLE `character_declinedname` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `character_equipmentsets`
+--
+
+DROP TABLE IF EXISTS `character_equipmentsets`;
+CREATE TABLE `character_equipmentsets` (
+  `guid` int(11) NOT NULL default '0',
+  `setguid` bigint(20) NOT NULL auto_increment,
+  `setindex` tinyint(4) NOT NULL default '0',
+  `name` varchar(100) NOT NULL,
+  `iconname` varchar(100) NOT NULL,
+  `item0` int(11) NOT NULL default '0',
+  `item1` int(11) NOT NULL default '0',
+  `item2` int(11) NOT NULL default '0',
+  `item3` int(11) NOT NULL default '0',
+  `item4` int(11) NOT NULL default '0',
+  `item5` int(11) NOT NULL default '0',
+  `item6` int(11) NOT NULL default '0',
+  `item7` int(11) NOT NULL default '0',
+  `item8` int(11) NOT NULL default '0',
+  `item9` int(11) NOT NULL default '0',
+  `item10` int(11) NOT NULL default '0',
+  `item11` int(11) NOT NULL default '0',
+  `item12` int(11) NOT NULL default '0',
+  `item13` int(11) NOT NULL default '0',
+  `item14` int(11) NOT NULL default '0',
+  `item15` int(11) NOT NULL default '0',
+  `item16` int(11) NOT NULL default '0',
+  `item17` int(11) NOT NULL default '0',
+  `item18` int(11) NOT NULL default '0',
+  PRIMARY KEY  (`setguid`),
+  UNIQUE KEY `idx_set` (`guid`,`setguid`,`setindex`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `character_equipmentsets`
+--
+
+LOCK TABLES `character_equipmentsets` WRITE;
+/*!40000 ALTER TABLE `character_equipmentsets` DISABLE KEYS */;
+/*!40000 ALTER TABLE `character_equipmentsets` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -510,7 +559,7 @@ CREATE TABLE `character_pet_declinedname` (
   `prepositional` varchar(12) NOT NULL default '',
   PRIMARY KEY  (`id`),
   KEY owner_key (`owner`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;
 
 --
 -- Dumping data for table `character_pet_declinedname`
@@ -971,7 +1020,7 @@ CREATE TABLE `guild_eventlog` (
   `PlayerGuid2` int(11) NOT NULL COMMENT 'Player 2',
   `NewRank` tinyint(2) NOT NULL COMMENT 'New rank(in case promotion/demotion)',
   `TimeStamp` bigint(20) NOT NULL COMMENT 'Event UNIX time'
-) ENGINE = InnoDB DEFAULT CHARSET = latin1 COMMENT 'Guild Eventlog';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT 'Guild Eventlog';
 
 --
 -- Dumping data for table `guild_eventlog`

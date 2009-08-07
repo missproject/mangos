@@ -26,7 +26,7 @@
 Vehicle::Vehicle() : Creature(), m_vehicleId(0)
 {
     m_isVehicle = true;
-    m_updateFlag = (UPDATEFLAG_LOWGUID | UPDATEFLAG_HIGHGUID | UPDATEFLAG_LIVING | UPDATEFLAG_HAS_POSITION | UPDATEFLAG_VEHICLE);
+    m_updateFlag = (UPDATEFLAG_LIVING | UPDATEFLAG_HAS_POSITION | UPDATEFLAG_VEHICLE);
 }
 
 Vehicle::~Vehicle()
@@ -62,8 +62,7 @@ void Vehicle::Update(uint32 diff)
 
 bool Vehicle::Create(uint32 guidlow, Map *map, uint32 Entry, uint32 vehicleId, uint32 team)
 {
-    SetMapId(map->GetId());
-    SetInstanceId(map->GetInstanceId());
+    SetMap(map);
 
     Object::_Create(guidlow, Entry, HIGHGUID_VEHICLE);
 
@@ -92,6 +91,5 @@ void Vehicle::Dismiss()
 {
     SendObjectDeSpawnAnim(GetGUID());
     CombatStop();
-    CleanupsBeforeDelete();
     AddObjectToRemoveList();
 }

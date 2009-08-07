@@ -98,11 +98,17 @@ extern ScriptMapMap sEventScripts;
 struct SpellClickInfo
 {
     uint32 spellId;
-    uint32 questId;
+    uint32 questStart;                                      // quest start (quest must be active or rewarded for spell apply)
+    uint32 questEnd;                                        // quest end (quest don't must be rewarded for spell apply)
+    bool   questStartCanActive;                             // if true then quest start can be active (not only rewarded)
     uint8 castFlags;
+
+    // helpers
+    bool IsFitToRequirements(Player const* player) const;
 };
 
 typedef std::multimap<uint32, SpellClickInfo> SpellClickInfoMap;
+typedef std::pair<SpellClickInfoMap::const_iterator,SpellClickInfoMap::const_iterator> SpellClickInfoMapBounds;
 
 struct AreaTrigger
 {
@@ -161,6 +167,8 @@ typedef UNORDERED_MAP<uint32,NpcOptionLocale> NpcOptionLocaleMap;
 typedef UNORDERED_MAP<uint32,PointOfInterestLocale> PointOfInterestLocaleMap;
 
 typedef std::multimap<uint32,uint32> QuestRelations;
+typedef std::multimap<uint32,ItemRequiredTarget> ItemRequiredTargetMap;
+typedef std::pair<ItemRequiredTargetMap::const_iterator, ItemRequiredTargetMap::const_iterator>  ItemRequiredTargetMapBounds;
 
 struct PetLevelInfo
 {
@@ -228,7 +236,7 @@ enum ConditionType
     CONDITION_SKILL                 = 7,                    // skill_id     skill_value
     CONDITION_QUESTREWARDED         = 8,                    // quest_id     0
     CONDITION_QUESTTAKEN            = 9,                    // quest_id     0,      for condition true while quest active.
-    CONDITION_AD_COMMISSION_AURA    = 10,                   // 0            0,      for condition true while one from AD ñommission aura active
+    CONDITION_AD_COMMISSION_AURA    = 10,                   // 0            0,      for condition true while one from AD commission aura active
     CONDITION_NO_AURA               = 11,                   // spell_id     effindex
     CONDITION_ACTIVE_EVENT          = 12,                   // event_id
 };
@@ -271,8 +279,10 @@ enum SkillRangeType
 
 SkillRangeType GetSkillRangeType(SkillLineEntry const *pSkill, bool racial);
 
-#define MAX_PLAYER_NAME 12                                  // max allowed by client name length
+#define MAX_PLAYER_NAME          12                         // max allowed by client name length
 #define MAX_INTERNAL_PLAYER_NAME 15                         // max server internal player name length ( > MAX_PLAYER_NAME for support declined names )
+#define MAX_PET_NAME             12                         // max allowed by client name length
+#define MAX_CHARTER_NAME         24                         // max allowed by client name length
 
 bool normalizePlayerName(std::string& name);
 
@@ -393,7 +403,7 @@ class ObjectMgr
 
         uint32 GetNearestTaxiNode( float x, float y, float z, uint32 mapid, uint32 team );
         void GetTaxiPath( uint32 source, uint32 destination, uint32 &path, uint32 &cost);
-        uint16 GetTaxiMount( uint32 id, uint32 team, bool allowed_alt_team = false);
+        uint32 GetTaxiMountDisplayId( uint32 id, uint32 team, bool allowed_alt_team = false);
         void GetTaxiPathNodes( uint32 path, Path &pathnodes, std::vector<uint32>& mapIds );
         void GetTransportPathNodes( uint32 path, TransportPath &pathnodes );
 
@@ -498,6 +508,7 @@ class ObjectMgr
         void LoadGameobjects();
         void LoadGameobjectRespawnTimes();
         void LoadItemPrototypes();
+        void LoadItemRequiredTarget();
         void LoadItemLocales();
         void LoadQuestLocales();
         void LoadNpcTextLocales();
@@ -528,7 +539,6 @@ class ObjectMgr
         void LoadReputationOnKill();
         void LoadPointsOfInterest();
 
-        SpellClickInfoMap mSpellClickInfoMap;
         void LoadNPCSpellClickSpells();
 
         void LoadWeatherZoneChances();
@@ -555,12 +565,14 @@ class ObjectMgr
         uint32 GenerateLowGuid(HighGuid guidhigh);
         uint32 GenerateArenaTeamId();
         uint32 GenerateAuctionID();
+        uint64 GenerateEquipmentSetGuid();
         uint32 GenerateGuildId();
         uint32 GenerateItemTextID();
         uint32 GenerateMailID();
         uint32 GeneratePetNumber();
 
         uint32 CreateItemText(std::string text);
+        void AddItemText(uint32 itemTextId, std::string text) { mItemTexts[itemTextId] = text; }
         std::string GetItemText( uint32 id )
         {
             ItemTextMap::const_iterator itr = mItemTexts.find( id );
@@ -684,9 +696,9 @@ class ObjectMgr
         bool IsReservedName(const std::string& name) const;
 
         // name with valid structure and symbols
-        static bool IsValidName( const std::string& name, bool create = false );
+        static uint8 CheckPlayerName( const std::string& name, bool create = false );
+        static PetNameInvalidReason CheckPetName( const std::string& name );
         static bool IsValidCharterName( const std::string& name );
-        static bool IsValidPetName( const std::string& name );
 
         static bool CheckDeclinedNames(std::wstring mainpart, DeclinedName const& names);
 
@@ -751,11 +763,23 @@ class ObjectMgr
         uint32 GetScriptId(const char *name);
 
         int GetOrNewIndexForLocale(LocaleConstant loc);
+
+        SpellClickInfoMapBounds GetSpellClickInfoMapBounds(uint32 creature_id) const
+        {
+            return SpellClickInfoMapBounds(mSpellClickInfoMap.lower_bound(creature_id),mSpellClickInfoMap.upper_bound(creature_id));
+        }
+
+        ItemRequiredTargetMapBounds GetItemRequiredTargetMapBounds(uint32 uiItemEntry) const
+        {
+            return ItemRequiredTargetMapBounds(m_ItemRequiredTarget.lower_bound(uiItemEntry),m_ItemRequiredTarget.upper_bound(uiItemEntry));
+        }
+
     protected:
 
         // first free id for selected id type
         uint32 m_arenaTeamId;
         uint32 m_auctionid;
+        uint64 m_equipmentSetGuid;
         uint32 m_guildId;
         uint32 m_ItemTextId;
         uint32 m_mailid;
@@ -808,6 +832,10 @@ class ObjectMgr
 
         ScriptNameMap       m_scriptNames;
 
+        SpellClickInfoMap   mSpellClickInfoMap;
+
+        ItemRequiredTargetMap m_ItemRequiredTarget;
+
         typedef             std::vector<LocaleConstant> LocalForIndex;
         LocalForIndex        m_LocalForIndex;
 
@@ -816,6 +844,7 @@ class ObjectMgr
     private:
         void LoadScripts(ScriptMapMap& scripts, char const* tablename);
         void CheckScripts(ScriptMapMap const& scripts,std::set<int32>& ids);
+        void LoadCreatureAddons(SQLStorage& creatureaddons, char const* entryName, char const* comment);
         void ConvertCreatureAddonAuras(CreatureDataAddon* addon, char const* table, char const* guidEntryStr);
         void LoadQuestRelationsHelper(QuestRelations& map,char const* table);
 

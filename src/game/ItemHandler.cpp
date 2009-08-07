@@ -439,6 +439,7 @@ void WorldSession::HandleItemQuerySingleOpcode( WorldPacket & recv_data )
         data << pProto->ArmorDamageModifier;
         data << pProto->Duration;                           // added in 2.4.2.8209, duration (seconds)
         data << pProto->ItemLimitCategory;                  // WotLK, ItemLimitCategory
+        data << pProto->HolidayId;                          // Holiday.dbc?
         SendPacket( &data );
     }
     else
@@ -662,28 +663,52 @@ void WorldSession::HandleBuybackItem(WorldPacket & recv_data)
 
 void WorldSession::HandleBuyItemInSlotOpcode( WorldPacket & recv_data )
 {
-    CHECK_PACKET_SIZE(recv_data,8+4+8+1+1);
+    CHECK_PACKET_SIZE(recv_data,8+4+4+8+1+4);
 
     sLog.outDebug(  "WORLD: Received CMSG_BUY_ITEM_IN_SLOT" );
     uint64 vendorguid, bagguid;
-    uint32 item;
-    uint8 slot, count;
+    uint32 item, slot, count;
+    uint8 bagslot;
 
-    recv_data >> vendorguid >> item >> bagguid >> slot >> count;
+    recv_data >> vendorguid >> item  >> slot >> bagguid >> bagslot >> count;
 
-    GetPlayer()->BuyItemFromVendor(vendorguid,item,count,bagguid,slot);
+    uint8 bag = NULL_BAG;                                   // init for case invalid bagGUID
+
+    // find bag slot by bag guid
+    if (bagguid == _player->GetGUID())
+        bag = INVENTORY_SLOT_BAG_0;
+    else
+    {
+        for (int i = INVENTORY_SLOT_BAG_START; i < INVENTORY_SLOT_BAG_END;++i)
+        {
+            if (Bag *pBag = (Bag*)_player->GetItemByPos(INVENTORY_SLOT_BAG_0,i))
+            {
+                if (bagguid == pBag->GetGUID())
+                {
+                    bag = i;
+                    break;
+                }
+            }
+        }
+    }
+
+    // bag not found, cheating?
+    if (bag == NULL_BAG)
+        return;
+
+    GetPlayer()->BuyItemFromVendor(vendorguid,item,count,bag,bagslot);
 }
 
 void WorldSession::HandleBuyItemOpcode( WorldPacket & recv_data )
 {
-    CHECK_PACKET_SIZE(recv_data,8+4+1+1);
+    CHECK_PACKET_SIZE(recv_data,8+4+4+4+1);
 
     sLog.outDebug(  "WORLD: Received CMSG_BUY_ITEM" );
     uint64 vendorguid;
-    uint32 item;
-    uint8 count, unk1;
+    uint32 item, slot, count;
+    uint8 unk1;
 
-    recv_data >> vendorguid >> item >> count >> unk1;
+    recv_data >> vendorguid >> item >> slot >> count >> unk1;
 
     GetPlayer()->BuyItemFromVendor(vendorguid,item,count,NULL_BAG,NULL_SLOT);
 }
@@ -835,12 +860,14 @@ void WorldSession::HandleBuyBankSlotOpcode(WorldPacket& recvPacket)
     recvPacket >> guid;
 
     // cheating protection
+    /* not critical if "cheated", and check skip allow by slots in bank windows open by .bank command.
     Creature *pCreature = GetPlayer()->GetNPCIfCanInteractWith(guid, UNIT_NPC_FLAG_BANKER);
     if(!pCreature)
     {
         sLog.outDebug( "WORLD: HandleBuyBankSlotOpcode - Unit (GUID: %u) not found or you can't interact with him.", uint32(GUID_LOPART(guid)) );
         return;
     }
+    */
 
     uint32 slot = _player->GetBankBagSlotCount();
 
@@ -1007,7 +1034,13 @@ void WorldSession::HandleItemNameQueryOpcode(WorldPacket & recv_data)
         return;
     }
     else
-        sLog.outDebug("WORLD: CMSG_ITEM_NAME_QUERY for item %u failed (unknown item)", itemid);
+    {
+        // listed in dbc or not expected to exist unknown item
+        if(sItemStore.LookupEntry(itemid))
+            sLog.outErrorDb("WORLD: CMSG_ITEM_NAME_QUERY for item %u failed (item listed in Item.dbc but not exist in DB)", itemid);
+        else
+            sLog.outError("WORLD: CMSG_ITEM_NAME_QUERY for item %u failed (unknown item, not listed in Item.dbc)", itemid);
+    }
 }
 
 void WorldSession::HandleWrapItemOpcode(WorldPacket& recv_data)
@@ -1319,7 +1352,7 @@ void WorldSession::HandleSocketOpcode(WorldPacket& recv_data)
     _player->ToggleMetaGemsActive(slot, true);              //turn on all metagems (except for target item)
 }
 
-void WorldSession::HandleCancelTempItemEnchantmentOpcode(WorldPacket& recv_data)
+void WorldSession::HandleCancelTempEnchantmentOpcode(WorldPacket& recv_data)
 {
     sLog.outDebug("WORLD: CMSG_CANCEL_TEMP_ENCHANTMENT");
 

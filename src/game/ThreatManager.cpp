@@ -32,11 +32,9 @@
 // The pHatingUnit is not used yet
 float ThreatCalcHelper::calcThreat(Unit* pHatedUnit, Unit* pHatingUnit, float pThreat, SpellSchoolMask schoolMask, SpellEntry const *pThreatSpell)
 {
-    if(pThreatSpell)
-    {
-        if( Player* modOwner = pHatingUnit->GetSpellModOwner() )
+    if (pThreatSpell)
+        if (Player* modOwner = pHatedUnit->GetSpellModOwner())
             modOwner->ApplySpellMod(pThreatSpell->Id, SPELLMOD_THREAT, pThreat);
-    }
 
     float threat = pHatedUnit->ApplyTotalThreatModifier(pThreat, schoolMask);
     return threat;
@@ -318,9 +316,9 @@ HostilReference* ThreatContainer::selectNextVictim(Creature* pAttacker, HostilRe
                     break;
                 }
 
-                if ((currentRef->getThreat() > 1.3f * pCurrentVictim->getThreat() ||
-                     currentRef->getThreat() > 1.1f * pCurrentVictim->getThreat()) &&
-                     pAttacker->IsWithinDistInMap(target, ATTACK_DISTANCE))
+                if (currentRef->getThreat() > 1.3f * pCurrentVictim->getThreat() ||
+                     (currentRef->getThreat() > 1.1f * pCurrentVictim->getThreat() &&
+                     pAttacker->IsWithinDistInMap(target, ATTACK_DISTANCE)) )
                 {                                           //implement 110% threat rule for targets in melee range
                     found = true;                           //and 130% rule for targets in ranged distances
                     break;                                  //for selecting alive targets

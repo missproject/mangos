@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
- 
+
 #ifndef _DEFINES_
 #define _DEFINES_
 
@@ -59,7 +59,7 @@ typedef vector<sField> T_Table;
 typedef vector<string> T_TableList;
 typedef map< string, T_Table > TDataBase;
 
-static 
+static
 void pg_notice(void *arg, const char *message)
 {
     /// Do nothing
@@ -89,9 +89,20 @@ string ConvertNativeType(enum_field_types mysqlType, uint32 length)
         case FIELD_TYPE_INT24:
             return "integer";
         case FIELD_TYPE_LONGLONG:
-            return "int8";
         case FIELD_TYPE_LONG:
-            return "bigint";
+            {
+                string temp;
+                char str[10];
+                temp = "numeric";
+                if (length)
+                {
+                    temp.append("(");
+                    sprintf(str,"%d",length);
+                    temp.append(str);
+                    temp.append(")");
+                }
+                return temp;
+            }
         case FIELD_TYPE_DECIMAL:
         case FIELD_TYPE_FLOAT:
         case FIELD_TYPE_DOUBLE:

@@ -208,6 +208,61 @@ pkgdata_DATA = \
 	7908_01_mangos_creature_template.sql \
 	7908_02_mangos_creature_addon.sql \
 	7908_03_mangos_creature_template_addon.sql \
+	7932_01_characters_character_pet.sql \
+	7938_01_realmd_account.sql \
+	7945_01_mangos_quest_template.sql \
+	7980_01_mangos_item_required_target.sql \
+	7988_01_mangos_item_template.sql \
+	7988_02_characters_character_equipmentsets.sql \
+	7988_03_mangos_spell_chain.sql \
+	7988_04_mangos_creature_template.sql \
+	7988_05_mangos_item_template.sql \
+	7988_06_mangos_gameobject_template.sql \
+	7988_07_characters_characters.sql \
+	7988_08_mangos_spell_bonus_data.sql \
+	7988_09_mangos_spell_proc_event.sql \
+	8016_01_mangos_npc_spellclick_spells.sql \
+	8021_01_mangos_spell_proc_event.sql \
+	8030_01_characters_character_spell.sql \
+	8030_02_characters_character_action.sql \
+	8030_03_mangos_npc_trainer.sql \
+	8050_01_mangos_spell_proc_event.sql \
+	8050_02_mangos_spell_bonus_data.sql \
+	8053_01_mangos_command.sql \
+	8060_01_mangos_spell_pet_auras.sql \
+	8064_01_mangos_spell_chain.sql \
+	8065_01_mangos_spell_proc_event.sql \
+	8071_01_mangos_command.sql \
+	8072_01_characters_characters.sql \
+	8072_02_characters_characters.sql \
+	8098_01_characters_character_action.sql \
+	8098_02_mangos_playercreateinfo_action.sql \
+	8098_03_characters_character_pet.sql \
+	8098_04_characters_pet_spell.sql \
+	8104_01_characters.sql \
+	8112_01_mangos_spell_proc_event.sql \
+	8115_01_mangos_playercreateinfo_action.sql \
+	8140_01_mangos_spell_proc_event.sql \
+	8158_01_mangos_playercreateinfo_action.sql \
+	8190_01_mangos_creature_template.sql \
+	8191_01_mangos_spell_affect.sql \
+	8211_01_mangos_spell_proc_event.sql \
+	8212_01_mangos_spell_proc_event.sql \
+	8213_01_mangos_spell_bonus_data.sql \
+	8227_01_mangos_spell_proc_event.sql \
+	8237_01_mangos_creature_template.sql \
+	8247_01_mangos_spell_bonus_data.sql \
+	8249_01_mangos_spell_proc_item_enchant.sql \
+	8249_02_mangos_spell_chain.sql \
+	8250_01_mangos_spell_threat.sql \
+	8251_01_mangos_spell_chain.sql \
+	8251_02_mangos_spell_bonus_data.sql \
+	8251_03_mangos_spell_proc_event.sql \
+	8253_01_mangos_spell_chain.sql \
+	8253_02_mangos_spell_proc_event.sql \
+	8254_01_mangos_spell_proc_event.sql \
+	8294_01_mangos_playercreateinfo_action.sql \
+	8310_01_mangos_spell_proc_event.sql \
 	README
 
 ## Additional files to include when running 'make dist'
@@ -396,4 +451,59 @@ EXTRA_DIST = \
 	7908_01_mangos_creature_template.sql \
 	7908_02_mangos_creature_addon.sql \
 	7908_03_mangos_creature_template_addon.sql \
+	7932_01_characters_character_pet.sql \
+	7938_01_realmd_account.sql \
+	7945_01_mangos_quest_template.sql \
+	7980_01_mangos_item_required_target.sql \
+	7988_01_mangos_item_template.sql \
+	7988_02_characters_character_equipmentsets.sql \
+	7988_03_mangos_spell_chain.sql \
+	7988_04_mangos_creature_template.sql \
+	7988_05_mangos_item_template.sql \
+	7988_06_mangos_gameobject_template.sql \
+	7988_07_characters_characters.sql \
+	7988_08_mangos_spell_bonus_data.sql \
+	7988_09_mangos_spell_proc_event.sql \
+	8016_01_mangos_npc_spellclick_spells.sql \
+	8021_01_mangos_spell_proc_event.sql \
+	8030_01_characters_character_spell.sql \
+	8030_02_characters_character_action.sql \
+	8030_03_mangos_npc_trainer.sql \
+	8050_01_mangos_spell_proc_event.sql \
+	8050_02_mangos_spell_bonus_data.sql \
+	8053_01_mangos_command.sql \
+	8060_01_mangos_spell_pet_auras.sql \
+	8064_01_mangos_spell_chain.sql \
+	8065_01_mangos_spell_proc_event.sql \
+	8071_01_mangos_command.sql \
+	8072_01_characters_characters.sql \
+	8072_02_characters_characters.sql \
+	8098_01_characters_character_action.sql \
+	8098_02_mangos_playercreateinfo_action.sql \
+	8098_03_characters_character_pet.sql \
+	8098_04_characters_pet_spell.sql \
+	8104_01_characters.sql \
+	8112_01_mangos_spell_proc_event.sql \
+	8115_01_mangos_playercreateinfo_action.sql \
+	8140_01_mangos_spell_proc_event.sql \
+	8158_01_mangos_playercreateinfo_action.sql \
+	8190_01_mangos_creature_template.sql \
+	8191_01_mangos_spell_affect.sql \
+	8211_01_mangos_spell_proc_event.sql \
+	8212_01_mangos_spell_proc_event.sql \
+	8213_01_mangos_spell_bonus_data.sql \
+	8227_01_mangos_spell_proc_event.sql \
+	8237_01_mangos_creature_template.sql \
+	8247_01_mangos_spell_bonus_data.sql \
+	8249_01_mangos_spell_proc_item_enchant.sql \
+	8249_02_mangos_spell_chain.sql \
+	8250_01_mangos_spell_threat.sql \
+	8251_01_mangos_spell_chain.sql \
+	8251_02_mangos_spell_bonus_data.sql \
+	8251_03_mangos_spell_proc_event.sql \
+	8253_01_mangos_spell_chain.sql \
+	8253_02_mangos_spell_proc_event.sql \
+	8254_01_mangos_spell_proc_event.sql \
+	8294_01_mangos_playercreateinfo_action.sql \
+	8310_01_mangos_spell_proc_event.sql \
 	README

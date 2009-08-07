@@ -41,9 +41,11 @@ struct GameObjectInfo
     char   *name;
     char   *IconName;
     char   *castBarCaption;
+    char   *unk1;
     uint32  faction;
     uint32  flags;
     float   size;
+    uint32  questItems[4];
     union                                                   // different GO types have different data field
     {
         //0 GAMEOBJECT_TYPE_DOOR
@@ -55,6 +57,7 @@ struct GameObjectInfo
             uint32 noDamageImmune;                          //3 break opening whenever you recieve damage?
             uint32 openTextID;                              //4 can be used to replace castBarCaption?
             uint32 closeTextID;                             //5
+            uint32 ignoredByPathing;                        //6
         } door;
         //1 GAMEOBJECT_TYPE_BUTTON
         struct
@@ -102,7 +105,9 @@ struct GameObjectInfo
             uint32 logLoot;                                 //13
             uint32 openTextID;                              //14 can be used to replace castBarCaption?
             uint32 groupLootRules;                          //15
+            uint32 floatingTooltip;                         //16
         } chest;
+        //4 GAMEOBJECT_TYPE_BINDER - empty
         //5 GAMEOBJECT_TYPE_GENERIC
         struct
         {
@@ -130,6 +135,7 @@ struct GameObjectInfo
             uint32 stealthAffected;                         //11
             uint32 openTextID;                              //12 can be used to replace castBarCaption?
             uint32 closeTextID;                             //13
+            uint32 ignoreTotems;                            //14
         } trap;
         //7 GAMEOBJECT_TYPE_CHAIR
         struct
@@ -137,6 +143,7 @@ struct GameObjectInfo
             uint32 slots;                                   //0
             uint32 height;                                  //1
             uint32 onlyCreatorUse;                          //2
+            uint32 triggeredEvent;                          //3
         } chair;
         //8 GAMEOBJECT_TYPE_SPELL_FOCUS
         struct
@@ -147,6 +154,7 @@ struct GameObjectInfo
             uint32 serverOnly;                              //3
             uint32 questID;                                 //4
             uint32 large;                                   //5
+            uint32 floatingTooltip;                         //6
         } spellFocus;
         //9 GAMEOBJECT_TYPE_TEXT
         struct
@@ -177,6 +185,9 @@ struct GameObjectInfo
             uint32 closeTextID;                             //15
             uint32 losOK;                                   //16 isBattlegroundObject
             uint32 allowMounted;                            //17
+            uint32 floatingTooltip;                         //18
+            uint32 gossipID;                                //19
+            uint32 WorldStateSetsState;                     //20
         } goober;
         //11 GAMEOBJECT_TYPE_TRANSPORT
         struct
@@ -184,6 +195,8 @@ struct GameObjectInfo
             uint32 pause;                                   //0
             uint32 startOpen;                               //1
             uint32 autoCloseTime;                           //2 secs till autoclose = autoCloseTime / 0x10000
+            uint32 pause1EventID;                           //3
+            uint32 pause2EventID;                           //4
         } transport;
         //12 GAMEOBJECT_TYPE_AREADAMAGE
         struct
@@ -205,6 +218,7 @@ struct GameObjectInfo
             uint32 eventID;                                 //2
             uint32 openTextID;                              //3 can be used to replace castBarCaption?
         } camera;
+        //14 GAMEOBJECT_TYPE_MAPOBJECT - empty
         //15 GAMEOBJECT_TYPE_MO_TRANSPORT
         struct
         {
@@ -215,13 +229,10 @@ struct GameObjectInfo
             uint32 stopEventID;                             //4
             uint32 transportPhysics;                        //5
             uint32 mapID;                                   //6
+            uint32 worldState1;                             //7
         } moTransport;
-        //17 GAMEOBJECT_TYPE_FISHINGNODE
-        struct
-        {
-            uint32 _data0;                                  //0
-            uint32 lootId;                                  //1
-        } fishnode;
+        //16 GAMEOBJECT_TYPE_DUELFLAG - empty
+        //17 GAMEOBJECT_TYPE_FISHINGNODE - empty
         //18 GAMEOBJECT_TYPE_SUMMONING_RITUAL
         struct
         {
@@ -234,11 +245,8 @@ struct GameObjectInfo
             uint32 castersGrouped;                          //6
             uint32 ritualNoTargetCheck;                     //7
         } summoningRitual;
-        //20 GAMEOBJECT_TYPE_AUCTIONHOUSE
-        struct
-        {
-            uint32 actionHouseID;                           //0
-        } auctionhouse;
+        //19 GAMEOBJECT_TYPE_MAILBOX - empty
+        //20 GAMEOBJECT_TYPE_DONOTUSE - empty
         //21 GAMEOBJECT_TYPE_GUARDPOST
         struct
         {
@@ -251,6 +259,8 @@ struct GameObjectInfo
             uint32 spellId;                                 //0
             uint32 charges;                                 //1
             uint32 partyOnly;                               //2
+            uint32 allowMounted;                            //3
+            uint32 large;                                   //4
         } spellcaster;
         //23 GAMEOBJECT_TYPE_MEETINGSTONE
         struct
@@ -317,6 +327,8 @@ struct GameObjectInfo
             uint32 maxTime;                                 //17
             uint32 large;                                   //18
             uint32 highlight;                               //19
+            uint32 startingValue;                           //20
+            uint32 unidirectional;                          //21
         } capturePoint;
         //30 GAMEOBJECT_TYPE_AURA_GENERATOR
         struct
@@ -344,12 +356,33 @@ struct GameObjectInfo
         //33 GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING
         struct
         {
-            uint32 dmgPctState1;                            //0
-            uint32 dmgPctState2;                            //1
-            uint32 state1Name;                              //2
-            uint32 state2Name;                              //3
+            uint32 intactNumHits;                           //0
+            uint32 creditProxyCreature;                     //1
+            uint32 empty1;                                  //2
+            uint32 intactEvent;                             //3
+            uint32 empty2;                                  //4
+            uint32 damagedNumHits;                          //5
+            uint32 empty3;                                  //6
+            uint32 empty4;                                  //7
+            uint32 empty5;                                  //8
+            uint32 damagedEvent;                            //9
+            uint32 empty6;                                  //10
+            uint32 empty7;                                  //11
+            uint32 empty8;                                  //12
+            uint32 empty9;                                  //13
+            uint32 destroyedEvent;                          //14
+            uint32 empty10;                                 //15
+            uint32 debuildingTimeSecs;                      //16
+            uint32 empty11;                                 //17
+            uint32 destructibleData;                        //18
+            uint32 rebuildingEvent;                         //19
+            uint32 empty12;                                 //20
+            uint32 empty13;                                 //21
+            uint32 damageEvent;                             //22
+            uint32 empty14;                                 //23
         } destructibleBuilding;
-        //34 GAMEOBJECT_TYPE_TRAPDOOR
+        //34 GAMEOBJECT_TYPE_GUILDBANK - empty
+        //35 GAMEOBJECT_TYPE_TRAPDOOR
         struct
         {
             uint32 whenToPause;                             // 0
@@ -358,12 +391,104 @@ struct GameObjectInfo
         } trapDoor;
 
         // not use for specific field access (only for output with loop by all filed), also this determinate max union size
-        struct                                              // GAMEOBJECT_TYPE_SPELLCASTER
+        struct
         {
             uint32 data[24];
         } raw;
     };
     uint32 ScriptId;
+
+    // helpers
+    bool IsDespawnAtAction() const
+    {
+        switch(type)
+        {
+            case GAMEOBJECT_TYPE_CHEST:  return chest.consumable;
+            case GAMEOBJECT_TYPE_GOOBER: return goober.consumable;
+            default: return false;
+        }
+    }
+
+    uint32 GetLockId() const
+    {
+        switch(type)
+        {
+            case GAMEOBJECT_TYPE_DOOR:       return door.lockId;
+            case GAMEOBJECT_TYPE_BUTTON:     return button.lockId;
+            case GAMEOBJECT_TYPE_QUESTGIVER: return questgiver.lockId;
+            case GAMEOBJECT_TYPE_CHEST:      return chest.lockId;
+            case GAMEOBJECT_TYPE_TRAP:       return trap.lockId;
+            case GAMEOBJECT_TYPE_GOOBER:     return goober.lockId;
+            case GAMEOBJECT_TYPE_AREADAMAGE: return areadamage.lockId;
+            case GAMEOBJECT_TYPE_CAMERA:     return camera.lockId;
+            case GAMEOBJECT_TYPE_FLAGSTAND:  return flagstand.lockId;
+            case GAMEOBJECT_TYPE_FISHINGHOLE:return fishinghole.lockId;
+            case GAMEOBJECT_TYPE_FLAGDROP:   return flagdrop.lockId;
+            default: return 0;
+        }
+    }
+
+    bool GetDespawnPossibility() const                      // despawn at targeting of cast?
+    {
+        switch(type)
+        {
+            case GAMEOBJECT_TYPE_DOOR:       return door.noDamageImmune;
+            case GAMEOBJECT_TYPE_BUTTON:     return button.noDamageImmune;
+            case GAMEOBJECT_TYPE_QUESTGIVER: return questgiver.noDamageImmune;
+            case GAMEOBJECT_TYPE_GOOBER:     return goober.noDamageImmune;
+            case GAMEOBJECT_TYPE_FLAGSTAND:  return flagstand.noDamageImmune;
+            case GAMEOBJECT_TYPE_FLAGDROP:   return flagdrop.noDamageImmune;
+            default: return true;
+        }
+    }
+
+    uint32 GetCharges() const                               // despawn at uses amount
+    {
+        switch(type)
+        {
+            case GAMEOBJECT_TYPE_TRAP:        return trap.charges;
+            case GAMEOBJECT_TYPE_GUARDPOST:   return guardpost.charges;
+            case GAMEOBJECT_TYPE_SPELLCASTER: return spellcaster.charges;
+            default: return 0;
+        }
+    }
+
+    uint32 GetLinkedGameObjectEntry() const
+    {
+        switch(type)
+        {
+            case GAMEOBJECT_TYPE_CHEST:       return chest.linkedTrapId;
+            case GAMEOBJECT_TYPE_SPELL_FOCUS: return spellFocus.linkedTrapId;
+            case GAMEOBJECT_TYPE_GOOBER:      return goober.linkedTrapId;
+            default: return 0;
+        }
+    }
+
+    uint32 GetAutoCloseTime() const
+    {
+        uint32 autoCloseTime = 0;
+        switch(type)
+        {
+            case GAMEOBJECT_TYPE_DOOR:          autoCloseTime = door.autoCloseTime; break;
+            case GAMEOBJECT_TYPE_BUTTON:        autoCloseTime = button.autoCloseTime; break;
+            case GAMEOBJECT_TYPE_TRAP:          autoCloseTime = trap.autoCloseTime; break;
+            case GAMEOBJECT_TYPE_GOOBER:        autoCloseTime = goober.autoCloseTime; break;
+            case GAMEOBJECT_TYPE_TRANSPORT:     autoCloseTime = transport.autoCloseTime; break;
+            case GAMEOBJECT_TYPE_AREADAMAGE:    autoCloseTime = areadamage.autoCloseTime; break;
+            default: break;
+        }
+        return autoCloseTime / 0x10000;
+    }
+
+    uint32 GetLootId() const
+    {
+        switch(type)
+        {
+            case GAMEOBJECT_TYPE_CHEST:       return chest.lootId;
+            case GAMEOBJECT_TYPE_FISHINGHOLE: return fishinghole.lootId;
+            default: return 0;
+        }
+    }
 };
 
 // GCC have alternative #pragma pack() syntax and old gcc version not support pack(pop), also any gcc version not support it at some platform
@@ -434,6 +559,7 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
 
         void AddToWorld();
         void RemoveFromWorld();
+        void CleanupsBeforeDelete();
 
         bool Create(uint32 guidlow, uint32 name_id, Map *map, uint32 phaseMask, float x, float y, float z, float ang, float rotation0, float rotation1, float rotation2, float rotation3, uint32 animprogress, GOState go_state);
         void Update(uint32 p_time);
@@ -466,40 +592,6 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
         void SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask);
         bool LoadFromDB(uint32 guid, Map *map);
         void DeleteFromDB();
-        static uint32 GetLootId(GameObjectInfo const* info);
-        uint32 GetLootId() const { return GetLootId(GetGOInfo()); }
-        uint32 GetLockId() const
-        {
-            switch(GetGoType())
-            {
-                case GAMEOBJECT_TYPE_DOOR:       return GetGOInfo()->door.lockId;
-                case GAMEOBJECT_TYPE_BUTTON:     return GetGOInfo()->button.lockId;
-                case GAMEOBJECT_TYPE_QUESTGIVER: return GetGOInfo()->questgiver.lockId;
-                case GAMEOBJECT_TYPE_CHEST:      return GetGOInfo()->chest.lockId;
-                case GAMEOBJECT_TYPE_TRAP:       return GetGOInfo()->trap.lockId;
-                case GAMEOBJECT_TYPE_GOOBER:     return GetGOInfo()->goober.lockId;
-                case GAMEOBJECT_TYPE_AREADAMAGE: return GetGOInfo()->areadamage.lockId;
-                case GAMEOBJECT_TYPE_CAMERA:     return GetGOInfo()->camera.lockId;
-                case GAMEOBJECT_TYPE_FLAGSTAND:  return GetGOInfo()->flagstand.lockId;
-                case GAMEOBJECT_TYPE_FISHINGHOLE:return GetGOInfo()->fishinghole.lockId;
-                case GAMEOBJECT_TYPE_FLAGDROP:   return GetGOInfo()->flagdrop.lockId;
-                default: return 0;
-            }
-        }
-
-        bool GetDespawnPossibility() const
-        {
-            switch(GetGoType())
-            {
-                case GAMEOBJECT_TYPE_DOOR:       return GetGOInfo()->door.noDamageImmune;
-                case GAMEOBJECT_TYPE_BUTTON:     return GetGOInfo()->button.noDamageImmune;
-                case GAMEOBJECT_TYPE_QUESTGIVER: return GetGOInfo()->questgiver.noDamageImmune;
-                case GAMEOBJECT_TYPE_GOOBER:     return GetGOInfo()->goober.noDamageImmune;
-                case GAMEOBJECT_TYPE_FLAGSTAND:  return GetGOInfo()->flagstand.noDamageImmune;
-                case GAMEOBJECT_TYPE_FLAGDROP:   return GetGOInfo()->flagdrop.noDamageImmune;
-                default: return true;
-            }
-        }
 
         time_t GetRespawnTime() const { return m_respawnTime; }
         time_t GetRespawnTimeEx() const
@@ -569,34 +661,7 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
         void UseDoorOrButton(uint32 time_to_restore = 0, bool alternative = false);
                                                             // 0 = use `gameobject`.`spawntimesecs`
         void ResetDoorOrButton();
-        // 0 = use `gameobject`.`spawntimesecs`
 
-        uint32 GetLinkedGameObjectEntry() const
-        {
-            switch(GetGoType())
-            {
-                case GAMEOBJECT_TYPE_CHEST:       return GetGOInfo()->chest.linkedTrapId;
-                case GAMEOBJECT_TYPE_SPELL_FOCUS: return GetGOInfo()->spellFocus.linkedTrapId;
-                case GAMEOBJECT_TYPE_GOOBER:      return GetGOInfo()->goober.linkedTrapId;
-                default: return 0;
-            }
-        }
-
-        uint32 GetAutoCloseTime() const
-        {
-            uint32 autoCloseTime = 0;
-            switch(GetGoType())
-            {
-                case GAMEOBJECT_TYPE_DOOR:          autoCloseTime = GetGOInfo()->door.autoCloseTime; break;
-                case GAMEOBJECT_TYPE_BUTTON:        autoCloseTime = GetGOInfo()->button.autoCloseTime; break;
-                case GAMEOBJECT_TYPE_TRAP:          autoCloseTime = GetGOInfo()->trap.autoCloseTime; break;
-                case GAMEOBJECT_TYPE_GOOBER:        autoCloseTime = GetGOInfo()->goober.autoCloseTime; break;
-                case GAMEOBJECT_TYPE_TRANSPORT:     autoCloseTime = GetGOInfo()->transport.autoCloseTime; break;
-                case GAMEOBJECT_TYPE_AREADAMAGE:    autoCloseTime = GetGOInfo()->areadamage.autoCloseTime; break;
-                default: break;
-            }
-            return autoCloseTime / 0x10000;
-        }
 
         void TriggeringLinkedGameObject( uint32 trapEntry, Unit* target);
 
@@ -607,8 +672,8 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
         GridReference<GameObject> &GetGridRef() { return m_gridRef; }
 
         bool isActiveObject() const { return false; }
+        uint64 GetRotation() const { return m_rotation; }
     protected:
-        uint32      m_charges;                              // Spell charges for GAMEOBJECT_TYPE_SPELLCASTER (22)
         uint32      m_spellId;
         time_t      m_respawnTime;                          // (secs) time of next respawn (or despawn if GO have owner()),
         uint32      m_respawnDelayTime;                     // (secs) if 0 then current GO state no dependent from timer
@@ -623,6 +688,7 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
 
         uint32 m_DBTableGuid;                               ///< For new or temporary gameobjects is 0 for saved it is lowguid
         GameObjectInfo const* m_goInfo;
+        uint64 m_rotation;
     private:
         void SwitchDoorOrButton(bool activate, bool alternative = false);
 

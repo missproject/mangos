@@ -65,12 +65,11 @@ enum PetSpellType
 {
     PETSPELL_NORMAL = 0,
     PETSPELL_FAMILY = 1,
-    PETSPELL_TALENT = 2,
 };
 
 struct PetSpell
 {
-    ActiveStates active : 16;
+    uint8 active;                                           // use instead enum (not good use *uint8* limited enum in case when value in enum not possitive in *int8*)
 
     PetSpellState state : 8;
     PetSpellType type   : 8;
@@ -92,6 +91,9 @@ enum PetTalk
 
 enum PetNameInvalidReason
 {
+    // custom, not send
+    PET_NAME_SUCCESS                                        = 0,
+
     PET_NAME_INVALID                                        = 1,
     PET_NAME_NO_NAME                                        = 2,
     PET_NAME_TOO_SHORT                                      = 3,
@@ -162,7 +164,7 @@ class Pet : public Creature
         void GivePetXP(uint32 xp);
         void GivePetLevel(uint32 level);
         void SynchronizeLevelWithOwner();
-        bool InitStatsForLevel(uint32 level);
+        bool InitStatsForLevel(uint32 level, Unit* owner = NULL);
         bool HaveInDiet(ItemPrototype const* item) const;
         uint32 GetCurrentFoodBenefitLevel(uint32 itemlevel);
         void SetDuration(int32 dur) { m_duration = dur; }
@@ -209,6 +211,7 @@ class Pet : public Creature
         void InitPetCreateSpells();
 
         bool resetTalents(bool no_cost = false);
+        static void resetTalentsForAllPetsOf(Player* owner, Pet* online_pet = NULL);
         uint32 resetTalentsCost() const;
         void InitTalentForLevel();
 
