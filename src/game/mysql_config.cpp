@@ -101,7 +101,7 @@ void MySQLConfig::Load()
 	// Ouverture du fichier de configuration
 	MISSConfig.SetSource("miss.conf");
 
-	MISSConfig.GetInt("LogLevel",&LogLevel);
+	LogLevel = MISSConfig.GetIntDefault("LogLevel", 0);
 	if (LogLevel>3)
 	{
 		error_log("MISS: Invalid LogLevel in miss.conf (%ld), LogLevel set to Debug Mode (3)",LogLevel);
@@ -113,7 +113,7 @@ void MySQLConfig::Load()
 		LogLevel=0;
 	}
 	outstring_log("MISS: LogLevel set to %ld",LogLevel);
-	MISSConfig.GetInt("Locale",&Locale);
+	Locale = MISSConfig.GetIntDefault("Locale", 0);
 	if (Locale>8)
 	{
 		error_log("MISS: Invalid Locale in miss.conf (%ld), Locale set to default (0)",Locale);
@@ -127,12 +127,12 @@ void MySQLConfig::Load()
 	outstring_log("MISS: Language set to %ld",Locale);
 
     //Get db string from file
-    char const* dbstring = NULL;
-    if (!MISSConfig.GetString("MISSDatabaseInfo", &dbstring))
+	std::string dbstring = MISSConfig.GetStringDefault("MISSDatabaseInfo", "");
+    if (dbstring.empty())
         error_log("MISS: Missing MISS Database Info from configuration file");
 
     //Initilize connection to DB
-    if (!dbstring || !MISSDB.Initialize(dbstring))
+    if (dbstring.empty() || !MISSDB.Initialize(dbstring.c_str()))
         error_log("MISS: Unable to connect to Database");
     else
 	{

@@ -1,0 +1,181 @@
+Index: system/ScriptLoader.cpp
+===================================================================
+--- system/ScriptLoader.cpp	(révision 1502)
++++ system/ScriptLoader.cpp	(copie de travail)
+@@ -4,6 +4,13 @@
+ 
+ #include "precompiled.h"
+ 
++// -- MISS --
++extern void AddSC_mercenary_summoner();
++extern void AddSC_mercenary_shaman();
++extern void AddSC_mercenary_warlock();
++extern void AddSC_mercenary_paladin();
++extern void AddSC_mercenary_mage();
++
+ //battlegrounds
+ extern void AddSC_battleground();
+ 
+@@ -391,6 +398,13 @@
+ 
+ void AddScripts()
+ {
++    // -- MISS --
++		AddSC_mercenary_summoner();
++		AddSC_mercenary_shaman();
++		AddSC_mercenary_warlock();
++		AddSC_mercenary_paladin();
++		AddSC_mercenary_mage();
++	
+     //battlegrounds
+     AddSC_battleground();
+ 
+Index: VC90/90ScriptDev2.vcproj
+===================================================================
+--- VC90/90ScriptDev2.vcproj	(révision 1502)
++++ VC90/90ScriptDev2.vcproj	(copie de travail)
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="windows-1250"?>
+ <VisualStudioProject
+ 	ProjectType="Visual C++"
+-	Version="9.00"
++	Version="9,00"
+ 	Name="ScriptDev2"
+ 	ProjectGUID="{4295C8A9-79B7-4354-8064-F05FB9CA0C96}"
+ 	RootNamespace="ScriptDev2"
+@@ -839,6 +839,10 @@
+ 						>
+ 					</File>
+ 					<File
++						RelativePath="..\scripts\eastern_kingdoms\scarlet_monastery\boss_headless_horseman.cpp"
++						>
++					</File>
++					<File
+ 						RelativePath="..\scripts\eastern_kingdoms\scarlet_monastery\boss_herod.cpp"
+ 						>
+ 					</File>
+@@ -863,10 +867,6 @@
+ 						>
+ 					</File>
+ 					<File
+-						RelativePath="..\scripts\eastern_kingdoms\scarlet_monastery\boss_headless_horseman.cpp"
+-						>
+-					</File>
+-					<File
+ 						RelativePath="..\scripts\eastern_kingdoms\scarlet_monastery\instance_scarlet_monastery.cpp"
+ 						>
+ 					</File>
+@@ -1546,16 +1546,16 @@
+ 				<File
+ 					RelativePath="..\scripts\northrend\grizzly_hills.cpp"
+ 					>
+-                </File>
+-                <File
+-                    RelativePath="..\scripts\northrend\howling_fjord.cpp"
+-                    >
+-                </File>
++				</File>
+ 				<File
++					RelativePath="..\scripts\northrend\howling_fjord.cpp"
++					>
++				</File>
++				<File
+ 					RelativePath="..\scripts\northrend\icecrown.cpp"
+ 					>
+ 				</File>
+-                <File
++				<File
+ 					RelativePath="..\scripts\northrend\sholazar_basin.cpp"
+ 					>
+ 				</File>
+@@ -1574,6 +1574,10 @@
+ 						Name="ahnkahet"
+ 						>
+ 						<File
++							RelativePath="..\scripts\northrend\azjol-nerub\ahnkahet\ahnkahet.h"
++							>
++						</File>
++						<File
+ 							RelativePath="..\scripts\northrend\azjol-nerub\ahnkahet\boss_jedoga.cpp"
+ 							>
+ 						</File>
+@@ -1590,10 +1594,6 @@
+ 							>
+ 						</File>
+ 						<File
+-							RelativePath="..\scripts\northrend\azjol-nerub\ahnkahet\ahnkahet.h"
+-							>
+-						</File>
+-						<File
+ 							RelativePath="..\scripts\northrend\azjol-nerub\ahnkahet\instance_ahnkahet.cpp"
+ 							>
+ 						</File>
+@@ -1743,11 +1743,11 @@
+ 						>
+ 					</File>
+ 					<File
+-						RelativePath="..\scripts\northrend\naxxramas\naxxramas.h"
++						RelativePath="..\scripts\northrend\naxxramas\instance_naxxramas.cpp"
+ 						>
+ 					</File>
+ 					<File
+-						RelativePath="..\scripts\northrend\naxxramas\instance_naxxramas.cpp"
++						RelativePath="..\scripts\northrend\naxxramas\naxxramas.h"
+ 						>
+ 					</File>
+ 				</Filter>
+@@ -2436,6 +2436,54 @@
+ 					>
+ 				</File>
+ 			</Filter>
++			<Filter
++				Name="miss"
++				>
++				<File
++					RelativePath="..\scripts\MISS\Shared\defines.cpp"
++					>
++				</File>
++				<File
++					RelativePath="..\scripts\MISS\Shared\defines.h"
++					>
++				</File>
++				<File
++					RelativePath="..\scripts\MISS\AI\mage.cpp"
++					>
++				</File>
++				<File
++					RelativePath="..\scripts\MISS\AI\mage.h"
++					>
++				</File>
++				<File
++					RelativePath="..\scripts\MISS\AI\paladin.cpp"
++					>
++				</File>
++				<File
++					RelativePath="..\scripts\MISS\AI\paladin.h"
++					>
++				</File>
++				<File
++					RelativePath="..\scripts\MISS\AI\shaman.cpp"
++					>
++				</File>
++				<File
++					RelativePath="..\scripts\MISS\AI\shaman.h"
++					>
++				</File>
++				<File
++					RelativePath="..\scripts\MISS\AI\summoner.cpp"
++					>
++				</File>
++				<File
++					RelativePath="..\scripts\MISS\AI\warlock.cpp"
++					>
++				</File>
++				<File
++					RelativePath="..\scripts\MISS\AI\warlock.h"
++					>
++				</File>
++			</Filter>
+ 		</Filter>
+ 		<Filter
+ 			Name="include"
