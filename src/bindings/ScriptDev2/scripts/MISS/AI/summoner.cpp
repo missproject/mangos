@@ -286,16 +286,16 @@ void SendDefaultMenu_mercenary_summoner(Player *player, Creature *_Creature, uin
     {
         player->PlayerTalkClass->CloseGossip();
 
-		if ( player->GetGroup() )
-		{
+		//if ( player->GetGroup() )
+		//{
 			player->ADD_GOSSIP_ITEM_EXTENDED(6,mysql.GetText((uint32)TEXT_SUMMONER_PALADIN_BUY),GOSSIP_SENDER_MAIN+1,GOSSIP_ACTION_INFO_DEF+6,mysql.GetText((uint32)TEXT_SUMMONER_PRICE),mysql.GetMercenaryData()[(uint32)MERCENARY_PALADIN].price,false);
 			player->ADD_GOSSIP_ITEM_EXTENDED(6,mysql.GetText((uint32)TEXT_SUMMONER_SHAMAN_BUY),GOSSIP_SENDER_MAIN+1,GOSSIP_ACTION_INFO_DEF+4,mysql.GetText((uint32)TEXT_SUMMONER_PRICE),mysql.GetMercenaryData()[(uint32)MERCENARY_SHAMAN].price,false);
 			player->ADD_GOSSIP_ITEM_EXTENDED(6,mysql.GetText((uint32)TEXT_SUMMONER_WARLOCK_BUY),GOSSIP_SENDER_MAIN+1,GOSSIP_ACTION_INFO_DEF+5,mysql.GetText((uint32)TEXT_SUMMONER_PRICE),mysql.GetMercenaryData()[(uint32)MERCENARY_WARLOCK].price,false);
 			player->ADD_GOSSIP_ITEM_EXTENDED(6,mysql.GetText((uint32)TEXT_SUMMONER_MAGE_BUY),GOSSIP_SENDER_MAIN+1,GOSSIP_ACTION_INFO_DEF+3,mysql.GetText((uint32)TEXT_SUMMONER_PRICE),mysql.GetMercenaryData()[(uint32)MERCENARY_MAGE].price,false);
 			player->PlayerTalkClass->SendGossipMenu(907,_Creature->GetGUID());
-		}
-		else
-			_Creature->MonsterSay(mysql.GetText((uint32)TEXT_SUMMONER_MUST_GROUP),LANG_UNIVERSAL,NULL);
+		//}
+		//else
+		//	_Creature->MonsterSay(mysql.GetText((uint32)TEXT_SUMMONER_MUST_GROUP),LANG_UNIVERSAL,NULL);
     }
 }
 

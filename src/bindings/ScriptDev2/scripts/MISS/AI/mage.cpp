@@ -256,8 +256,8 @@ void mercenary_mageAI::Reset()
 
 void mercenary_mageAI::Init(Player* buying_player)
 {
-	g_master = buying_player->GetGroup();
-	m_master = buying_player->GetGroup()->GetFirstMember()->getSource();
+	//g_master = buying_player->GetGroup();
+	m_master = buying_player;
 	m_creature->GetMotionMaster()->Clear();
 	if ( MovingMode == 1 )
 		m_creature->GetMotionMaster()->MoveFollow((Unit*)m_master,MovingGap,0);
@@ -640,13 +640,13 @@ void mercenary_mageAI::OrderTreatment(const char* argument, bool destroy)
 		uint32 t_packet__h = wodex.SCEnDExPGetPacketXHeader(m_creature,argument,40,i);
 		if ( t_packet__h && wodex.GetSourceFromCEnDExPPacket(t_packet__h) )
 		{
-			if ( ((Group*)g_master)->IsMember(wodex.GetSourceFromCEnDExPPacket(t_packet__h)->GetGUID()) || wodex.GetSourceFromCEnDExPPacket(t_packet__h)->isGameMaster() )
-			{
+			//if ( ((Group*)g_master)->IsMember(wodex.GetSourceFromCEnDExPPacket(t_packet__h)->GetGUID()) || wodex.GetSourceFromCEnDExPPacket(t_packet__h)->isGameMaster() )
+			//{
 				// Traitement du paquet
 				if ( !OrderAlreadyRead(t_packet__h) ) TreatPacket(wodex, t_packet__h); // traitement des paquets généraux
 				s_headers.push_back(t_packet__h);
 				if ( destroy ) wodex.DeleteCEnDExPPacket(t_packet__h);
-			}
+			//}
 		}
 	}
 }
@@ -665,8 +665,8 @@ void mercenary_mageAI::JustDied(Unit *who)
 
 void mercenary_mageAI::UpdateAI(const uint32 diff)
 {
-	if ( !g_master )
-		return;
+	//if ( !g_master )
+	//	return;
 
 	// Gestion des cooldowns
 
