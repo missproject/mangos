@@ -16,46 +16,42 @@
 
 ## Process this file with automake to produce Makefile.in
 
+## Sub-directories to parse
+
 ## CPP flags for includes, defines, etc.
-AM_CPPFLAGS = $(MANGOS_INCLUDES) -I$(top_builddir)/src/shared -I$(srcdir)/../../dep/include -I$(srcdir)/../framework -I$(srcdir)/../shared  -I$(srcdir)/../game -I$(srcdir) -DSYSCONFDIR=\"$(sysconfdir)/\"
+AM_CPPFLAGS = $(MANGOS_INCLUDES) -I$(top_builddir)/src/shared -I$(srcdir) -I$(srcdir)/../../../dep/include -I$(srcdir)/../../framework -I$(srcdir)/../../shared -I$(srcdir)/../../shared/vmap -I$(srcdir)/../../realmd -DSYSCONFDIR=\"$(sysconfdir)/\"
 
-## Build world daemon as standalone program
-bin_PROGRAMS = mangos-worldd
-mangos_worldd_SOURCES = \
-	CliRunnable.cpp \
-	CliRunnable.h \
-	Main.cpp \
-	Master.cpp \
-	Master.h \
-	RASocket.cpp \
-	RASocket.h \
-	WorldRunnable.cpp \
-	WorldRunnable.h
+## Build MaNGOS game library as convenience library.
+#  All libraries will be convenience libraries. Might be changed to shared
+#  later.
+noinst_LIBRARIES = libmangoschat.a
 
-## Link world daemon against the shared library
-mangos_worldd_LDADD = \
-	../bindings/universal/libmangosscript.la \
-	../game/libmangosgame.a \
-	../game/mangchat/libmangoschat.a \
-	../shared/Database/libmangosdatabase.a \
-	../shared/Config/libmangosconfig.a \
-	../shared/Auth/libmangosauth.a \
-	../shared/libmangosshared.a \
-	../shared/vmap/libmangosvmaps.a \
-	../framework/libmangosframework.a \
-	../../dep/src/sockets/libmangossockets.a \
-	../../dep/src/g3dlite/libg3dlite.a
-
-mangos_worldd_LDFLAGS = -L../../dep/src/sockets -L../../dep/src/g3dlite -L../bindings/universal/ -L$(libdir) $(MANGOS_LIBS) -export-dynamic
+#  libmangossgame library will later be reused by ...
+libmangoschat_a_SOURCES = \
+        IRCClient.cpp \
+        IRCClient.h \
+        IRCCmd.cpp \
+        IRCCmd.h \
+        IRCCmde.cpp \
+        IRCConf.cpp \
+        IRCConf.h \
+        IRCFunc.h \
+        IRCIO.cpp \
+        IRCLog.cpp \
+        IRCLog.h \
+        IRCSock.cpp \
+        MCS_OnlinePlayers.cpp \
+        MCS_OnlinePlayers.h
 
 ## Additional files to include when running 'make dist'
-#  Include world daemon configuration
+#  Precompiled Headers for WIN
 EXTRA_DIST = \
-	mangosd.conf.dist
+	IRCConf.h \
+	mangchat.conf.dist
 
 ## Additional files to install
 sysconf_DATA = \
-	mangosd.conf.dist
+	mangchat.conf.dist
 
 install-data-hook:
 	@list='$(sysconf_DATA)'

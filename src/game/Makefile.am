@@ -17,6 +17,7 @@
 ## Process this file with automake to produce Makefile.in
 
 ## Sub-directories to parse
+SUBDIRS = mangchat
 
 ## CPP flags for includes, defines, etc.
 AM_CPPFLAGS = $(MANGOS_INCLUDES) -I$(top_builddir)/src/shared -I$(srcdir) -I$(srcdir)/../../dep/include -I$(srcdir)/../framework -I$(srcdir)/../shared -I$(srcdir)/../shared/vmap -I$(srcdir)/../realmd -DSYSCONFDIR=\"$(sysconfdir)/\"

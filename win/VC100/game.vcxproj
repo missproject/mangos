@@ -491,6 +491,14 @@
     <ClCompile Include="..\..\src\game\WorldSession.cpp" />
     <ClCompile Include="..\..\src\game\WorldSocket.cpp" />
     <ClCompile Include="..\..\src\game\WorldSocketMgr.cpp" />
+    <ClCompile Include="..\..\src\game\mangchat\IRCClient.cpp" />
+    <ClCompile Include="..\..\src\game\mangchat\IRCCmd.cpp" />
+    <ClCompile Include="..\..\src\game\mangchat\IRCCmde.cpp" />
+    <ClCompile Include="..\..\src\game\mangchat\IRCConf.cpp" />
+    <ClCompile Include="..\..\src\game\mangchat\IRCIO.cpp" />
+    <ClCompile Include="..\..\src\game\mangchat\IRCLog.cpp" />
+    <ClCompile Include="..\..\src\game\mangchat\IRCSock.cpp" />
+    <ClCompile Include="..\..\src\game\mangchat\MCS_OnlinePlayers.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\game\AccountMgr.h" />
@@ -623,6 +631,11 @@
     <ClInclude Include="..\..\src\game\WorldSession.h" />
     <ClInclude Include="..\..\src\game\WorldSocket.h" />
     <ClInclude Include="..\..\src\game\WorldSocketMgr.h" />
+    <ClInclude Include="..\..\src\game\mangchat\IRCClient.h" />
+    <ClInclude Include="..\..\src\game\mangchat\IRCCmd.h" />
+    <ClInclude Include="..\..\src\game\mangchat\IRCFunc.h" />
+    <ClInclude Include="..\..\src\game\mangchat\IRCLog.h" />
+    <ClInclude Include="..\..\src\game\mangchat\MCS_OnlinePlayers.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="shared.vcxproj">

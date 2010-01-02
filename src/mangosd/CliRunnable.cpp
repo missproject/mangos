@@ -227,7 +227,7 @@ bool ChatHandler::HandleAccountCreateCommand(const char* args)
     if(!szAcc || !szPassword)
         return false;
 
-    // normalized in accmgr.CreateAccount
+    // normalized in sAccountMgr.CreateAccount
     std::string account_name = szAcc;
     std::string password = szPassword;
 
