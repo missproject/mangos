@@ -45,7 +45,6 @@ std::string FlagsToStr(const uint32 Flags)
         Ret="None";
         return Ret;
     }
-
     if(Flags & MOVEMENTFLAG_FORWARD)
     {   Ret+="FW "; }
     if(Flags & MOVEMENTFLAG_BACKWARD)
@@ -158,9 +157,9 @@ bool WorldSession::Anti__ReportCheat(const char* Reason,float Speed,const char* 
                 << "t_guid: " << MvInfo->t_guid << " falltime: " << MvInfo->fallTime;
         }
         CharacterDatabase.PExecute("INSERT INTO cheaters (player,acctid,reason,speed,count,first_date,last_date,`Op`,Val1,Val2,Map,Pos,Level) "
-                                   "VALUES ('%s','%u','%s','%f','1',NOW(),NOW(),'%s','%f','%u','%u','%s','%u')",
-                                   Player,Acc,Reason,Speed,Op,Val1,Val2,Map,
-                                   Pos.str().c_str(),GetPlayer()->getLevel());
+            "VALUES ('%s','%u','%s','%f','1',NOW(),NOW(),'%s','%f','%u','%u','%s','%u')",
+            Player,Acc,Reason,Speed,Op,Val1,Val2,Map,
+            Pos.str().c_str(),GetPlayer()->getLevel());
     }
 
     if(sWorld.GetMvAnticheatKill() && GetPlayer()->isAlive())
@@ -180,7 +179,6 @@ bool WorldSession::Anti__ReportCheat(const char* Reason,float Speed,const char* 
         QueryResult *result = loginDatabase.PQuery("SELECT last_ip FROM account WHERE id=%u", Acc);
         if(result)
         {
-
             Field *fields = result->Fetch();
             std::string LastIP = fields[0].GetCppString();
             if(!LastIP.empty())
@@ -501,7 +499,7 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
         {
             plMover->m_anti_BeginFallZ=INVALID_HEIGHT;
         }
-	    }
+    }
 
     // ---- anti-cheat features -->>>
     uint32 Anti_TeleTimeDiff=plMover ? time(NULL) - plMover->Anti__GetLastTeleTime() : time(NULL);
@@ -520,8 +518,8 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
         float delta_x = GetPlayer()->GetPositionX() - movementInfo.x;
         float delta_y = GetPlayer()->GetPositionY() - movementInfo.y;
         float delta_z = GetPlayer()->GetPositionZ() - movementInfo.z;
-        float delta = sqrt(delta_x * delta_x + delta_y * delta_y); // Len of movement-vector via Pythagoras (a^2+b^2=Len^2)
-        float tg_z = 0.0f; //tangens
+        float delta = sqrt(delta_x * delta_x + delta_y * delta_y);              // Len of movement-vector via Pythagoras (a^2+b^2=Len^2)
+        float tg_z = 0.0f;                                                      //tangens
         float delta_t = getMSTimeDiff(GetPlayer()->m_anti_lastmovetime,CurTime);
 
         GetPlayer()->m_anti_lastmovetime = CurTime;
@@ -547,15 +545,15 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
             GetPlayer()->m_anti_MovedLen = 0.0f;
             static const float MaxDeltaXYT = sWorld.GetMvAnticheatMaxXYT();
 
-#ifdef __ANTI_DEBUG__
+            #ifdef __ANTI_DEBUG__
             SendAreaTriggerMessage("XYT: %f ; Flags: %s",delta_xyt,FlagsToStr(movementInfo.flags).c_str());
-#endif //__ANTI_DEBUG__
+            #endif //__ANTI_DEBUG__
 
             if(delta_xyt > MaxDeltaXYT && delta<=100.0f && GetPlayer()->GetZoneId() != 2257)
             {
                 Anti__CheatOccurred(CurTime,"Speed hack",delta_xyt,LookupOpcodeName(opcode),
-                                    (float)(GetPlayer()->GetMotionMaster()->GetCurrentMovementGeneratorType()),
-                                    (float)(getMSTimeDiff(OldNextLenCheck-500,CurTime)),&movementInfo);
+                    (float)(GetPlayer()->GetMotionMaster()->GetCurrentMovementGeneratorType()),
+                    (float)(getMSTimeDiff(OldNextLenCheck-500,CurTime)),&movementInfo);
             }
         }
 
@@ -589,9 +587,9 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
             if((movementInfo.flags & (MOVEMENTFLAG_CAN_FLY | MOVEMENTFLAG_FLYING | MOVEMENTFLAG_FLYING2)) != 0) // Fly Hack
             {
                 Anti__CheatOccurred(CurTime,"Fly hack",
-                                    ((uint8)(GetPlayer()->HasAuraType(SPELL_AURA_FLY))) +
-                                    ((uint8)(GetPlayer()->HasAuraType(SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED))*2),
-                                    NULL,GetPlayer()->GetPositionZ()-Anti__MapZ);
+                    ((uint8)(GetPlayer()->HasAuraType(SPELL_AURA_FLY))) +
+                    ((uint8)(GetPlayer()->HasAuraType(SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED))*2),
+                    NULL,GetPlayer()->GetPositionZ()-Anti__MapZ);
             }
         }
     }

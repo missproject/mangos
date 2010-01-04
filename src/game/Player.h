@@ -2145,7 +2145,6 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         uint32 Anti__GetLastTeleTime() const { return m_anti_TeleTime; }
         void Anti__SetLastTeleTime(uint32 TeleTime) { m_anti_TeleTime=TeleTime; }
-        //bool CanFly() const { return m_movementInfo.HasMovementFlag(MOVEMENTFLAG_CAN_FLY); }
         bool CanFly() const { return m_CanFly;  }
         void SetCanFly(bool CanFly) { m_CanFly=CanFly; }
         bool IsFlying() const { return m_movementInfo.HasMovementFlag(MOVEMENTFLAG_FLYING); }

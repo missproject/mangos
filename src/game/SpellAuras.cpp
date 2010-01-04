@@ -6260,7 +6260,7 @@ void Aura::HandleAuraAllowFlight(bool apply, bool Real)
         data.Initialize(SMSG_MOVE_UNSET_CAN_FLY, 12);
         ((Player*)m_target)->SetCanFly(false);
     }
-		data.append(m_target->GetPackGUID());
+    data.append(m_target->GetPackGUID());
     data << uint32(0);                                      // unk
     m_target->SendMessageToSet(&data, true);
 }
