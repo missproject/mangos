@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -117,6 +117,9 @@ class MANGOS_DLL_SPEC CreatureAI
 
         // Called at waypoint reached or point movement finished
         virtual void MovementInform(uint32 /*MovementType*/, uint32 /*Data*/) {}
+
+        // Called if a temporary summoned of m_creature reach a move point
+        virtual void SummonedMovementInform(Creature* /*summoned*/, uint32 /*motion_type*/, uint32 /*point_id*/) {}
 
         // Called at text emote receive from player
         virtual void ReceiveEmote(Player* /*pPlayer*/, uint32 /*text_emote*/) {}

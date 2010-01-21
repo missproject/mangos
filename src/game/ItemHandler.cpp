@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -149,13 +149,6 @@ void WorldSession::HandleAutoEquipItemOpcode( WorldPacket & recv_data )
     Item *pSrcItem  = _player->GetItemByPos( srcbag, srcslot );
     if( !pSrcItem )
         return;                                             // only at cheat
-
-    if(pSrcItem->m_lootGenerated)                           // prevent swap looting item
-    {
-        //best error message found for attempting to swap while looting
-        _player->SendEquipError( EQUIP_ERR_CANT_DO_RIGHT_NOW, pSrcItem, NULL );
-        return;
-    }
 
     uint16 dest;
     uint8 msg = _player->CanEquipItem( NULL_SLOT, dest, pSrcItem, !pSrcItem->IsBag() );

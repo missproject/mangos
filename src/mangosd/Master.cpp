@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -233,13 +233,9 @@ int Master::Run()
     
     // set realmbuilds depend on mangosd expected builds, and set server online
     {
-        std::ostringstream data;
-        int accepted_versions[] = EXPECTED_MANGOSD_CLIENT_BUILD;
-        for(int i = 0; accepted_versions[i]; ++i)
-        {
-            data << accepted_versions[i] << " ";
-        }
-        loginDatabase.PExecute("UPDATE realmlist SET color = 0, population = 0, realmbuilds = '%s'  WHERE id = '%d'", data.str().c_str(), realmID);
+        std::string builds = AcceptableClientBuildsListStr();
+        loginDatabase.escape_string(builds);
+        loginDatabase.PExecute("UPDATE realmlist SET color = 0, population = 0, realmbuilds = '%s'  WHERE id = '%d'", builds.c_str(), realmID);
     }
 
     ACE_Based::Thread* cliThread = NULL;

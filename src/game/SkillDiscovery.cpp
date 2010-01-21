@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -89,7 +89,7 @@ void LoadSkillDiscoveryTable()
             SpellEntry const* reqSpellEntry = sSpellStore.LookupEntry(reqSkillOrSpell);
             if (!reqSpellEntry)
             {
-                if(reportedReqSpells.count(reqSkillOrSpell)==0)
+                if (reportedReqSpells.find(reqSkillOrSpell) == reportedReqSpells.end())
                 {
                     sLog.outErrorDb("Spell (ID: %u) have not existed spell (ID: %i) in `reqSpell` field in `skill_discovery_template` table",spellId,reqSkillOrSpell);
                     reportedReqSpells.insert(reqSkillOrSpell);
@@ -102,7 +102,7 @@ void LoadSkillDiscoveryTable()
                 // explicit discovery ability
                 !IsExplicitDiscoverySpell(reqSpellEntry))
             {
-                if (reportedReqSpells.count(reqSkillOrSpell)==0)
+                if (reportedReqSpells.find(reqSkillOrSpell) == reportedReqSpells.end())
                 {
                     sLog.outErrorDb("Spell (ID: %u) not have MECHANIC_DISCOVERY (28) value in Mechanic field in spell.dbc"
                         " and not 100%% chance random discovery ability but listed for spellId %u (and maybe more) in `skill_discovery_template` table",

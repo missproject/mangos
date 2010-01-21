@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -361,13 +361,22 @@ typedef std::map<uint32,time_t> CreatureSpellCooldowns;
 
 #define MAX_VENDOR_ITEMS 150                                // Limitation in 3.x.x item count in SMSG_LIST_INVENTORY
 
+enum CreatureSubtype
+{
+    CREATURE_SUBTYPE_GENERIC,                               // new Creature
+    CREATURE_SUBTYPE_PET,                                   // new Pet
+    CREATURE_SUBTYPE_TOTEM,                                 // new Totem
+    CREATURE_SUBTYPE_VEHICLE,                               // new Vehicle
+    CREATURE_SUBTYPE_TEMPORARY_SUMMON,                      // new TemporarySummon
+};
+
 class MANGOS_DLL_SPEC Creature : public Unit
 {
     CreatureAI *i_AI;
 
     public:
 
-        explicit Creature();
+        explicit Creature(CreatureSubtype subtype = CREATURE_SUBTYPE_GENERIC);
         virtual ~Creature();
 
         void AddToWorld();
@@ -385,10 +394,13 @@ class MANGOS_DLL_SPEC Creature : public Unit
         void GetRespawnCoord(float &x, float &y, float &z, float* ori = NULL, float* dist =NULL) const;
         uint32 GetEquipmentId() const { return m_equipmentId; }
 
-        bool isPet() const { return m_isPet; }
-        bool isVehicle() const { return m_isVehicle; }
+        CreatureSubtype GetSubtype() const { return m_subtype; }
+        bool isPet() const { return m_subtype == CREATURE_SUBTYPE_PET; }
+        bool isVehicle() const { return m_subtype == CREATURE_SUBTYPE_VEHICLE; }
+        bool isTotem() const { return m_subtype == CREATURE_SUBTYPE_TOTEM; }
+        bool isTemporarySummon() const { return m_subtype == CREATURE_SUBTYPE_TEMPORARY_SUMMON; }
+
         void SetCorpseDelay(uint32 delay) { m_corpseDelay = delay; }
-        bool isTotem() const { return m_isTotem; }
         bool isRacialLeader() const { return GetCreatureInfo()->RacialLeader; }
         bool isCivilian() const { return GetCreatureInfo()->flags_extra & CREATURE_FLAG_EXTRA_CIVILIAN; }
         bool canWalk() const { return GetCreatureInfo()->InhabitType & INHABIT_GROUND; }
@@ -429,11 +441,29 @@ class MANGOS_DLL_SPEC Creature : public Unit
         void AI_SendMoveToPacket(float x, float y, float z, uint32 time, MonsterMovementFlags MovementFlags, uint8 type);
         CreatureAI* AI() { return i_AI; }
 
-        void AddMonsterMoveFlag(MonsterMovementFlags f) { m_monsterMoveFlags = MonsterMovementFlags(m_monsterMoveFlags | f); }
-        void RemoveMonsterMoveFlag(MonsterMovementFlags f) { m_monsterMoveFlags = MonsterMovementFlags(m_monsterMoveFlags & ~f); }
+        void AddMonsterMoveFlag(MonsterMovementFlags f)
+        {
+            bool need_walk_sync = (f & MONSTER_MOVE_WALK) != (m_monsterMoveFlags & MONSTER_MOVE_WALK);
+            m_monsterMoveFlags = MonsterMovementFlags(m_monsterMoveFlags | f);
+            if (need_walk_sync)
+                UpdateWalkMode(this,false);
+        }
+        void RemoveMonsterMoveFlag(MonsterMovementFlags f)
+        {
+            bool need_walk_sync = (f & MONSTER_MOVE_WALK) != (m_monsterMoveFlags & MONSTER_MOVE_WALK);
+            m_monsterMoveFlags = MonsterMovementFlags(m_monsterMoveFlags & ~f);
+            if (need_walk_sync)
+                UpdateWalkMode(this,false);
+        }
         bool HasMonsterMoveFlag(MonsterMovementFlags f) const { return m_monsterMoveFlags & f; }
         MonsterMovementFlags GetMonsterMoveFlags() const { return m_monsterMoveFlags; }
-        void SetMonsterMoveFlags(MonsterMovementFlags f) { m_monsterMoveFlags = f; }
+        void SetMonsterMoveFlags(MonsterMovementFlags f)
+        {
+            bool need_walk_sync = (f & MONSTER_MOVE_WALK) != (m_monsterMoveFlags & MONSTER_MOVE_WALK);
+            m_monsterMoveFlags = f;                     // need set before
+            if (need_walk_sync)
+                UpdateWalkMode(this,false);
+        }
 
         void SendMonsterMoveWithSpeed(float x, float y, float z, uint32 transitTime = 0, Player* player = NULL);
         void SendMonsterMoveWithSpeedToCurrentDestination(Player* player = NULL);
@@ -538,7 +568,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
         void RemoveCorpse();
         bool isDeadByDefault() const { return m_isDeadByDefault; };
 
-        void ForcedDespawn();
+        void ForcedDespawn(uint32 timeMSToDespawn = 0);
 
         time_t const& GetRespawnTime() const { return m_respawnTime; }
         time_t GetRespawnTimeEx() const;
@@ -576,6 +606,9 @@ class MANGOS_DLL_SPEC Creature : public Unit
         void SetCombatStartPosition(float x, float y, float z) { CombatStartX = x; CombatStartY = y; CombatStartZ = z; }
         void GetCombatStartPosition(float &x, float &y, float &z) { x = CombatStartX; y = CombatStartY; z = CombatStartZ; }
 
+        void SetSummonPoint(float fX, float fY, float fZ, float fOrient) { m_summonXpoint = fX; m_summonYpoint = fY; m_summonZpoint = fZ; m_summonOrientation = fOrient; }
+        void GetSummonPoint(float &fX, float &fY, float &fZ, float &fOrient) const { fX = m_summonXpoint; fY = m_summonYpoint; fZ = m_summonZpoint; fOrient = m_summonOrientation; }
+
         uint32 GetGlobalCooldown() const { return m_GlobalCooldown; }
 
         void SetDeadByDefault (bool death_state) { m_isDeadByDefault = death_state; }
@@ -607,9 +640,7 @@ class MANGOS_DLL_SPEC Creature : public Unit
         uint32 m_corpseDelay;                               // (secs) delay between death and corpse disappearance
         float m_respawnradius;
 
-        bool m_isPet;                                       // set only in Pet::Pet
-        bool m_isVehicle;                                   // set only in Vehicle::Vehicle
-        bool m_isTotem;                                     // set only in Totem::Totem
+        CreatureSubtype m_subtype;                          // set in Creatures subclasses for fast it detect without dynamic_cast use
         void RegenerateMana();
         void RegenerateHealth();
         MovementGeneratorType m_defaultMovementType;
@@ -629,6 +660,12 @@ class MANGOS_DLL_SPEC Creature : public Unit
         float CombatStartX;
         float CombatStartY;
         float CombatStartZ;
+
+        float m_summonXpoint;
+        float m_summonYpoint;
+        float m_summonZpoint;
+        float m_summonOrientation;
+
     private:
         GridReference<Creature> m_gridRef;
         CreatureInfo const* m_creatureInfo;                 // in difficulty mode > 0 can different from ObjMgr::GetCreatureTemplate(GetEntry())
@@ -649,6 +686,16 @@ class AssistDelayEvent : public BasicEvent
         uint64            m_victim;
         std::list<uint64> m_assistants;
         Unit&             m_owner;
+};
+
+class ForcedDespawnDelayEvent : public BasicEvent
+{
+    public:
+        ForcedDespawnDelayEvent(Creature& owner) : BasicEvent(), m_owner(owner) { }
+        bool Execute(uint64 e_time, uint32 p_time);
+
+    private:
+        Creature& m_owner;
 };
 
 #endif
