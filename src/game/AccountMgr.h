@@ -16,8 +16,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _sAccountMgr_H
-#define _sAccountMgr_H
+#ifndef _ACCMGR_H
+#define _ACCMGR_H
 
 #include "Common.h"
 #include "Policies/Singleton.h"
