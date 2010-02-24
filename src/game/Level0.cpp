@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -148,7 +148,7 @@ bool ChatHandler::HandleSaveCommand(const char* /*args*/)
     }
 
     // save or plan save after 20 sec (logout delay) if current next save time more this value and _not_ output any messages to prevent cheat planning
-    uint32 save_interval = sWorld.getConfig(CONFIG_INTERVAL_SAVE);
+    uint32 save_interval = sWorld.getConfig(CONFIG_UINT32_INTERVAL_SAVE);
     if (save_interval==0 || (save_interval > 20*IN_MILISECONDS && player->GetSaveTimer() <= save_interval - 20*IN_MILISECONDS))
         player->SaveToDB();
 
@@ -164,7 +164,7 @@ bool ChatHandler::HandleGMListIngameCommand(const char* /*args*/)
     for(; itr != m.end(); ++itr)
     {
         AccountTypes itr_sec = itr->second->GetSession()->GetSecurity();
-        if ((itr->second->isGameMaster() || (itr_sec > SEC_PLAYER && itr_sec <= sWorld.getConfig(CONFIG_GM_LEVEL_IN_GM_LIST))) &&
+        if ((itr->second->isGameMaster() || (itr_sec > SEC_PLAYER && itr_sec <= (AccountTypes)sWorld.getConfig(CONFIG_UINT32_GM_LEVEL_IN_GM_LIST))) &&
             (!m_session || itr->second->IsVisibleGloballyFor(m_session->GetPlayer())))
         {
             if(first)
@@ -777,14 +777,14 @@ bool ChatHandler::HandleGMCDirectOrderCommand(const char *args)
     SpellEntry const *spellInfo = sSpellStore.LookupEntry( 43430 );
     if(spellInfo)
     {
-      for(uint32 i = 0;i<3;i++)
+      for(uint32 i = 0;i<MAX_EFFECT_INDEX;i++)
       {
         uint8 eff = spellInfo->Effect[i];
         if (eff>=TOTAL_SPELL_EFFECTS)
           continue;
         if(eff == SPELL_EFFECT_APPLY_AREA_AURA_PARTY || eff == SPELL_EFFECT_APPLY_AURA || eff == SPELL_EFFECT_PERSISTENT_AREA_AURA)
         {
-          Aura *Aur = CreateAura(spellInfo, i, NULL, m_session->GetPlayer());
+          Aura *Aur = CreateAura(spellInfo, SpellEffectIndex(i), NULL, m_session->GetPlayer());
           Aur->SetAuraDuration(3600000);
           m_session->GetPlayer()->AddAura(Aur);
         }

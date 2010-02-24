@@ -446,7 +446,7 @@ volatile Unit* UnitListGetRandomHostileUnitExceptNotWishSpell(std::list<volatile
 			continue;
 		if ( (*i) == victim )
 			continue;
-		if ( ((Unit*)(*i))->HasAura(spell,0) )
+		if ( ((Unit*)(*i))->HasAura(spell,SpellEffectIndex(0)) )
 			++b;
     }
 	// Par exemple s'il y a 3 unités possibles : i = 3;
@@ -458,7 +458,7 @@ volatile Unit* UnitListGetRandomHostileUnitExceptNotWishSpell(std::list<volatile
 			continue;
 		if ( (*i) == victim )
 			continue;
-		if ( ((Unit*)(*i))->HasAura(spell,0) && ((Unit*)(*i))->isAlive() && ((Unit*)m_creature)->IsWithinDistInMap(((Unit*)(*i)),10) && ((Unit*)m_creature)->IsHostileTo((Unit*)(*i)) )
+		if ( ((Unit*)(*i))->HasAura(spell,SpellEffectIndex(0)) && ((Unit*)(*i))->isAlive() && ((Unit*)m_creature)->IsWithinDistInMap(((Unit*)(*i)),10) && ((Unit*)m_creature)->IsHostileTo((Unit*)(*i)) )
 		{
 			if ( j <= 0 )
 				return (*i);

@@ -212,7 +212,7 @@ void mercenary_paladinAI::SelfCastFreecast()
 			if (eff>=TOTAL_SPELL_EFFECTS) continue;
 			if(eff == SPELL_EFFECT_APPLY_AREA_AURA_PARTY || eff == SPELL_EFFECT_APPLY_AURA || eff == SPELL_EFFECT_PERSISTENT_AREA_AURA)
 			{
-				Aura *Aur = CreateAura(spellInfo, i, NULL, m_creature);
+				Aura *Aur = CreateAura(spellInfo, SpellEffectIndex(i), NULL, m_creature);
 				Aur->SetAuraDuration(3600000);
 				if ( i == 0 ) Aur->SetModifier(SPELL_AURA_ADD_PCT_MODIFIER,0,0,2);
 				if ( i == 1 ) Aur->SetModifier(SPELL_AURA_ADD_FLAT_MODIFIER,-15000,0,126);
@@ -908,7 +908,7 @@ void mercenary_paladinAI::UpdateAI(const uint32 diff)
 							continue;
 						if(eff == SPELL_EFFECT_APPLY_AREA_AURA_PARTY || eff == SPELL_EFFECT_APPLY_AURA || eff == SPELL_EFFECT_PERSISTENT_AREA_AURA)
 						{
-							Aura *Aur = CreateAura(spellInfo, i, NULL, t_player);
+							Aura *Aur = CreateAura(spellInfo, SpellEffectIndex(i), NULL, t_player);
 							Aur->SetAuraDuration(Spell3Length1*1000);
 							t_player->AddAura(Aur);
 						}
@@ -936,7 +936,7 @@ void mercenary_paladinAI::UpdateAI(const uint32 diff)
 							continue;
 						if(eff == SPELL_EFFECT_APPLY_AREA_AURA_PARTY || eff == SPELL_EFFECT_APPLY_AURA || eff == SPELL_EFFECT_PERSISTENT_AREA_AURA)
 						{
-							Aura *Aur = CreateAura(spellInfo, i, NULL, t_player);
+							Aura *Aur = CreateAura(spellInfo, SpellEffectIndex(i), NULL, t_player);
 							Aur->SetAuraDuration(Spell3Length2*1000);
 							t_player->AddAura(Aur);
 						}
@@ -972,7 +972,7 @@ void mercenary_paladinAI::UpdateAI(const uint32 diff)
 						continue;
 					if(eff == SPELL_EFFECT_APPLY_AREA_AURA_PARTY || eff == SPELL_EFFECT_APPLY_AURA || eff == SPELL_EFFECT_PERSISTENT_AREA_AURA)
 					{
-						Aura *Aur = CreateAura(spellInfo, i, NULL, t_player);
+						Aura *Aur = CreateAura(spellInfo, SpellEffectIndex(i), NULL, t_player);
 						Aur->SetModifier(Aur->GetModifier()->m_auraname,Spell2Effect,Aur->GetModifier()->periodictime,Aur->GetModifier()->m_miscvalue);
 						Aur->SetAuraDuration(Spell2Length*1000);
 						t_player->AddAura(Aur);

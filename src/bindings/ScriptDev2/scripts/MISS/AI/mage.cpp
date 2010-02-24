@@ -169,7 +169,7 @@ void mercenary_mageAI::SelfCastFreecast()
 			if (eff>=TOTAL_SPELL_EFFECTS) continue;
 			if(eff == SPELL_EFFECT_APPLY_AREA_AURA_PARTY || eff == SPELL_EFFECT_APPLY_AURA || eff == SPELL_EFFECT_PERSISTENT_AREA_AURA)
 			{
-				Aura *Aur = CreateAura(spellInfo, i, NULL, m_creature);
+				Aura *Aur = CreateAura(spellInfo, SpellEffectIndex(i), NULL, m_creature);
 				Aur->SetAuraDuration(3600000);
 				if ( i == 0 ) Aur->SetModifier(SPELL_AURA_ADD_PCT_MODIFIER,0,0,2);
 				if ( i == 1 ) Aur->SetModifier(SPELL_AURA_ADD_FLAT_MODIFIER,-10000,0,126);
