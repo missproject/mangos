@@ -978,7 +978,7 @@ void mercenary_shamanAI::UpdateAI(const uint32 diff)
 					if (eff>=TOTAL_SPELL_EFFECTS) continue;
 					if(eff == SPELL_EFFECT_APPLY_AREA_AURA_PARTY || eff == SPELL_EFFECT_APPLY_AURA || eff == SPELL_EFFECT_PERSISTENT_AREA_AURA)
 					{
-						Aura *Aur = CreateAura(spellInfo, i, NULL, t_player);
+						Aura *Aur = CreateAura(spellInfo, SpellEffectIndex(i), NULL, t_player);
 						Aur->SetAuraDuration(BuffLength*1000);
 						Aur->SetModifier((AuraType)mysql.GetBuffData((uint32)SpellToCast,i,0),mysql.GetBuffData((uint32)SpellToCast,i,1),mysql.GetBuffData((uint32)SpellToCast,i,2),mysql.GetBuffData((uint32)SpellToCast,i,3));
 						t_player->AddAura(Aur);
